@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Utils.hpp"
+
 enum class RelayIds
 {
     Relay1,
@@ -15,24 +17,39 @@ enum class RelayIds
     Relay11,
     Relay12,
     NumberOfRelays,
-    RelayAll,
+    AllRelays,
     Unknown
 };
 
 enum class RelayState
 {
-    Open,
+    Opened,
     Closed,
+    Unknown
+};
+
+enum class CmdPriority
+{
+    Priority0,
+    Priority1,
+    Priority2,
+    Priority3,
+    Priority4,
+    Priority5,
+    Priority6,
+    Priority7,
+    Priority8,
+    Priority9,
     Unknown
 };
 
 enum class CommandType
 {
     ManCtrl,
-    TempBasedCtrl,
-    HumBasedCtrl,
-    TimeBasedCtrl,
-    FlowBasedCtrl,
+    AutoTemperatureCtrl,
+    AutoHumidityCtrl,
+    AutoTimeCtrl,
+    AutoFlowCtrl,
     Unknown
 };
 
@@ -42,7 +59,7 @@ enum class SensorTypes
     Humidity,
     SoilMoisture,
     BarometricPressure
-}
+};
 
 enum class CommandState
 {
@@ -53,3 +70,8 @@ enum class CommandState
     MemoryFull,
     Unknown
 };
+
+CommandType CommandTypeFromString(const String& typeStr, int startId = 0, int endId = -1);
+RelayIds RelayIdTypeFromString(const String& typeStr, int startId = 0, int endId = -1);
+RelayState RelayStateFromString(const String& typeStr, int startId = 0, int endId = -1);
+CmdPriority CmdPriorityFromString(const String& typeStr, int startId = 0, int endId = -1);

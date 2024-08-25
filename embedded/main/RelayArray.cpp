@@ -54,7 +54,7 @@ bool RelayArray::setState(RelayIds p_relayId, RelayState p_state)
             m_states[id] = p_state;
             return handleRelay(id, p_state);
         }
-        case RelayIds::RelayAll:
+        case RelayIds::AllRelays:
         {
             for (int id = 0; id < NUMBER_OF_RELAYS; ++id)
             {

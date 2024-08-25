@@ -4,7 +4,14 @@
         "*.layout-template": "vue",
         "*.vue": "vue",
         "string": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "iostream": "cpp",
+        "string_view": "cpp",
+        "array": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp"
     },
     "C_Cpp.default.compilerPath": "/home/szilard_b/.arduino15/packages/esp32/tools/esp-x32/2302/bin/xtensa-esp32-elf-g++"
 }
