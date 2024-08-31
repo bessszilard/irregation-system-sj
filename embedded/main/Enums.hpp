@@ -18,7 +18,7 @@ enum class RelayIds
     Relay12,
     NumberOfRelays,
     AllRelays,
-    Unknown
+    Unknown = 0xFF
 };
 
 enum class RelayState
@@ -40,6 +40,7 @@ enum class CmdPriority
     Priority7,
     Priority8,
     Priority9,
+    PriorityLowest,
     Unknown
 };
 
@@ -75,3 +76,12 @@ CommandType CommandTypeFromString(const String& typeStr, int startId = 0, int en
 RelayIds RelayIdTypeFromString(const String& typeStr, int startId = 0, int endId = -1);
 RelayState RelayStateFromString(const String& typeStr, int startId = 0, int endId = -1);
 CmdPriority CmdPriorityFromString(const String& typeStr, int startId = 0, int endId = -1);
+
+String ToString(RelayIds type);
+String ToString(RelayState type);
+String ToString(CmdPriority type);
+String ToString(CommandType type);
+// String ToString(SensorTypes type);
+// String ToString(CommandState type);
+
+RelayIds ToRelayId(uint8_t p_id);

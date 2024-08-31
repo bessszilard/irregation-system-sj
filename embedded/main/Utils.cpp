@@ -1,6 +1,6 @@
 #include "Utils.hpp"
 
-String Utils::GetSubStr(const String& p_rawMsg, int p_startId, int p_endId)
+String Utils::GetSubStr(const String& p_rawMsg, int p_startId, int p_endId, bool p_verbose)
 {
     if ((p_startId < 0))
     {
@@ -10,7 +10,8 @@ String Utils::GetSubStr(const String& p_rawMsg, int p_startId, int p_endId)
 
     String subStr = p_rawMsg.substr(p_startId, p_endId - p_startId);
 #ifdef PC_BUILD
-    std::cout << subStr << std::endl;
+    if (p_verbose)
+        std::cout << subStr << std::endl;
 #endif
     return subStr;
 }

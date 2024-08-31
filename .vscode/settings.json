@@ -11,7 +11,12 @@
         "deque": "cpp",
         "unordered_map": "cpp",
         "vector": "cpp",
-        "initializer_list": "cpp"
+        "initializer_list": "cpp",
+        "compare": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp"
     },
     "C_Cpp.default.compilerPath": "/home/szilard_b/.arduino15/packages/esp32/tools/esp-x32/2302/bin/xtensa-esp32-elf-g++"
 }

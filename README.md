@@ -14,8 +14,9 @@
   - [ ] Calibrate + set the range
 - [ ] Add code for I2C expander
   - [ ] Handle relays as an array
+- [ ] Create commands
 - [ ] Event handling
-  - [ ] Add some command
+  - [ ] Add some command and test
   - [ ] Add sensor compatibility
   - [ ] Add portable station compatibility
   - [ ] Store commands permanently - to work automatically
@@ -34,3 +35,11 @@
 - [ ] test the moisture sensor
 - [ ] create protocol that will give option to use multiple stations
 - [ ] Measure current consumption
+
+
+## Next steps
+1. Add commands via SolenoidManager
+2. CmdToStr
+3. Indicate which command controls the solenoid
+4. Set priorities
+5. Test scenarios

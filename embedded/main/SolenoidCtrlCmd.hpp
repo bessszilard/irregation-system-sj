@@ -17,13 +17,15 @@ struct SolenoidCtrlCmd
     SolenoidCtrlCmd(const String& p_cmd);
     virtual ~SolenoidCtrlCmd(){};
 
+    String toString() const;
+
     CommandType cmdType;
     CmdPriority priority; // larger value means lower priority
     RelayIds relayId;
     RelayState relayState;
     String action;
 
-    inline bool eq(const SolenoidCtrlCmd& p_cmd) const
+    inline bool operator==(const SolenoidCtrlCmd& p_cmd) const
     {
         return cmdType == p_cmd.cmdType && relayId == p_cmd.relayId && relayState == p_cmd.relayState &&
                action == p_cmd.action;

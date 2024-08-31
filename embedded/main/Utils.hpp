@@ -10,5 +10,5 @@ using String = std::string;
 
 namespace Utils
 {
-String GetSubStr(const String& p_rawMsg, int p_startId, int p_endId);
+String GetSubStr(const String& p_rawMsg, int p_startId, int p_endId, bool p_verbose = false);
 }
