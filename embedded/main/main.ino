@@ -1,13 +1,18 @@
-#include "Enums.hpp"
-#include "Pinout.hpp"
-#include "RelayArray.hpp"
 #include <Adafruit_BME280.h>
 #include <Adafruit_Sensor.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <Wire.h>
+#include <DallasTemperature.h>
+#include <OneWire.h>
+
+#include "Enums.hpp"
+#include "Pinout.hpp"
+#include "RelayArray.hpp"
 
 RelayArray relayArray;
+OneWire oneWireForTemp(TEMPERATURE_DATA);
+DallasTemperature tempSensor(&oneWireForTemp);
 
 void setup()
 {
@@ -29,9 +34,13 @@ void setup()
 
 void loop()
 {
+    tempSensor.requestTemperatures();
+    Serial.print("Celsius temperature: ");
+    Serial.print(tempSensor.getTempCByIndex(0));
+
     Serial.println("Good.");
     relayArray.setState(RelayIds::Relay1, RelayState::Closed);
     delay(1000);
-    relayArray.setState(RelayIds::Relay1, RelayState::Open);
+    relayArray.setState(RelayIds::Relay1, RelayState::Opened);
     delay(100);
 }
