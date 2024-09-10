@@ -1,17 +1,10 @@
 #include "RelayArray.hpp"
 #include <Arduino.h>
 
-RelayArray::RelayArray() : m_pins{} {}
-
-bool RelayArray::init(int pins[NUMBER_OF_RELAYS])
+RelayArray::RelayArray(int dataPin, int clockPin, int latchPin)
 {
-    for (int i = 0; i < NUMBER_OF_RELAYS; ++i)
-    {
-        m_pins[i] = pins[i];
-        // TODOsz use I2C expander
-        pinMode(pins[i], OUTPUT);
-    }
-    return true;
+    m_shift.setBitCount(8);
+    m_shift.setPins(dataPin, clockPin, latchPin);
 }
 
 bool RelayArray::handleRelay(int p_id, RelayState p_state)
@@ -23,11 +16,11 @@ bool RelayArray::handleRelay(int p_id, RelayState p_state)
     }
     switch (p_state)
     {
-        case RelayState::Open:
-            digitalWrite(m_pins[p_id], LOW);
+        case RelayState::Opened:
+            m_shift.writeBit(p_id, HIGH);
             return true;
         case RelayState::Closed:
-            digitalWrite(m_pins[p_id], HIGH);
+            m_shift.writeBit(p_id, LOW);
             return true;
     }
     return false;

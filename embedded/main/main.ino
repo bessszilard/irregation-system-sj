@@ -11,7 +11,7 @@
 #include "Pinout.hpp"
 #include "RelayArray.hpp"
 
-RelayArray relayArray;
+RelayArray relayArray(RELAY_ARRAY_DATA_1, RELAY_ARRAY_CLOCK, RELAY_ARRAY_LATCH);
 OneWire oneWireForTemp(TEMPERATURE_DATA_PIN);
 DallasTemperature tempSensor(&oneWireForTemp);
 DHT humSensor(HUMIDITY_DATA_PIN, 11);
@@ -21,24 +21,33 @@ BME280I2C bme; // Default : forced mode, standby time = 1000 ms
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
+void sensorSetup();
+void updateSensorData();
+
 void setup()
 {
-    int relayPins[NUMBER_OF_RELAYS] = {RELAY_1_PIN,
-                                       RELAY_2_PIN,
-                                       RELAY_3_PIN,
-                                       RELAY_4_PIN,
-                                       RELAY_5_PIN,
-                                       RELAY_6_PIN,
-                                       RELAY_7_PIN,
-                                       RELAY_8_PIN,
-                                       RELAY_9_PIN,
-                                       RELAY_10_PIN,
-                                       RELAY_11_PIN,
-                                       RELAY_12_PIN};
-    relayArray.init(relayPins);
     Serial.begin(115200);
     Wire.begin();
+    sensorSetup();
+}
 
+void loop()
+{
+    updateSensorData();
+
+    Serial.println("Good.");
+    relayArray.setState(RelayIds::Relay1, RelayState::Closed);
+    relayArray.setState(RelayIds::Relay2, RelayState::Opened);
+    delay(1000);
+    relayArray.setState(RelayIds::Relay1, RelayState::Opened);
+    relayArray.setState(RelayIds::Relay2, RelayState::Closed);
+    delay(100);
+}
+
+//---------------------------------------------------------------
+
+void sensorSetup()
+{
     while (!bme.begin())
     {
         Serial.println("Could not find BME280 sensor!");
@@ -58,7 +67,7 @@ void setup()
     }
 }
 
-void loop()
+void updateSensorData()
 {
     tempSensor.requestTemperatures();
     Serial.print("Celsius temperature: ");
@@ -82,10 +91,4 @@ void loop()
     Serial.print("\t\tPressure: ");
     Serial.print(pres);
     Serial.println("Pa");
-
-    Serial.println("Good.");
-    relayArray.setState(RelayIds::Relay1, RelayState::Closed);
-    delay(1000);
-    relayArray.setState(RelayIds::Relay1, RelayState::Opened);
-    delay(100);
 }

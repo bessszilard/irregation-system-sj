@@ -16,6 +16,10 @@ enum class RelayIds
     Relay10,
     Relay11,
     Relay12,
+    Relay13,
+    Relay14,
+    Relay15,
+    Relay16,
     NumberOfRelays,
     AllRelays,
     Unknown = 0xFF
@@ -77,7 +81,7 @@ RelayIds RelayIdTypeFromString(const String& typeStr, int startId = 0, int endId
 RelayState RelayStateFromString(const String& typeStr, int startId = 0, int endId = -1);
 CmdPriority CmdPriorityFromString(const String& typeStr, int startId = 0, int endId = -1);
 
-String ToString(RelayIds type);
+String ToString(RelayIds id);
 String ToString(RelayState type);
 String ToString(CmdPriority type);
 String ToString(CommandType type);
@@ -85,3 +89,7 @@ String ToString(CommandType type);
 // String ToString(CommandState type);
 
 RelayIds ToRelayId(uint8_t p_id);
+inline uint8_t RelayIdToUInt(RelayIds p_id)
+{
+    static_cast<uint8_t>(p_id);
+}
