@@ -11,7 +11,7 @@
 #include "Pinout.hpp"
 #include "RelayArray.hpp"
 
-RelayArray relayArray(RELAY_ARRAY_DATA_1, RELAY_ARRAY_CLOCK, RELAY_ARRAY_LATCH);
+RelayArray relayArray(RELAY_ARRAY_DATA, RELAY_ARRAY_CLOCK, RELAY_ARRAY_LATCH);
 OneWire oneWireForTemp(TEMPERATURE_DATA_PIN);
 DallasTemperature tempSensor(&oneWireForTemp);
 DHT humSensor(HUMIDITY_DATA_PIN, 11);
@@ -36,12 +36,38 @@ void loop()
     updateSensorData();
 
     Serial.println("Good.");
-    relayArray.setState(RelayIds::Relay1, RelayState::Closed);
-    relayArray.setState(RelayIds::Relay2, RelayState::Opened);
-    delay(1000);
-    relayArray.setState(RelayIds::Relay1, RelayState::Opened);
-    relayArray.setState(RelayIds::Relay2, RelayState::Closed);
+
+    relayArray.knTestIncr();
     delay(100);
+
+    // for (uint8_t i = 0; i < NUMBER_OF_RELAYS; ++i)
+    // {
+    //     relayArray.setState(ToRelayId(i), RelayState::Closed);
+    //     delay(300);
+    //     relayArray.setState(ToRelayId(i), RelayState::Opened);
+    // }
+
+    // relayArray.setState(RelayIds::AllRelays, RelayState::Closed);
+    // delay(300);
+    // relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
+    // delay(300);
+    // relayArray.setState(RelayIds::AllRelays, RelayState::Closed);
+    // delay(300);
+    // relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
+    // delay(300);
+    // relayArray.setState(RelayIds::AllRelays, RelayState::Closed);
+    // delay(600);
+    // relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
+    // delay(300);
+    // relayArray.setState(RelayIds::Relay2, RelayState::Closed);
+    // delay(300);
+    // relayArray.setState(RelayIds::Relay2, RelayState::Opened);
+    // relayArray.setState(RelayIds::Relay9, RelayState::Closed);
+    // delay(300);
+    // relayArray.setState(RelayIds::Relay10, RelayState::Closed);
+    // relayArray.setState(RelayIds::Relay9, RelayState::Opened);
+    // delay(300);
+    // relayArray.setState(RelayIds::Relay10, RelayState::Opened);
 }
 
 //---------------------------------------------------------------

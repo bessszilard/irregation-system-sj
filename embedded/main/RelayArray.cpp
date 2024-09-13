@@ -3,8 +3,29 @@
 
 RelayArray::RelayArray(int dataPin, int clockPin, int latchPin)
 {
-    m_shift.setBitCount(8);
+    m_shift.setBitCount(16);
     m_shift.setPins(dataPin, clockPin, latchPin);
+}
+
+bool RelayArray::handleAllRelays(RelayState p_state)
+{
+    m_shift.batchWriteBegin();
+    for (int id = 0; id < NUMBER_OF_RELAYS; ++id)
+    {
+        switch (p_state)
+        {
+            case RelayState::Opened:
+                m_shift.writeBit(id, LOW);
+                m_states[id] = p_state;
+                continue;
+            case RelayState::Closed:
+                m_shift.writeBit(id, HIGH);
+                m_states[id] = p_state;
+                continue;
+        }
+    }
+    m_shift.batchWriteEnd();
+    return true;
 }
 
 bool RelayArray::handleRelay(int p_id, RelayState p_state)
@@ -17,10 +38,12 @@ bool RelayArray::handleRelay(int p_id, RelayState p_state)
     switch (p_state)
     {
         case RelayState::Opened:
-            m_shift.writeBit(p_id, HIGH);
+            m_shift.writeBit(p_id, LOW);
+            m_states[p_id] = p_state;
             return true;
         case RelayState::Closed:
-            m_shift.writeBit(p_id, LOW);
+            m_shift.writeBit(p_id, HIGH);
+            m_states[p_id] = p_state;
             return true;
     }
     return false;
@@ -49,10 +72,7 @@ bool RelayArray::setState(RelayIds p_relayId, RelayState p_state)
         }
         case RelayIds::AllRelays:
         {
-            for (int id = 0; id < NUMBER_OF_RELAYS; ++id)
-            {
-                handleRelay(id, p_state);
-            }
+            handleAllRelays(p_state);
             return true;
         }
         case RelayIds::NumberOfRelays:
@@ -62,4 +82,16 @@ bool RelayArray::setState(RelayIds p_relayId, RelayState p_state)
             // TODOsz error
             return false;
     }
+}
+
+void RelayArray::knTestIncr()
+{
+    static uint knTestId = 0;
+
+    if (NUMBER_OF_RELAYS <= knTestId)
+    {
+        knTestId = 0;
+    }
+    handleAllRelays(RelayState::Opened);
+    handleRelay(knTestId++, RelayState::Closed);
 }

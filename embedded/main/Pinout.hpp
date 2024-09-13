@@ -1,6 +1,6 @@
 #pragma once
 
-#define RELAY_ARRAY_DATA_1 (32)
+#define RELAY_ARRAY_DATA (32)
 #define RELAY_ARRAY_CLOCK (33)
 #define RELAY_ARRAY_LATCH (25)
 

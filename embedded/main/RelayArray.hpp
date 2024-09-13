@@ -19,7 +19,10 @@ public:
         return m_states[RelayIdToUInt(p_id)];
     }
 
+    void knTestIncr();
+
 private:
+    bool handleAllRelays(RelayState p_state);
     bool handleRelay(int p_id, RelayState p_state);
 
 private:
