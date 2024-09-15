@@ -10,6 +10,7 @@
 #include "Enums.hpp"
 #include "Pinout.hpp"
 #include "RelayArray.hpp"
+#include "YFG1FlowMeter.hpp"
 
 RelayArray relayArray(RELAY_ARRAY_DATA, RELAY_ARRAY_CLOCK, RELAY_ARRAY_LATCH);
 OneWire oneWireForTemp(TEMPERATURE_DATA_PIN);
@@ -18,6 +19,10 @@ DHT humSensor(HUMIDITY_DATA_PIN, 11);
 
 BME280I2C bme; // Default : forced mode, standby time = 1000 ms
                // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
+
+byte sensorPin = 23;
+
+YFG1FlowMeter fm(sensorPin);
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
@@ -28,46 +33,19 @@ void setup()
 {
     Serial.begin(115200);
     Wire.begin();
+    pinMode(LED_PIN, OUTPUT);
     sensorSetup();
+    relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
+
+    pinMode(sensorPin, INPUT_PULLUP);
 }
 
 void loop()
 {
+    // relayArray.knTestIncr();
     updateSensorData();
-
-    Serial.println("Good.");
-
-    relayArray.knTestIncr();
-    delay(100);
-
-    // for (uint8_t i = 0; i < NUMBER_OF_RELAYS; ++i)
-    // {
-    //     relayArray.setState(ToRelayId(i), RelayState::Closed);
-    //     delay(300);
-    //     relayArray.setState(ToRelayId(i), RelayState::Opened);
-    // }
-
-    // relayArray.setState(RelayIds::AllRelays, RelayState::Closed);
-    // delay(300);
-    // relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
-    // delay(300);
-    // relayArray.setState(RelayIds::AllRelays, RelayState::Closed);
-    // delay(300);
-    // relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
-    // delay(300);
-    // relayArray.setState(RelayIds::AllRelays, RelayState::Closed);
-    // delay(600);
-    // relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
-    // delay(300);
-    // relayArray.setState(RelayIds::Relay2, RelayState::Closed);
-    // delay(300);
-    // relayArray.setState(RelayIds::Relay2, RelayState::Opened);
-    // relayArray.setState(RelayIds::Relay9, RelayState::Closed);
-    // delay(300);
-    // relayArray.setState(RelayIds::Relay10, RelayState::Closed);
-    // relayArray.setState(RelayIds::Relay9, RelayState::Opened);
-    // delay(300);
-    // relayArray.setState(RelayIds::Relay10, RelayState::Opened);
+    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+    delay(400);
 }
 
 //---------------------------------------------------------------
@@ -95,6 +73,7 @@ void sensorSetup()
 
 void updateSensorData()
 {
+    fm.updateFlowData();
     tempSensor.requestTemperatures();
     Serial.print("Celsius temperature: ");
     Serial.println(tempSensor.getTempCByIndex(0));
