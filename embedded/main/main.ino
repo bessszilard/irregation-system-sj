@@ -11,18 +11,18 @@
 #include "Pinout.hpp"
 #include "RelayArray.hpp"
 #include "YFG1FlowMeter.hpp"
+#include "LcdLayouts.hpp"
 
 RelayArray relayArray(RELAY_ARRAY_DATA, RELAY_ARRAY_CLOCK, RELAY_ARRAY_LATCH);
 OneWire oneWireForTemp(TEMPERATURE_DATA_PIN);
 DallasTemperature tempSensor(&oneWireForTemp);
 DHT humSensor(HUMIDITY_DATA_PIN, 11);
 
+LcdLayouts lcdLayout;
+// Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 BME280I2C bme; // Default : forced mode, standby time = 1000 ms
-               // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 
-byte sensorPin = 23;
-
-YFG1FlowMeter fm(sensorPin);
+YFG1FlowMeter fm(FLOW_METER_PIN);
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
@@ -33,17 +33,20 @@ void setup()
 {
     Serial.begin(115200);
     Wire.begin();
-    pinMode(LED_PIN, OUTPUT);
     sensorSetup();
-    relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
+    lcdLayout.init();
+    lcdLayout.selectKeyBoardMode("banan");
 
-    pinMode(sensorPin, INPUT_PULLUP);
+    relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
+    pinMode(LED_PIN, OUTPUT);
 }
 
 void loop()
 {
     // relayArray.knTestIncr();
     updateSensorData();
+
+    // heart beat
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
     delay(400);
 }
