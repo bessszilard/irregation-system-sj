@@ -1,5 +1,7 @@
+
 #include <BME280I2C.h>
 #include <Wire.h>
+#include <DS1307.h>
 
 #include <PubSubClient.h>
 #include <WiFi.h>
@@ -24,6 +26,18 @@ BME280I2C bme; // Default : forced mode, standby time = 1000 ms
 
 YFG1FlowMeter fm(FLOW_METER_PIN);
 
+uint8_t set_Sec    = 0;    /* Set the Seconds */
+uint8_t set_Minute = 47;   /* Set the Minutes */
+uint8_t set_Hour   = 3;    /* Set the Hours */
+uint8_t set_Day    = 13;   /* Set the Day */
+uint8_t set_Month  = 05;   /* Set the Month */
+uint16_t set_Year  = 2022; /* Set the Year */
+
+uint8_t sec, minute, hour, day, month;
+uint16_t year;
+
+DS1307 rtc;
+
 #define SEALEVELPRESSURE_HPA (1013.25)
 
 void sensorSetup();
@@ -39,16 +53,60 @@ void setup()
 
     relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
     pinMode(LED_PIN, OUTPUT);
+
+    rtc.begin();
+    /*03:47:00 13.05.2022 //sec, min, hour, day, month, year*/
+    rtc.set(set_Sec, set_Minute, set_Hour, set_Day, set_Month, set_Year);
+    rtc.stop(); /*stop/pause RTC*/
+
+    rtc.start(); /*start RTC*/
+    delay(1000); /*Wait for 1000mS*/
+    Serial.print("You have set: ");
+    Serial.print("\nTime: ");
+    Serial.print(set_Hour, DEC);
+    Serial.print(":");
+    Serial.print(set_Minute, DEC);
+    Serial.print(":");
+    Serial.print(set_Sec, DEC);
+
+    Serial.print("\nDate: ");
+    Serial.print(set_Day, DEC);
+    Serial.print(".");
+    Serial.print(set_Month, DEC);
+    Serial.print(".");
+    Serial.print(set_Year, DEC);
+    Serial.println("");
 }
 
 void loop()
 {
     // relayArray.knTestIncr();
-    updateSensorData();
+    // updateSensorData();
 
     // heart beat
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
     delay(400);
+
+    /*get time from RTC*/
+    rtc.get(&sec, &minute, &hour, &day, &month, &year);
+
+    /*serial output*/
+    Serial.print("\nTime: ");
+    Serial.print(hour, DEC);
+    Serial.print(":");
+    Serial.print(minute, DEC);
+    Serial.print(":");
+    Serial.print(sec, DEC);
+
+    Serial.print("\nDate: ");
+    Serial.print(day, DEC);
+    Serial.print(".");
+    Serial.print(month, DEC);
+    Serial.print(".");
+    Serial.print(year, DEC);
+    Serial.println("");
+    /*wait a second*/
+    delay(1000);
 }
 
 //---------------------------------------------------------------
