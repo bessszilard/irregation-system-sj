@@ -25,6 +25,8 @@ enum class RelayIds
     Unknown = 0xFF
 };
 
+#define NUMBER_OF_RELAYS (static_cast<int>(RelayIds::NumberOfRelays))
+
 enum class RelayState
 {
     Opened,

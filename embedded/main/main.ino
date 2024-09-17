@@ -1,7 +1,7 @@
 
 #include <BME280I2C.h>
 #include <Wire.h>
-#include <DS1307.h>
+#include <DS1307.h> // https://www.electronicwings.com/esp32/rtc-ds1307-interfacing-with-esp32
 
 #include <PubSubClient.h>
 #include <WiFi.h>
@@ -9,7 +9,7 @@
 #include <OneWire.h>
 #include <DHT.h>
 
-#include "Enums.hpp"
+#include "Structures.hpp"
 #include "Pinout.hpp"
 #include "RelayArray.hpp"
 #include "YFG1FlowMeter.hpp"
@@ -19,42 +19,85 @@ RelayArray relayArray(RELAY_ARRAY_DATA, RELAY_ARRAY_CLOCK, RELAY_ARRAY_LATCH);
 OneWire oneWireForTemp(TEMPERATURE_DATA_PIN);
 DallasTemperature tempSensor(&oneWireForTemp);
 DHT humSensor(HUMIDITY_DATA_PIN, 11);
-
 LcdLayouts lcdLayout;
-// Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
-BME280I2C bme; // Default : forced mode, standby time = 1000 ms
-
 YFG1FlowMeter fm(FLOW_METER_PIN);
-
-uint8_t set_Sec    = 0;    /* Set the Seconds */
-uint8_t set_Minute = 47;   /* Set the Minutes */
-uint8_t set_Hour   = 3;    /* Set the Hours */
-uint8_t set_Day    = 13;   /* Set the Day */
-uint8_t set_Month  = 05;   /* Set the Month */
-uint16_t set_Year  = 2022; /* Set the Year */
-
-uint8_t sec, minute, hour, day, month;
-uint16_t year;
-
 DS1307 rtc;
 
+BME280I2C bme; // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
+// Default : forced mode, standby time = 1000 ms
 #define SEALEVELPRESSURE_HPA (1013.25)
 
+void localTimeSetup();
 void sensorSetup();
-void updateSensorData();
+
+bool updateLocalTime(LocalTime& p_data);
+bool updateSensorData(SensorsData& p_data);
 
 void setup()
 {
     Serial.begin(115200);
     Wire.begin();
+
+    localTimeSetup();
     sensorSetup();
+
     lcdLayout.init();
     lcdLayout.selectKeyBoardMode("banan");
 
     relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
     pinMode(LED_PIN, OUTPUT);
+}
 
+void loop()
+{
+    // fast loop
+    // Process MQTT updates
+    // Store the messages from the moisture nodes
+
+    // slow loop
+    // Update time
+    LocalTime locTime;
+    if (false == updateLocalTime(locTime))
+    {
+        Serial.println("Invalid local time");
+        return;
+    }
+
+    // Update sensors
+    SensorsData sensorData;
+    if (false == updateSensorData(sensorData))
+    {
+        Serial.println("Invalid local time");
+        return;
+    }
+
+    // Set relay states based on the given rules
+
+    // Update relay state
+
+    // publish to MQTT
+
+    // Update LCD
+
+    // heart beat
+    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+
+    delay(1000);
+}
+
+//---------------------------------------------------------------
+
+void localTimeSetup()
+{
     rtc.begin();
+
+    uint8_t set_Sec    = 0;    /* Set the Seconds */
+    uint8_t set_Minute = 47;   /* Set the Minutes */
+    uint8_t set_Hour   = 3;    /* Set the Hours */
+    uint8_t set_Day    = 13;   /* Set the Day */
+    uint8_t set_Month  = 05;   /* Set the Month */
+    uint16_t set_Year  = 2022; /* Set the Year */
+
     /*03:47:00 13.05.2022 //sec, min, hour, day, month, year*/
     rtc.set(set_Sec, set_Minute, set_Hour, set_Day, set_Month, set_Year);
     rtc.stop(); /*stop/pause RTC*/
@@ -78,39 +121,6 @@ void setup()
     Serial.println("");
 }
 
-void loop()
-{
-    // relayArray.knTestIncr();
-    // updateSensorData();
-
-    // heart beat
-    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-    delay(400);
-
-    /*get time from RTC*/
-    rtc.get(&sec, &minute, &hour, &day, &month, &year);
-
-    /*serial output*/
-    Serial.print("\nTime: ");
-    Serial.print(hour, DEC);
-    Serial.print(":");
-    Serial.print(minute, DEC);
-    Serial.print(":");
-    Serial.print(sec, DEC);
-
-    Serial.print("\nDate: ");
-    Serial.print(day, DEC);
-    Serial.print(".");
-    Serial.print(month, DEC);
-    Serial.print(".");
-    Serial.print(year, DEC);
-    Serial.println("");
-    /*wait a second*/
-    delay(1000);
-}
-
-//---------------------------------------------------------------
-
 void sensorSetup()
 {
     while (!bme.begin())
@@ -132,7 +142,32 @@ void sensorSetup()
     }
 }
 
-void updateSensorData()
+bool updateLocalTime(LocalTime& p_data)
+{
+    /*get time from RTC*/
+    rtc.get(&p_data.sec, &p_data.minute, &p_data.hour, &p_data.day, &p_data.month, &p_data.year);
+
+    /*serial output*/
+    Serial.print("\nTime: ");
+    Serial.print(p_data.hour, DEC);
+    Serial.print(":");
+    Serial.print(p_data.minute, DEC);
+    Serial.print(":");
+    Serial.print(p_data.sec, DEC);
+
+    Serial.print("\nDate: ");
+    Serial.print(p_data.day, DEC);
+    Serial.print(".");
+    Serial.print(p_data.month, DEC);
+    Serial.print(".");
+    Serial.print(p_data.year, DEC);
+    Serial.println("");
+    /*wait a second*/
+
+    return true;
+}
+
+bool updateSensorData(SensorsData& p_data)
 {
     fm.updateFlowData();
     tempSensor.requestTemperatures();
@@ -157,4 +192,6 @@ void updateSensorData()
     Serial.print("\t\tPressure: ");
     Serial.print(pres);
     Serial.println("Pa");
+
+    return true;
 }
