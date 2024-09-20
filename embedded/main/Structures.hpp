@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Enums.hpp"
+#include "time.h"
 
 #define MAX_SOIL_MOISTURE_NODE (30)
 
@@ -13,20 +14,50 @@ struct SoilMoisture
     bool valid = false;
 };
 
-struct LocalTime
+struct LocalTime : tm
 {
-    uint8_t sec    = 0;
-    uint8_t minute = 0;
-    uint8_t hour   = 0;
-    uint8_t day    = 0;
-    uint8_t month  = 0;
-    uint16_t year  = 0;
-
     bool valid = false;
-    bool operator==(LocalTime& time)
+
+    inline uint8_t getDay() const
     {
-        return sec == time.sec && minute == time.minute && hour == time.hour && day == time.day &&
-               month == time.month && year == time.year;
+        return tm_mday;
+    }
+
+    inline uint8_t getMonth() const
+    {
+        return tm_mon + 1;
+    }
+
+    inline uint16_t getYear() const
+    {
+        return tm_year + 1900;
+    }
+
+    void notEqPrint(int a, int b)
+    {
+        if (a != b)
+            Serial.println(String(a) + "!=" + String(b));
+    }
+
+    bool eq(LocalTime& time)
+    {
+        bool result = tm_sec == time.tm_sec && tm_min == time.tm_min && tm_hour == time.tm_hour &&
+                      getDay() == time.getDay() && getMonth() == time.getMonth() && getYear() == time.getYear();
+        if (result)
+            return true;
+        notEqPrint(tm_sec, time.tm_sec);
+        notEqPrint(tm_min, time.tm_min);
+        notEqPrint(tm_hour, time.tm_hour);
+        notEqPrint(getDay(), time.getDay());
+        notEqPrint(getMonth(), time.getMonth());
+        notEqPrint(getYear(), time.getYear());
+        return false;
+    }
+
+    String toString() const
+    {
+        return String(getYear()) + "-" + String(getMonth()) + "-" + String(getDay()) + " " + String(tm_hour) + ":" +
+               String(tm_min) + ":" + String(tm_sec);
     }
 };
 

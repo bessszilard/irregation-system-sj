@@ -1,8 +1,6 @@
 #include "Enums.hpp"
 #include <Shifty.h>
 
-#define NUMBER_OF_RELAYS (static_cast<int>(RelayIds::NumberOfRelays))
-
 class RelayArray
 {
 public:

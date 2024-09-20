@@ -11,3 +11,4 @@
 
 #define BAROMETRIC_SCL (22)
 #define BAROMETRIC_SDA (21)
+#define FLOW_METER_PIN (23)

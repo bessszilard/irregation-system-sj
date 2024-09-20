@@ -1,4 +1,5 @@
 #include "YFG1FlowMeter.hpp"
+#include "driver/gpio.h"
 
 static uint16_t s_pulseCount = 0;
 
@@ -14,6 +15,7 @@ YFG1FlowMeter::YFG1FlowMeter(int p_pin, float p_calibrationFactor)
         , m_oldTime_ms(0)
         , m_data{0.0, 0}
 {
+    gpio_install_isr_service(ESP_INTR_FLAG_LEVEL1);
     pinMode(m_inputPin, INPUT_PULLUP);
     attachInterrupt(m_inputPin, pulseCounter, FALLING);
 }

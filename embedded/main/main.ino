@@ -8,12 +8,32 @@
 #include <DallasTemperature.h>
 #include <OneWire.h>
 #include <DHT.h>
+#include <NTPClient.h> // https://randomnerdtutorials.com/esp32-date-time-ntp-client-server-arduino/
+#include <WiFiUdp.h>
+#include "time.h"
 
 #include "Structures.hpp"
 #include "Pinout.hpp"
 #include "RelayArray.hpp"
 #include "YFG1FlowMeter.hpp"
 #include "LcdLayouts.hpp"
+
+#define SEALEVELPRESSURE_HPA (1013.25)
+
+void localTimeSetup();
+void sensorSetup();
+void setupWifiAndMqtt();
+
+bool localTimeUpdate(LocalTime& p_data);
+bool sensorDataUpdate(SensorsData& p_data);
+
+// Replace with your network credentials
+const char* ssid     = "Bbox-F6C5B3B2";
+const char* password = "eNv3xEW4SXu9AEMnsC";
+
+const char* ntpServer        = "pool.ntp.org";
+const long gmtOffset_sec     = 3600 * 2;
+const int daylightOffset_sec = 3600 * 0;
 
 RelayArray relayArray(RELAY_ARRAY_DATA, RELAY_ARRAY_CLOCK, RELAY_ARRAY_LATCH);
 OneWire oneWireForTemp(TEMPERATURE_DATA_PIN);
@@ -25,19 +45,20 @@ DS1307 rtc;
 
 BME280I2C bme; // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 // Default : forced mode, standby time = 1000 ms
-#define SEALEVELPRESSURE_HPA (1013.25)
 
-void localTimeSetup();
-void sensorSetup();
-
-bool updateLocalTime(LocalTime& p_data);
-bool updateSensorData(SensorsData& p_data);
+bool wifiAvailable = false;
 
 void setup()
 {
     Serial.begin(115200);
+    while (!Serial)
+    {
+        ; // wait for serial port to connect. Needed for native USB
+    }
+
     Wire.begin();
 
+    setupWifiAndMqtt();
     localTimeSetup();
     sensorSetup();
 
@@ -57,7 +78,7 @@ void loop()
     // slow loop
     // Update time
     LocalTime locTime;
-    if (false == updateLocalTime(locTime))
+    if (false == localTimeUpdate(locTime))
     {
         Serial.println("Invalid local time");
         return;
@@ -65,7 +86,7 @@ void loop()
 
     // Update sensors
     SensorsData sensorData;
-    if (false == updateSensorData(sensorData))
+    if (false == sensorDataUpdate(sensorData))
     {
         Serial.println("Invalid local time");
         return;
@@ -87,38 +108,98 @@ void loop()
 
 //---------------------------------------------------------------
 
+void setupWifiAndMqtt()
+{
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+    WiFi.begin(ssid, password);
+    int maxTryToConnect = 5;
+    int attempt         = 0;
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        attempt++;
+        delay(500);
+        Serial.print(".");
+        if (maxTryToConnect <= attempt)
+        {
+            wifiAvailable = false;
+            return;
+        }
+    }
+    // Print local IP address and start web server
+    Serial.println("");
+    Serial.println("WiFi connected.");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+    wifiAvailable = true;
+}
+
 void localTimeSetup()
 {
+    if (wifiAvailable)
+    {
+        configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+    }
     rtc.begin();
-
-    uint8_t set_Sec    = 0;    /* Set the Seconds */
-    uint8_t set_Minute = 47;   /* Set the Minutes */
-    uint8_t set_Hour   = 3;    /* Set the Hours */
-    uint8_t set_Day    = 13;   /* Set the Day */
-    uint8_t set_Month  = 05;   /* Set the Month */
-    uint16_t set_Year  = 2022; /* Set the Year */
-
-    /*03:47:00 13.05.2022 //sec, min, hour, day, month, year*/
-    rtc.set(set_Sec, set_Minute, set_Hour, set_Day, set_Month, set_Year);
-    rtc.stop(); /*stop/pause RTC*/
-
+    rtc.stop();  /*stop/pause RTC*/
     rtc.start(); /*start RTC*/
-    delay(1000); /*Wait for 1000mS*/
-    Serial.print("You have set: ");
-    Serial.print("\nTime: ");
-    Serial.print(set_Hour, DEC);
-    Serial.print(":");
-    Serial.print(set_Minute, DEC);
-    Serial.print(":");
-    Serial.print(set_Sec, DEC);
+}
 
-    Serial.print("\nDate: ");
-    Serial.print(set_Day, DEC);
-    Serial.print(".");
-    Serial.print(set_Month, DEC);
-    Serial.print(".");
-    Serial.print(set_Year, DEC);
-    Serial.println("");
+bool localTimeUpdate(LocalTime& p_data)
+{
+    if (false == wifiAvailable)
+    {
+        LocalTime rtcTime;
+        int year, month;
+        rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
+        p_data = rtcTime;
+        Serial.println("Rtc time: " + rtcTime.toString());
+        return true;
+    }
+
+    LocalTime ntpTime;
+    if (getLocalTime(&ntpTime))
+    {
+        p_data = ntpTime;
+        Serial.println("ntp time: " + ntpTime.toString());
+
+        // RTC
+        int year, month;
+        LocalTime rtcTime;
+        rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
+        rtcTime.tm_mon  = month - 1;
+        rtcTime.tm_year = year - 1900;
+
+        if (ntpTime.eq(rtcTime))
+        {
+            return true;
+        }
+
+        rtc.set(ntpTime.tm_sec,
+                ntpTime.tm_min,
+                ntpTime.tm_hour,
+                ntpTime.tm_mday,
+                ntpTime.tm_mon + 1,
+                ntpTime.tm_year + 1900);
+
+        rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
+        rtcTime.tm_mon  = month - 1;
+        rtcTime.tm_year = year - 1900;
+        Serial.println("Update RTC");
+        Serial.println("Rtc time: " + rtcTime.toString());
+    }
+    else
+    {
+        Serial.println("Failed to obtain time from NTP");
+        LocalTime rtcTime;
+        int year, month;
+        rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
+        Serial.println("Update RTC");
+        Serial.println("Rtc time: " + rtcTime.toString());
+
+        p_data = rtcTime;
+    }
+    return true;
 }
 
 void sensorSetup()
@@ -142,32 +223,7 @@ void sensorSetup()
     }
 }
 
-bool updateLocalTime(LocalTime& p_data)
-{
-    /*get time from RTC*/
-    rtc.get(&p_data.sec, &p_data.minute, &p_data.hour, &p_data.day, &p_data.month, &p_data.year);
-
-    /*serial output*/
-    Serial.print("\nTime: ");
-    Serial.print(p_data.hour, DEC);
-    Serial.print(":");
-    Serial.print(p_data.minute, DEC);
-    Serial.print(":");
-    Serial.print(p_data.sec, DEC);
-
-    Serial.print("\nDate: ");
-    Serial.print(p_data.day, DEC);
-    Serial.print(".");
-    Serial.print(p_data.month, DEC);
-    Serial.print(".");
-    Serial.print(p_data.year, DEC);
-    Serial.println("");
-    /*wait a second*/
-
-    return true;
-}
-
-bool updateSensorData(SensorsData& p_data)
+bool sensorDataUpdate(SensorsData& p_data)
 {
     fm.updateFlowData();
     tempSensor.requestTemperatures();
