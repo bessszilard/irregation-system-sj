@@ -12,8 +12,11 @@ void LcdLayouts::init()
 
 void LcdLayouts::selectKeyBoardMode(const String& p_firstLine)
 {
-    // 0 M:PG_DU  PG:1000
-    // 1 W:OFF BT:PG_DW
+    //   0123456789012345
+    // 0 W:O 9 M:O N:32??
+    // 1 R:00000 0000 00
+
+    // W O = OK, connected
 
     m_lcd.clear();
     m_lcd.setCursor(0, 0);
@@ -45,6 +48,24 @@ void LcdLayouts::defaultL(const String& p_mode,
     else
     {
     }
+
+    m_lcd.clear();
+    m_lcd.setCursor(0, 0);
+    m_lcd.print(firstLine);
+    m_lcd.setCursor(0, 1);
+    m_lcd.print(secondLine);
+}
+
+void LcdLayouts::updateDef(wl_status_t p_wifiState,
+                           int8_t p_rssi_dBm,
+                           bool p_mqttState,
+                           const RelayArrayStates& p_relayArrayState)
+{
+    String firstLine = "W:" + ToShortString(p_wifiState) + " " + ToShortString(ToSignalStrength(p_rssi_dBm)) + " " +
+                       String(p_rssi_dBm) + " ";
+    firstLine += "M:" + String(p_mqttState);
+
+    String secondLine = p_relayArrayState.toString();
 
     m_lcd.clear();
     m_lcd.setCursor(0, 0);

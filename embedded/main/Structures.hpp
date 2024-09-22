@@ -61,11 +61,25 @@ struct LocalTime : tm
     }
 };
 
-struct SolenoidStates
+struct RelayArrayStates
 {
-    RelayState solenoid[NUMBER_OF_RELAYS];
-    const uint8_t solenoidCnt = NUMBER_OF_RELAYS;
+    RelayState states[NUMBER_OF_RELAYS];
+    const uint8_t relayCnt = NUMBER_OF_RELAYS;
 
+    String toString() const
+    {
+        uint8_t spaceAfterId = NUMBER_OF_RELAYS < 13 ? 5 : 6;
+        String str           = "R:";
+        for (uint8_t relayId = 0; relayId < NUMBER_OF_RELAYS; ++relayId)
+        {
+            str += ToShortString(states[relayId]);
+            if (relayId != 0 && (relayId % spaceAfterId == 0))
+            {
+                str += " ";
+            }
+        }
+        return str;
+    }
     bool valid = false;
 };
 

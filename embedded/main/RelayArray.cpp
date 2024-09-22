@@ -95,3 +95,11 @@ void RelayArray::knTestIncr()
     handleAllRelays(RelayState::Opened);
     handleRelay(knTestId++, RelayState::Closed);
 }
+
+void RelayArray::update(const RelayArrayStates& p_relays)
+{
+    for (uint8_t relayIdInt = 0; relayIdInt < p_relays.relayCnt; ++relayIdInt)
+    {
+        setState(ToRelayId(relayIdInt), p_relays.states[relayIdInt]);
+    }
+}

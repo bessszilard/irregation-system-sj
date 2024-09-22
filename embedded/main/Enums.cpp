@@ -57,9 +57,9 @@ CmdPriority CmdPriorityFromString(const String& p_rawMsg, int p_startId /*=0*/, 
     return CmdPriority::Unknown;    
 }
 
-String ToString(RelayIds id)
+String ToString(RelayIds p_id)
 {
-    switch(id)
+    switch(p_id)
     {
         case RelayIds::Relay1:       return "R01";
         case RelayIds::Relay2:       return "R02";
@@ -78,9 +78,9 @@ String ToString(RelayIds id)
     return "";
 }
 
-String ToString(RelayState state)
+String ToString(RelayState p_state)
 {
-    switch(state)
+    switch(p_state)
     {
         case RelayState::Opened: return "Opened";
         case RelayState::Closed: return "Closed";
@@ -88,9 +88,9 @@ String ToString(RelayState state)
     return "";
 }
 
-String ToString(CmdPriority priority)
+String ToString(CmdPriority p_priority)
 {
-    switch(priority)
+    switch(p_priority)
     {
         case CmdPriority::Priority0: return "P0";
         case CmdPriority::Priority1: return "P1";
@@ -106,9 +106,9 @@ String ToString(CmdPriority priority)
     return "";
 }
 
-String ToString(CommandType type)
+String ToString(CommandType p_type)
 {
-    switch(type) 
+    switch(p_type) 
     {
         case CommandType::ManCtrl:              return "Manua";
         case CommandType::AutoTemperatureCtrl:  return "ATemp";
@@ -118,6 +118,53 @@ String ToString(CommandType type)
     }
     return "";
 }
+
+String ToShortString(wl_status_t p_status)
+{
+    switch(p_status)
+    {
+        case WL_NO_SHIELD:      return "NS";
+        case WL_STOPPED:        return "ST";
+        case WL_IDLE_STATUS:    return "ID";
+        case WL_NO_SSID_AVAIL:  return "NO";
+        case WL_SCAN_COMPLETED: return "SC";
+        case WL_CONNECTED:      return "OK";
+        case WL_CONNECT_FAILED: return "CF";
+        case WL_CONNECTION_LOST:return "CL";
+        case WL_DISCONNECTED:   return "DI";
+    }
+    return "";
+}
+
+String ToShortString(SignalStrength p_strength)
+{
+    switch(p_strength)
+    {
+        case SignalStrength::Strength9of9: return "9";
+        case SignalStrength::Strength8of9: return "8";
+        case SignalStrength::Strength7of9: return "7";
+        case SignalStrength::Strength6of9: return "6";
+        case SignalStrength::Strength5of9: return "5";
+        case SignalStrength::Strength4of9: return "4";
+        case SignalStrength::Strength3of9: return "3";
+        case SignalStrength::Strength2of9: return "2";
+        case SignalStrength::Strength1of9: return "1";
+        case SignalStrength::Strength0of9: return "0";
+    }
+    return "U";
+}
+
+
+String ToShortString(RelayState p_state)
+{
+    switch(p_state)
+    {
+        case RelayState::Opened: return "0";
+        case RelayState::Closed: return "1";
+    }
+    return "U";
+}
+
 
 RelayIds ToRelayId(uint8_t p_id)
 {
@@ -140,23 +187,19 @@ RelayIds ToRelayId(uint8_t p_id)
     return RelayIds::Unknown;
 }
 
-
-// String ToString(SensorTypes type)
-// {
-//     switch()
-//     {
-
-//     }
-//     return "";
-// }
-
-// String ToString(CommandState state)
-// {
-//     switch()
-//     {
-
-//     }
-//     return "";
-// }
+SignalStrength ToSignalStrength(int8_t p_rssi)
+{
+    if (p_rssi ==  0) return SignalStrength::Unknown;
+    if (p_rssi > -50) return SignalStrength::Strength9of9;
+    if (p_rssi > -55) return SignalStrength::Strength8of9;
+    if (p_rssi > -60) return SignalStrength::Strength7of9;
+    if (p_rssi > -65) return SignalStrength::Strength6of9;
+    if (p_rssi > -70) return SignalStrength::Strength5of9;
+    if (p_rssi > -75) return SignalStrength::Strength4of9;
+    if (p_rssi > -80) return SignalStrength::Strength3of9;
+    if (p_rssi > -85) return SignalStrength::Strength2of9;
+    if (p_rssi > -90) return SignalStrength::Strength1of9;
+    return SignalStrength::Strength0of9;
+}
 
 // clang-format on

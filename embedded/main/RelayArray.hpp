@@ -1,4 +1,5 @@
 #include "Enums.hpp"
+#include "Structures.hpp"
 #include <Shifty.h>
 
 class RelayArray
@@ -9,6 +10,8 @@ public:
     ~RelayArray(){};
 
     bool setState(RelayIds p_id, RelayState p_state);
+
+    void update(const RelayArrayStates& p_states);
 
     inline RelayState getState(RelayIds p_id)
     {

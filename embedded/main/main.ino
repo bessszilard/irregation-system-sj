@@ -30,6 +30,8 @@ bool sensorDataUpdate(SensorsData& p_data);
 // Replace with your network credentials
 const char* ssid     = "Bbox-F6C5B3B2";
 const char* password = "eNv3xEW4SXu9AEMnsC";
+// const char* ssid     = "Redmi Note 10 Pro";
+// const char* password = "12345678";
 
 const char* ntpServer        = "pool.ntp.org";
 const long gmtOffset_sec     = 3600 * 2;
@@ -46,7 +48,7 @@ DS1307 rtc;
 BME280I2C bme; // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 // Default : forced mode, standby time = 1000 ms
 
-bool wifiAvailable = false;
+SignalStrength wifiSignalStrength = SignalStrength::Unknown;
 
 void setup()
 {
@@ -93,12 +95,15 @@ void loop()
     }
 
     // Set relay states based on the given rules
+    RelayArrayStates relayStates;
 
     // Update relay state
+    relayArray.update(relayStates);
 
     // publish to MQTT
 
     // Update LCD
+    lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
 
     // heart beat
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
@@ -122,7 +127,6 @@ void setupWifiAndMqtt()
         Serial.print(".");
         if (maxTryToConnect <= attempt)
         {
-            wifiAvailable = false;
             return;
         }
     }
@@ -131,12 +135,11 @@ void setupWifiAndMqtt()
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
-    wifiAvailable = true;
 }
 
 void localTimeSetup()
 {
-    if (wifiAvailable)
+    if (WiFi.status() == WL_CONNECTED)
     {
         configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
     }
@@ -147,7 +150,7 @@ void localTimeSetup()
 
 bool localTimeUpdate(LocalTime& p_data)
 {
-    if (false == wifiAvailable)
+    if (WiFi.status() != WL_CONNECTED)
     {
         LocalTime rtcTime;
         int year, month;

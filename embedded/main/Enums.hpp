@@ -1,5 +1,6 @@
 #pragma once
 
+#include "WiFiType.h"
 #include "Utils.hpp"
 
 enum class RelayIds
@@ -78,17 +79,39 @@ enum class CommandState
     Unknown
 };
 
-CommandType CommandTypeFromString(const String& typeStr, int startId = 0, int endId = -1);
-RelayIds RelayIdTypeFromString(const String& typeStr, int startId = 0, int endId = -1);
-RelayState RelayStateFromString(const String& typeStr, int startId = 0, int endId = -1);
-CmdPriority CmdPriorityFromString(const String& typeStr, int startId = 0, int endId = -1);
+enum class SignalStrength
+{
+    Strength9of9,
+    Strength8of9,
+    Strength7of9,
+    Strength6of9,
+    Strength5of9,
+    Strength4of9,
+    Strength3of9,
+    Strength2of9,
+    Strength1of9,
+    Strength0of9,
+    Unknown
+};
 
-String ToString(RelayIds id);
-String ToString(RelayState type);
-String ToString(CmdPriority type);
-String ToString(CommandType type);
+CommandType CommandTypeFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
+RelayIds RelayIdTypeFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
+RelayState RelayStateFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
+CmdPriority CmdPriorityFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
+
+String ToString(RelayIds p_id);
+String ToString(RelayState p_type);
+String ToString(CmdPriority p_type);
+String ToString(CommandType p_type);
+
+// For LCD display
+String ToShortString(wl_status_t p_status);
+String ToShortString(SignalStrength p_strength);
+String ToShortString(RelayState p_state);
 // String ToString(SensorTypes type);
 // String ToString(CommandState type);
+
+SignalStrength ToSignalStrength(int8_t p_rssi);
 
 RelayIds ToRelayId(uint8_t p_id);
 inline uint8_t RelayIdToUInt(RelayIds p_id)
