@@ -18,11 +18,15 @@ public:
                   bool p_wirelessError,
                   const String& p_buttonText = "");
 
+    void connectingToSSID(const String& p_ssid, bool p_connected = false, int p_attempts = 0);
+
     void updateDef(wl_status_t p_wifiState,
                    int8_t p_rssi_dBm,
                    bool p_mqttState,
                    const RelayArrayStates& p_relayArrayState);
 
 private:
+    void update(const String& firstLine, const String& secondLine);
+
     LiquidCrystal_I2C m_lcd;
 };

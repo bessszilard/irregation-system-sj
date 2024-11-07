@@ -12,3 +12,6 @@
 #define BAROMETRIC_SCL (22)
 #define BAROMETRIC_SDA (21)
 #define FLOW_METER_PIN (23)
+
+#define HC12_RXD (16)
+#define HC12_TXD (17)

@@ -66,10 +66,23 @@ struct RelayArrayStates
     RelayState states[NUMBER_OF_RELAYS];
     const uint8_t relayCnt = NUMBER_OF_RELAYS;
 
+    RelayArrayStates(RelayState p_state)
+    {
+        for (uint8_t relayId = 0; relayId < relayCnt; ++relayId)
+        {
+            states[relayId] = p_state;
+        }
+    }
+
     String toString() const
     {
-        uint8_t spaceAfterId = NUMBER_OF_RELAYS < 13 ? 5 : 6;
-        String str           = "R:";
+        uint8_t spaceAfterId = 16;
+        String str;
+        if (NUMBER_OF_RELAYS < 16)
+        {
+            spaceAfterId = 5;
+            str += "R:";
+        }
         for (uint8_t relayId = 0; relayId < NUMBER_OF_RELAYS; ++relayId)
         {
             str += ToShortString(states[relayId]);

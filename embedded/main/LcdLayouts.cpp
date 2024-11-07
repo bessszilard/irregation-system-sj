@@ -16,13 +16,8 @@ void LcdLayouts::selectKeyBoardMode(const String& p_firstLine)
     // 0 W:O 9 M:O N:32??
     // 1 R:00000 0000 00
 
-    // W O = OK, connected
-
-    m_lcd.clear();
-    m_lcd.setCursor(0, 0);
-    m_lcd.print(p_firstLine);
-    m_lcd.setCursor(0, 1);
-    m_lcd.print("     ^^^^");
+    String secondLine = "     ^^^^";
+    update(p_firstLine, secondLine);
 }
 
 void LcdLayouts::defaultL(const String& p_mode,
@@ -49,11 +44,18 @@ void LcdLayouts::defaultL(const String& p_mode,
     {
     }
 
-    m_lcd.clear();
-    m_lcd.setCursor(0, 0);
-    m_lcd.print(firstLine);
-    m_lcd.setCursor(0, 1);
-    m_lcd.print(secondLine);
+    update(firstLine, secondLine);
+}
+
+void LcdLayouts::connectingToSSID(const String& p_ssid, bool p_connected, int p_attempts)
+{
+    String firstLine = p_connected ? "Connected to" : "Connecting to";
+    for (int i = 0; i < p_attempts; ++i)
+    {
+        firstLine += ".";
+    }
+    String secondLine = p_ssid;
+    update(firstLine, secondLine);
 }
 
 void LcdLayouts::updateDef(wl_status_t p_wifiState,
@@ -61,12 +63,15 @@ void LcdLayouts::updateDef(wl_status_t p_wifiState,
                            bool p_mqttState,
                            const RelayArrayStates& p_relayArrayState)
 {
-    String firstLine = "W:" + ToShortString(p_wifiState) + " " + ToShortString(ToSignalStrength(p_rssi_dBm)) + " " +
-                       String(p_rssi_dBm) + " ";
+    String firstLine = "W:" + ToShortString(p_wifiState) + " " + ToShortString(ToSignalStrength(p_rssi_dBm)) + " ";
     firstLine += "M:" + String(p_mqttState);
 
     String secondLine = p_relayArrayState.toString();
+    update(firstLine, secondLine);
+}
 
+void LcdLayouts::update(const String& firstLine, const String& secondLine)
+{
     m_lcd.clear();
     m_lcd.setCursor(0, 0);
     m_lcd.print(firstLine);

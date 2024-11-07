@@ -30,6 +30,7 @@ bool RelayArray::handleAllRelays(RelayState p_state)
 
 bool RelayArray::handleRelay(int p_id, RelayState p_state)
 {
+    m_states[p_id] = p_state;
     if (NUMBER_OF_RELAYS < p_id)
     {
         Serial.println("Invalid relay id " + String(p_id));
@@ -66,8 +67,7 @@ bool RelayArray::setState(RelayIds p_relayId, RelayState p_state)
         case RelayIds::Relay11:
         case RelayIds::Relay12:
         {
-            int id       = static_cast<int>(p_relayId);
-            m_states[id] = p_state;
+            int id = static_cast<int>(p_relayId);
             return handleRelay(id, p_state);
         }
         case RelayIds::AllRelays:
@@ -98,8 +98,11 @@ void RelayArray::knTestIncr()
 
 void RelayArray::update(const RelayArrayStates& p_relays)
 {
+    m_shift.batchWriteBegin();
     for (uint8_t relayIdInt = 0; relayIdInt < p_relays.relayCnt; ++relayIdInt)
     {
-        setState(ToRelayId(relayIdInt), p_relays.states[relayIdInt]);
+        handleRelay(relayIdInt, p_relays.states[relayIdInt]);
+        Serial.print(String(relayIdInt) + "->" + ToString(p_relays.states[relayIdInt]));
     }
+    m_shift.batchWriteEnd();
 }
