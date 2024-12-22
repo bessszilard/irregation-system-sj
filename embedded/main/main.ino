@@ -19,19 +19,14 @@
 #include "LcdLayouts.hpp"
 
 #define SEALEVELPRESSURE_HPA (1013.25)
-
-void localTimeSetup();
-void sensorSetup();
-void setupWifiAndMqtt();
-
-bool localTimeUpdate(LocalTime& p_data);
-bool sensorDataUpdate(SensorsData& p_data);
+// #define MQTT_SERVER "test.mosquitto.org"
+#define MQTT_SERVER "broker.emqx.io"
+#define MQTT_PORT 1883
+char clientID[20];
 
 // Replace with your network credentials
 const char* ssid     = "Bbox-F6C5B3B2";
 const char* password = "eNv3xEW4SXu9AEMnsC";
-// const char* ssid     = "Redmi Note 10 Pro";
-// const char* password = "12345678";
 
 const char* ntpServer        = "pool.ntp.org";
 const long gmtOffset_sec     = 3600 * 2;
@@ -50,6 +45,17 @@ BME280I2C bme; // Oversampling = pressure ×1, temperature ×1, humidity ×1, fi
 
 SignalStrength wifiSignalStrength = SignalStrength::Unknown;
 
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+
+void localTimeSetup();
+void sensorSetup();
+bool setupWifiAndMqtt();
+
+bool localTimeUpdate(LocalTime& p_data);
+bool sensorDataUpdate(SensorData& p_data);
+void reconnectMqtt();
+
 void setup()
 {
     Serial.begin(115200);
@@ -59,61 +65,104 @@ void setup()
     }
 
     Wire.begin();
+    lcdLayout.init();
 
-    setupWifiAndMqtt();
+    lcdLayout.connectingToSSID(ssid, false, 0);
+    if (setupWifiAndMqtt())
+    {
+        lcdLayout.connectingToSSID(ssid, true);
+    }
     localTimeSetup();
     sensorSetup();
 
-    lcdLayout.init();
-    lcdLayout.selectKeyBoardMode("banan");
-
     relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
     pinMode(LED_PIN, OUTPUT);
+
+    // Serial2.begin(9600, SERIAL_8N1, HC12_RXD, HC12_TXD); // Hardware Serial of ESP32
 }
+
+bool opened = false;
+LocalTime locTime;
+SensorData sensorData;
+RelayArrayStates relayStates(RelayState::Opened);
+char myData[50];
 
 void loop()
 {
+    // Serial.println(" >> Free banana");
+
+    if (Serial2.available() > 0)
+    {
+        byte m    = Serial2.readBytesUntil('\n', myData, 50);
+        myData[m] = '\0';
+        Serial.println(myData);
+        digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+    }
+    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+
     // fast loop
     // Process MQTT updates
     // Store the messages from the moisture nodes
 
     // slow loop
     // Update time
-    LocalTime locTime;
-    if (false == localTimeUpdate(locTime))
+    // if (false == localTimeUpdate(locTime))
+    // {
+    //     Serial.println("Invalid local time");
+    //     return;
+    // }
+
+    // // Update sensors
+    // if (false == sensorDataUpdate(sensorData))
+    // {
+    //     Serial.println("Invalid local time");
+    //     return;
+    // }
+    // // char humString[8];
+    // // dtostrf(sensorData.humidity, 1, 2, humString);
+    // // Serial.print("Humidity: ");
+    // // Serial.println(humString);
+
+    if (mqttClient.publish("sjirs/humidity", "0.01")) // String(sensorData.humidity).c_str());
     {
-        Serial.println("Invalid local time");
-        return;
+        Serial.print("Published to sjirs/humidity");
     }
-
-    // Update sensors
-    SensorsData sensorData;
-    if (false == sensorDataUpdate(sensorData))
+    else
     {
-        Serial.println("Invalid local time");
-        return;
+        Serial.print("Failed to publish");
     }
-
-    // Set relay states based on the given rules
-    RelayArrayStates relayStates;
-
-    // Update relay state
-    relayArray.update(relayStates);
-
-    // publish to MQTT
-
-    // Update LCD
-    lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
-
-    // heart beat
-    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-
     delay(1000);
+
+    // // Set relay states based on the given rules
+
+    // relayStates.states[1]  = RelayState::Closed;
+    // relayStates.states[8]  = opened ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[0]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[2]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[3]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[4]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[9]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[15] = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // opened                 = !opened;
+
+    // // Update relay state
+    // relayArray.update(relayStates);
+
+    // // publish to MQTT
+
+    // // Update LCD
+    // lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
+
+    // // heart beat
+    // digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+
+    // delay(1000);
 }
 
 //---------------------------------------------------------------
+bool setupWifiAndMqtt()
+//---------------------------------------------------------------
 
-void setupWifiAndMqtt()
 {
     Serial.print("Connecting to ");
     Serial.println(ssid);
@@ -122,12 +171,13 @@ void setupWifiAndMqtt()
     int attempt         = 0;
     while (WiFi.status() != WL_CONNECTED)
     {
+        lcdLayout.connectingToSSID(ssid, attempt);
         attempt++;
         delay(500);
         Serial.print(".");
         if (maxTryToConnect <= attempt)
         {
-            return;
+            return false;
         }
     }
     // Print local IP address and start web server
@@ -135,9 +185,34 @@ void setupWifiAndMqtt()
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
+
+    Serial.println("Setting up MQTT connection");
+    mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
+
+    for (int c = 0; c < 8; c++)
+    {
+        clientID[c]     = random('A', 'Z' + 1);
+        clientID[c + 1] = '\0';
+    }
+    Serial.printf("clientID : %s\n", clientID);
+
+    if (mqttClient.connect(clientID))
+    {
+        Serial.print("Connection has been established with ");
+        Serial.println(MQTT_SERVER);
+    }
+    else
+    {
+        Serial.println("The MQTT server connection failed...");
+        return false;
+    }
+    mqttClient.setCallback(callback);
+    return true;
 }
 
+//---------------------------------------------------------------
 void localTimeSetup()
+//---------------------------------------------------------------
 {
     if (WiFi.status() == WL_CONNECTED)
     {
@@ -148,7 +223,9 @@ void localTimeSetup()
     rtc.start(); /*start RTC*/
 }
 
+//---------------------------------------------------------------
 bool localTimeUpdate(LocalTime& p_data)
+//---------------------------------------------------------------
 {
     if (WiFi.status() != WL_CONNECTED)
     {
@@ -205,28 +282,33 @@ bool localTimeUpdate(LocalTime& p_data)
     return true;
 }
 
+//---------------------------------------------------------------
 void sensorSetup()
+//---------------------------------------------------------------
 {
-    while (!bme.begin())
-    {
-        Serial.println("Could not find BME280 sensor!");
-        delay(1000);
-    }
+    // TODOsz update
+    // while (!bme.begin())
+    // {
+    //     Serial.println("Could not find BME280 sensor!");
+    //     delay(1000);
+    // }
 
-    switch (bme.chipModel())
-    {
-        case BME280::ChipModel_BME280:
-            Serial.println("Found BME280 sensor! Success.");
-            break;
-        case BME280::ChipModel_BMP280:
-            Serial.println("Found BMP280 sensor! No Humidity available.");
-            break;
-        default:
-            Serial.println("Found UNKNOWN sensor! Error!");
-    }
+    // switch (bme.chipModel())
+    // {
+    //     case BME280::ChipModel_BME280:
+    //         Serial.println("Found BME280 sensor! Success.");
+    //         break;
+    //     case BME280::ChipModel_BMP280:
+    //         Serial.println("Found BMP280 sensor! No Humidity available.");
+    //         break;
+    //     default:
+    //         Serial.println("Found UNKNOWN sensor! Error!");
+    // }
 }
 
-bool sensorDataUpdate(SensorsData& p_data)
+//---------------------------------------------------------------
+bool sensorDataUpdate(SensorData& p_data)
+//---------------------------------------------------------------
 {
     fm.updateFlowData();
     tempSensor.requestTemperatures();
@@ -253,4 +335,67 @@ bool sensorDataUpdate(SensorsData& p_data)
     Serial.println("Pa");
 
     return true;
+}
+
+// MQTT
+//---------------------------------------------------------------
+void callback(char* topic, byte* message, unsigned int length)
+//---------------------------------------------------------------
+{
+    Serial.print("Message arrived on topic: ");
+    Serial.print(topic);
+    Serial.print(". Message: ");
+    String messageTemp;
+
+    for (int i = 0; i < length; i++)
+    {
+        Serial.print((char)message[i]);
+        messageTemp += (char)message[i];
+    }
+    Serial.println();
+
+    // Feel free to add more if statements to control more GPIOs with MQTT
+
+    // If a message is received on the topic esp32/output, you check if the message is either "on" or "off".
+    // Changes the output state according to the message
+    if (String(topic) == "esp32/output")
+    {
+        Serial.print("Changing output to ");
+        if (messageTemp == "on")
+        {
+            Serial.println("on");
+            digitalWrite(LED_PIN, HIGH);
+        }
+        else if (messageTemp == "off")
+        {
+            Serial.println("off");
+            digitalWrite(LED_PIN, LOW);
+        }
+    }
+}
+
+//---------------------------------------------------------------
+void reconnectMqtt()
+//---------------------------------------------------------------
+{
+    // Loop until we're reconnected
+    while (!mqttClient.connected())
+    {
+        Serial.print("Attempting MQTT connection...");
+        // Attempt to connect
+        if (mqttClient.connect("espClient"))
+        {
+            Serial.println("connected");
+            // Subscribe
+            mqttClient.subscribe("esp32/output");
+        }
+        else
+        {
+            Serial.print("failed, rc=");
+            Serial.print(mqttClient.state());
+            Serial.println(" try again in 5 seconds");
+            // Wait 5 seconds before retrying
+            delay(5000);
+        }
+    }
 }
