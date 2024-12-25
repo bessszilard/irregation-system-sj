@@ -10,6 +10,7 @@
 #include <DHT.h>
 #include <NTPClient.h> // https://randomnerdtutorials.com/esp32-date-time-ntp-client-server-arduino/
 #include <WiFiUdp.h>
+#include "FRAM.h"
 #include "time.h"
 
 #include "Structures.hpp"
@@ -47,6 +48,8 @@ SignalStrength wifiSignalStrength = SignalStrength::Unknown;
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
+
+FRAM fram(&Wire);
 
 void localTimeSetup();
 void sensorSetup();
@@ -99,6 +102,26 @@ void loop()
         digitalWrite(LED_PIN, !digitalRead(LED_PIN));
     }
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+
+    int rv = fram.begin(0x50);
+    if (rv != 0)
+    {
+        Serial.println(rv);
+    }
+    else
+    {
+        Serial.println();
+        Serial.println(__FUNCTION__);
+        Serial.print("ManufacturerID: ");
+        Serial.println(fram.getManufacturerID());
+        Serial.print("     ProductID: ");
+        Serial.println(fram.getProductID());
+        Serial.print("     memory KB: ");
+        Serial.println(fram.getSize());
+
+        Serial.println();
+    }
+    Serial.println("done...");
 
     // fast loop
     // Process MQTT updates
