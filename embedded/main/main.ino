@@ -70,7 +70,6 @@ void setup()
     {
         ; // wait for serial port to connect. Needed for native USB
     }
-
     Wire.begin();
     lcdLayout.init();
 
@@ -107,7 +106,7 @@ void loop()
         digitalWrite(LED_PIN, !digitalRead(LED_PIN));
     }
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-    mqttClient.loop();
+    mqttHd.loop();
 
     // int rv = fram.begin(0x50);
     // if (rv != 0)
@@ -152,15 +151,8 @@ void loop()
     // // Serial.print("Humidity: ");
     // // Serial.println(humString);
 
-    // mqttHd.updateSensorData();
-    // if (mqttClient.publish("sjirs/humidity", "0.01")) // String(sensorData.humidity).c_str());
-    // {
-    //     Serial.println("Published to sjirs/humidity");
-    // }
-    // else
-    // {
-    //     Serial.print("Failed to publish");
-    // }
+    mqttHd.publish(sensorData);
+    mqttHd.publish(relayStates);
 
     // Serial.println((String)sht20.humidity() + " %RH");
     // Serial.println();
@@ -185,12 +177,9 @@ void loop()
     // // publish to MQTT
 
     // Update LCD
-    // lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
-
-    // // heart beat
-    // digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-
-    // delay(1000);
+    lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
+    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+    delay(1000);
 }
 
 //---------------------------------------------------------------
@@ -221,28 +210,11 @@ bool setupWifiAndMqtt()
     Serial.println(WiFi.localIP());
 
     Serial.println("Setting up MQTT connection");
-    mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
-    mqttClient.setCallback(callback);
-
-    for (int c = 0; c < 8; c++)
+    if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT))
     {
-        clientID[c]     = random('A', 'Z' + 1);
-        clientID[c + 1] = '\0';
-    }
-    Serial.printf("clientID : %s\n", clientID);
-
-    if (mqttClient.connect(clientID))
-    {
-        Serial.print("Connection has been established with ");
-        Serial.println(MQTT_SERVER);
-    }
-    else
-    {
-        Serial.println("The MQTT server connection failed...");
+        Serial.println("Failed to set up the Mqtt server");
         return false;
     }
-    // mqttHd->init(MQTT_SERVER, MQTT_PORT);
-    mqttClient.subscribe("esp32/output");
     return true;
 }
 
@@ -371,67 +343,4 @@ bool sensorDataUpdate(SensorData& p_data)
     Serial.println("Pa");
 
     return true;
-}
-
-// MQTT
-//---------------------------------------------------------------
-void callback(char* topic, byte* message, unsigned int length)
-//---------------------------------------------------------------
-{
-    Serial.print("Message arrived on topic: ");
-    Serial.print(topic);
-    Serial.print(". Message: ");
-    String messageTemp;
-
-    for (int i = 0; i < length; i++)
-    {
-        Serial.print((char)message[i]);
-        messageTemp += (char)message[i];
-    }
-    Serial.println();
-
-    // Feel free to add more if statements to control more GPIOs with MQTT
-
-    // If a message is received on the topic esp32/output, you check if the message is either "on" or "off".
-    // Changes the output state according to the message
-    if (String(topic) == "esp32/output")
-    {
-        Serial.print("Changing output to ");
-        if (messageTemp == "on")
-        {
-            Serial.println("on");
-            digitalWrite(LED_PIN, HIGH);
-        }
-        else if (messageTemp == "off")
-        {
-            Serial.println("off");
-            digitalWrite(LED_PIN, LOW);
-        }
-    }
-}
-
-//---------------------------------------------------------------
-void reconnectMqtt()
-//---------------------------------------------------------------
-{
-    // Loop until we're reconnected
-    while (!mqttClient.connected())
-    {
-        Serial.print("Attempting MQTT connection...");
-        // Attempt to connect
-        if (mqttClient.connect("espClient"))
-        {
-            Serial.println("connected");
-            // Subscribe
-            mqttClient.subscribe("esp32/output");
-        }
-        else
-        {
-            Serial.print("failed, rc=");
-            Serial.print(mqttClient.state());
-            Serial.println(" try again in 5 seconds");
-            // Wait 5 seconds before retrying
-            delay(5000);
-        }
-    }
 }
