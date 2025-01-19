@@ -96,13 +96,35 @@ struct RelayArrayStates
     bool valid = false;
 };
 
-struct SensorsData
+struct SensorData
 {
     float externalTemp_C = NAN;
     float humidity       = NAN;
     float pressure_Pa    = NAN;
+    float flowRate_LitMin = NAN;
     uint8_t rainSensor   = 0;
     SoilMoisture soilMoisture[MAX_SOIL_MOISTURE_NODE];
 
     bool valid = false;
+
+    String toJSON() const
+    {
+        String json = "{";
+        json += "\"externalTemp_C\": " + String(isnan(externalTemp_C) ? "null" : String(externalTemp_C, 2)) + ",";
+        json += "\"humidity\": " + String(isnan(humidity) ? "null" : String(humidity, 2)) + ",";
+        json += "\"flowRate_LitMin\": " + String(isnan(flowRate_LitMin) ? "null" : String(flowRate_LitMin, 2)) + ",";
+        json += "\"pressure_Pa\": " + String(isnan(pressure_Pa) ? "null" : String(pressure_Pa, 2)) + ",";
+        json += "\"rainSensor\": " + String(rainSensor) + ",";
+        json += "\"soilMoisture\": [";
+        for (int i = 0; i < MAX_SOIL_MOISTURE_NODE; ++i)
+        {
+            json += isnan(soilMoisture[i].measurement) ? "null" : String(soilMoisture[i].measurement, 2);
+            if (i < MAX_SOIL_MOISTURE_NODE - 1)
+                json += ",";
+        }
+        json += "],";
+        json += "\"valid\": " + String(valid ? "true" : "false");
+        json += "}";
+        return json;
+    }
 };

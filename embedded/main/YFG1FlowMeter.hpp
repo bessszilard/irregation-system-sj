@@ -11,11 +11,16 @@ public:
 
     struct Data
     {
-        float flowRate_minPerLit;
+        float flowRate_LitMin;
         uint32_t totalFlow_litres;
     };
 
     void updateFlowData();
+
+    inline const Data& getData() const
+    {
+        return m_data;
+    }
 
 private:
     float m_calibrationFactor;

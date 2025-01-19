@@ -44,8 +44,7 @@ void MqttHandler::publish(const SensorData& sensors)
         Serial.println("Invalid mqtt client");
         return;
     }
-
-    if (m_client->publish(MQTT_SENSORS, "0.21")) // String(sensorData.humidity).c_str());
+    if (m_client->publish(MQTT_SENSORS, sensors.toJSON().c_str())) // String(sensorData.humidity).c_str());
     {
         Serial.println("Published to sjirs/humidity");
     }

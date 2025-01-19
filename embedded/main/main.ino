@@ -22,10 +22,8 @@
 #include "MqttHandler.hpp"
 
 #define SEALEVELPRESSURE_HPA (1013.25)
-// #define MQTT_SERVER "test.mosquitto.org"
 #define MQTT_SERVER "broker.emqx.io"
 #define MQTT_PORT 1883
-char clientID[20];
 
 // Replace with your network credentials
 const char* ssid     = "Bbox-F6C5B3B2";
@@ -96,8 +94,6 @@ char myData[50];
 
 void loop()
 {
-    // Serial.println(" >> Free banana");
-
     if (Serial2.available() > 0)
     {
         byte m    = Serial2.readBytesUntil('\n', myData, 50);
@@ -134,18 +130,18 @@ void loop()
 
     // slow loop
     // Update time
-    // if (false == localTimeUpdate(locTime))
-    // {
-    //     Serial.println("Invalid local time");
-    //     return;
-    // }
+    if (false == localTimeUpdate(locTime))
+    {
+        Serial.println("Invalid local time");
+        return;
+    }
 
     // // Update sensors
-    // if (false == sensorDataUpdate(sensorData))
-    // {
-    //     Serial.println("Invalid local time");
-    //     return;
-    // }
+    if (false == sensorDataUpdate(sensorData))
+    {
+        Serial.println("Invalid local time");
+        return;
+    }
     // // char humString[8];
     // // dtostrf(sensorData.humidity, 1, 2, humString);
     // // Serial.print("Humidity: ");
@@ -318,29 +314,15 @@ void sensorSetup()
 bool sensorDataUpdate(SensorData& p_data)
 //---------------------------------------------------------------
 {
+    p_data.valid = false;
     fm.updateFlowData();
+    p_data.flowRate_LitMin = fm.getData().flowRate_LitMin;
+
     tempSensor.requestTemperatures();
-    Serial.print("Celsius temperature: ");
-    Serial.println(tempSensor.getTempCByIndex(0));
-    Serial.print("Humidity: ");
-    Serial.println(humSensor.readHumidity());
+    p_data.externalTemp_C = tempSensor.getTempCByIndex(0);
 
-    float temp(NAN), hum(NAN), pres(NAN);
+    p_data.humidity = sht20.humidity();
 
-    BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
-    BME280::PresUnit presUnit(BME280::PresUnit_Pa);
-
-    bme.read(pres, temp, hum, tempUnit, presUnit);
-
-    Serial.print("Temp: ");
-    Serial.print(temp);
-    Serial.print("°" + String(tempUnit == BME280::TempUnit_Celsius ? 'C' : 'F'));
-    Serial.print("\t\tHumidity: ");
-    Serial.print(hum);
-    Serial.print("% RH");
-    Serial.print("\t\tPressure: ");
-    Serial.print(pres);
-    Serial.println("Pa");
-
+    p_data.valid = true;
     return true;
 }

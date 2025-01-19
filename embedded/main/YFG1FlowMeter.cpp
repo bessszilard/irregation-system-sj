@@ -36,8 +36,8 @@ void YFG1FlowMeter::updateFlowData()
         attachInterrupt(m_inputPin, pulseCounter, FALLING);
         m_oldTime_ms = millis();
 
-        m_data.flowRate_minPerLit = flowRate_mLitPerSec * 60 / 1000;
-        m_data.totalFlow_litres += m_data.flowRate_minPerLit;
+        m_data.flowRate_LitMin = flowRate_mLitPerSec * 60 / 1000;
+        m_data.totalFlow_litres += m_data.flowRate_LitMin;
 
         // Print the flow rate for this second in litres / minute
         Serial.print("Flow rate [lit/sec]: ");
@@ -46,7 +46,7 @@ void YFG1FlowMeter::updateFlowData()
         // Determine the fractional part. The 10 multiplier gives us 1 decimal place.
 
         Serial.print("[L/min]:");
-        Serial.print(m_data.flowRate_minPerLit); // Print the fractional part of the variable
+        Serial.print(m_data.flowRate_LitMin); // Print the fractional part of the variable
         // Print the number of litres flowed in this second
 
         // Print the cumulative total of litres flowed since starting
