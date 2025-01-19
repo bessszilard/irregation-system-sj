@@ -115,6 +115,7 @@ String ToString(CommandType p_type)
         case CommandType::AutoFlowCtrl:         return "AFlow";
         case CommandType::AutoHumidityCtrl:     return "AHumi";
         case CommandType::AutoTimeCtrl:         return "ATime";
+        case CommandType::AutoMoistureCtrl:     return "AMost";
     }
     return "";
 }

@@ -58,6 +58,7 @@ enum class CommandType
     AutoHumidityCtrl,
     AutoTimeCtrl,
     AutoFlowCtrl,
+    AutoMoistureCtrl,
     Unknown
 };
 
