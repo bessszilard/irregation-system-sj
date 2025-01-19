@@ -11,6 +11,7 @@
 #include <NTPClient.h> // https://randomnerdtutorials.com/esp32-date-time-ntp-client-server-arduino/
 #include <WiFiUdp.h>
 #include "FRAM.h"
+#include "uFire_SHT20.h"
 #include "time.h"
 
 #include "Structures.hpp"
@@ -18,6 +19,7 @@
 #include "RelayArray.hpp"
 #include "YFG1FlowMeter.hpp"
 #include "LcdLayouts.hpp"
+#include "MqttHandler.hpp"
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 // #define MQTT_SERVER "test.mosquitto.org"
@@ -36,6 +38,7 @@ const int daylightOffset_sec = 3600 * 0;
 RelayArray relayArray(RELAY_ARRAY_DATA, RELAY_ARRAY_CLOCK, RELAY_ARRAY_LATCH);
 OneWire oneWireForTemp(TEMPERATURE_DATA_PIN);
 DallasTemperature tempSensor(&oneWireForTemp);
+uFire_SHT20 sht20;
 DHT humSensor(HUMIDITY_DATA_PIN, 11);
 LcdLayouts lcdLayout;
 YFG1FlowMeter fm(FLOW_METER_PIN);
@@ -48,6 +51,7 @@ SignalStrength wifiSignalStrength = SignalStrength::Unknown;
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
+MqttHandler mqttHd(&mqttClient);
 
 FRAM fram(&Wire);
 
@@ -77,6 +81,7 @@ void setup()
     }
     localTimeSetup();
     sensorSetup();
+    sht20.begin();
 
     relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
     pinMode(LED_PIN, OUTPUT);
@@ -102,26 +107,27 @@ void loop()
         digitalWrite(LED_PIN, !digitalRead(LED_PIN));
     }
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+    mqttClient.loop();
 
-    int rv = fram.begin(0x50);
-    if (rv != 0)
-    {
-        Serial.println(rv);
-    }
-    else
-    {
-        Serial.println();
-        Serial.println(__FUNCTION__);
-        Serial.print("ManufacturerID: ");
-        Serial.println(fram.getManufacturerID());
-        Serial.print("     ProductID: ");
-        Serial.println(fram.getProductID());
-        Serial.print("     memory KB: ");
-        Serial.println(fram.getSize());
+    // int rv = fram.begin(0x50);
+    // if (rv != 0)
+    // {
+    //     Serial.println(rv);
+    // }
+    // else
+    // {
+    //     Serial.println();
+    //     Serial.println(__FUNCTION__);
+    //     Serial.print("ManufacturerID: ");
+    //     Serial.println(fram.getManufacturerID());
+    //     Serial.print("     ProductID: ");
+    //     Serial.println(fram.getProductID());
+    //     Serial.print("     memory KB: ");
+    //     Serial.println(fram.getSize());
 
-        Serial.println();
-    }
-    Serial.println("done...");
+    //     Serial.println();
+    // }
+    // Serial.println("done...");
 
     // fast loop
     // Process MQTT updates
@@ -146,15 +152,20 @@ void loop()
     // // Serial.print("Humidity: ");
     // // Serial.println(humString);
 
-    if (mqttClient.publish("sjirs/humidity", "0.01")) // String(sensorData.humidity).c_str());
-    {
-        Serial.print("Published to sjirs/humidity");
-    }
-    else
-    {
-        Serial.print("Failed to publish");
-    }
-    delay(1000);
+    // mqttHd.updateSensorData();
+    // if (mqttClient.publish("sjirs/humidity", "0.01")) // String(sensorData.humidity).c_str());
+    // {
+    //     Serial.println("Published to sjirs/humidity");
+    // }
+    // else
+    // {
+    //     Serial.print("Failed to publish");
+    // }
+
+    // Serial.println((String)sht20.humidity() + " %RH");
+    // Serial.println();
+
+    // delay(1000);
 
     // // Set relay states based on the given rules
 
@@ -173,7 +184,7 @@ void loop()
 
     // // publish to MQTT
 
-    // // Update LCD
+    // Update LCD
     // lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
 
     // // heart beat
@@ -211,6 +222,7 @@ bool setupWifiAndMqtt()
 
     Serial.println("Setting up MQTT connection");
     mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
+    mqttClient.setCallback(callback);
 
     for (int c = 0; c < 8; c++)
     {
@@ -229,7 +241,8 @@ bool setupWifiAndMqtt()
         Serial.println("The MQTT server connection failed...");
         return false;
     }
-    mqttClient.setCallback(callback);
+    // mqttHd->init(MQTT_SERVER, MQTT_PORT);
+    mqttClient.subscribe("esp32/output");
     return true;
 }
 
