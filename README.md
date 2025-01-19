@@ -3,20 +3,27 @@
 ## TODOs for the ControlCentre
 
 - [x] Simple led blinking
-- [ ] Update the schematic according to the I2C expander
-- [ ] Add code for BME280
+- [X] Update the schematic according to the shift register
+- [X] Add code for BME280
   - [ ] Calibrate + set the range
-- [ ] Add code for DHT11
+- [x] Add code for DS18B20
   - [ ] Calibrate + set the range
-- [ ] Add code for YF-G1
+- [x] Add code for DHT11
   - [ ] Calibrate + set the range
-- [ ] Add code for HC-12
+- [S] Add code for YF-G1
   - [ ] Calibrate + set the range
-- [ ] Add code for I2C expander
-  - [ ] Handle relays as an array
-- [ ] Create commands
-- [ ] Event handling
-  - [ ] Add some command and test
+- [X] Add code for HC-12
+- [X] Add code for RTC
+  - [X] Calibrate + set the range
+- [X] Add code for NTP
+  - [X] Calibrate + set the range
+- [X] Add code for shift register expander
+  - [X] Handle relays as an array
+- [ ] Add FRAM
+  - [ ] Design memory block
+- [X] Create commands
+- [ ] Cmd handling
+  - [X] Add some command and test
   - [ ] Add sensor compatibility
   - [ ] Add portable station compatibility
   - [ ] Store commands permanently - to work automatically
@@ -24,7 +31,7 @@
 - [ ] Add Mqtt compatibility
   - [ ] List topics
   - [ ] Sensor 
-  - [ ] Add event handling
+  - [ ] Add cmd handling
 - [ ] Handle timing
 
 ## TODOs for the PortableStations
@@ -43,3 +50,31 @@
 3. Indicate which command controls the solenoid
 4. Set priorities
 5. Test scenarios
+
+
+# MQTT topics
+```
+/sensors
+  /temperature
+  /humidity
+  /barometric-pressure
+  /soil-moisture
+    /node1
+      /value
+      /battery
+    /node2
+    ...
+    /nodeN
+/relays
+  /relay1
+    /state
+    /active-command
+  /relay2
+  ...
+  /relay12
+/command
+  /add-command (listen)
+  /remove-command (listen)
+  /stored-command-list
+/wifi-strength
+```
