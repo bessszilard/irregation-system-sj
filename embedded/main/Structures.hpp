@@ -4,6 +4,7 @@
 #include "time.h"
 
 #define MAX_SOIL_MOISTURE_NODE (30)
+#define TOLERANCE_SEC (10)
 
 struct SoilMoisture
 {
@@ -41,8 +42,9 @@ struct LocalTime : tm
 
     bool eq(LocalTime& time)
     {
-        bool result = tm_sec == time.tm_sec && tm_min == time.tm_min && tm_hour == time.tm_hour &&
-                      getDay() == time.getDay() && getMonth() == time.getMonth() && getYear() == time.getYear();
+        bool result = tm_min == time.tm_min && tm_hour == time.tm_hour && getDay() == time.getDay() &&
+                      getMonth() == time.getMonth() && getYear() == time.getYear() &&
+                      (abs(tm_sec - time.tm_sec) < TOLERANCE_SEC);
         if (result)
             return true;
         notEqPrint(tm_sec, time.tm_sec);

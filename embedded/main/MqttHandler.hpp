@@ -10,6 +10,7 @@ public:
 
     void publish(const SensorData& sensors);
     void publish(const RelayArrayStates& sensors);
+    void publish(const LocalTime& time);
 
     static void callback(char* topic, byte* message, unsigned int length);
 
@@ -19,4 +20,6 @@ public:
 
 private:
     PubSubClient* m_client;
+
+    void publish(const char* topic, const String& message);
 };

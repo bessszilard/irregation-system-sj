@@ -135,27 +135,17 @@ void loop()
         Serial.println("Invalid local time");
         return;
     }
+    mqttHd.publish(locTime);
 
-    // // Update sensors
+    // Update sensors
     if (false == sensorDataUpdate(sensorData))
     {
         Serial.println("Invalid local time");
         return;
     }
-    // // char humString[8];
-    // // dtostrf(sensorData.humidity, 1, 2, humString);
-    // // Serial.print("Humidity: ");
-    // // Serial.println(humString);
-
     mqttHd.publish(sensorData);
+
     mqttHd.publish(relayStates);
-
-    // Serial.println((String)sht20.humidity() + " %RH");
-    // Serial.println();
-
-    // delay(1000);
-
-    // // Set relay states based on the given rules
 
     // relayStates.states[1]  = RelayState::Closed;
     // relayStates.states[8]  = opened ? RelayState::Opened : RelayState::Closed;

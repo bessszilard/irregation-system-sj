@@ -39,39 +39,21 @@ bool MqttHandler::init(const char* p_domain, uint16_t p_port)
 void MqttHandler::publish(const SensorData& sensors)
 //---------------------------------------------------------------
 {
-    if (m_client == nullptr)
-    {
-        Serial.println("Invalid mqtt client");
-        return;
-    }
-    if (m_client->publish(MQTT_SENSORS, sensors.toJSON().c_str())) // String(sensorData.humidity).c_str());
-    {
-        Serial.println("Published to sjirs/humidity");
-    }
-    else
-    {
-        Serial.print("Failed to publish");
-    }
+    publish(MQTT_SENSORS, sensors.toJSON());
 }
 
 //---------------------------------------------------------------
 void MqttHandler::publish(const RelayArrayStates& states)
 //---------------------------------------------------------------
 {
-    if (m_client == nullptr)
-    {
-        Serial.println("Invalid mqtt client");
-        return;
-    }
+    publish(MQTT_RELAYS, states.toString());
+}
 
-    if (m_client->publish(MQTT_RELAYS, states.toString().c_str()))
-    {
-        Serial.println("Published to sjirs/humidity");
-    }
-    else
-    {
-        Serial.print("Failed to publish relay states");
-    }
+//---------------------------------------------------------------
+void MqttHandler::publish(const LocalTime& time)
+//---------------------------------------------------------------
+{
+    publish(MQTT_LOCAL_TIME, time.toString());
 }
 
 //---------------------------------------------------------------
@@ -145,5 +127,27 @@ void MqttHandler::reconnectMqtt()
             // Wait 5 seconds before retrying
             delay(5000);
         }
+    }
+}
+
+//---------------------------------------------------------------
+void MqttHandler::publish(const char* topic, const String& message)
+//---------------------------------------------------------------
+{
+    if (m_client == nullptr)
+    {
+        Serial.println("Invalid mqtt client");
+        return;
+    }
+
+    if (m_client->publish(topic, message.c_str()))
+    {
+        Serial.print("Published to");
+        Serial.println(topic);
+    }
+    else
+    {
+        Serial.print("Failed to");
+        Serial.println(topic);
     }
 }
