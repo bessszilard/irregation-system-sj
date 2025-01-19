@@ -16,7 +16,11 @@
         "functional": "cpp",
         "tuple": "cpp",
         "type_traits": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "limits": "cpp",
+        "system_error": "cpp",
+        "random": "cpp",
+        "cstddef": "cpp"
     },
     "C_Cpp.default.compilerPath": "/home/szilard_b/.arduino15/packages/esp32/tools/esp-x32/2302/bin/xtensa-esp32-elf-g++"
 }
