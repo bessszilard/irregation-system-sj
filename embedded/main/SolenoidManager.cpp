@@ -67,18 +67,38 @@ CommandState SolenoidManager::removeCmd(uint8_t p_id)
 
 String SolenoidManager::getCmdListInJson() const
 {
-    String cmdList = "{ cmdList: [";
+    // Calculate the approximate buffer size needed.
+    size_t estimatedSize = 16; // Initial size for "{ cmdList: [ ] }" and other fixed parts
     for (uint8_t i = 0; i < m_currentCmdId; i++)
     {
-        String toAdd = "\"" + m_cmdList[i].toString() + "\"";
+        estimatedSize += m_cmdList[i].toString().length() + 4; // Quotes and commas
+    }
+
+    // Allocate a buffer on the heap
+    char* buffer = (char*)malloc(estimatedSize);
+    if (!buffer)
+    {
+        return "{}"; // Return empty JSON if memory allocation fails
+    }
+
+    // Start building the JSON
+    strcpy(buffer, "{ cmdList: [");
+    for (uint8_t i = 0; i < m_currentCmdId; i++)
+    {
+        strcat(buffer, "\"");
+        strcat(buffer, m_cmdList[i].toString().c_str());
+        strcat(buffer, "\"");
         if (i < m_currentCmdId - 1)
         {
-            toAdd += ", ";
+            strcat(buffer, ", ");
         }
-        cmdList += toAdd;
     }
-    cmdList += "] }";
-    return cmdList;
+    strcat(buffer, "] }");
+    // Create a String object from the buffer and free the buffer
+    String result(buffer);
+    free(buffer);
+
+    return result;
 }
 
 String SolenoidManager::getCmdString(uint8_t p_id) const
