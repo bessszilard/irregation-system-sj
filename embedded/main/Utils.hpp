@@ -1,9 +1,11 @@
 #pragma once
 
 #ifdef PC_BUILD
-#include <string>
-#include <iostream>
-using String = std::string;
+#include "../mock/Shifty.h"
+#include "../mock/String.h"
+#include "../mock/EnumsAndConstants.h"
+#include "../mock/Serial.h"
+#include <math.h>
 #else
 #include <Arduino.h>
 #endif

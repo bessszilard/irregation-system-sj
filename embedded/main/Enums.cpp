@@ -120,6 +120,20 @@ String ToString(CommandType p_type)
     return "";
 }
 
+String ToString(CommandState p_state)
+{
+    switch(p_state) 
+    {
+        case CommandState::Added:            return "Added";
+        case CommandState::Removed:          return "Removed";
+        case CommandState::AlreadyPresent:   return "AlreadyPresent";
+        case CommandState::CantRemove:       return "CantRemove";
+        case CommandState::MemoryFull:       return "MemoryFull";
+        case CommandState::Unknown:          return "Unknown";
+    }
+    return "";
+}
+
 String ToShortString(wl_status_t p_status)
 {
     switch(p_status)

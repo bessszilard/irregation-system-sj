@@ -1,6 +1,13 @@
+#pragma once
+
 #include "Enums.hpp"
 #include "Structures.hpp"
+
+#ifdef PC_BUILD
+#include "../mock/Shifty.h"
+#else
 #include <Shifty.h>
+#endif
 
 class RelayArray
 {

@@ -21,6 +21,8 @@
 #include "LcdLayouts.hpp"
 #include "MqttHandler.hpp"
 
+#include "SolenoidManager.hpp"
+
 #define SEALEVELPRESSURE_HPA (1013.25)
 #define MQTT_SERVER "broker.emqx.io"
 #define MQTT_PORT 1883
@@ -53,6 +55,8 @@ MqttHandler mqttHd(&mqttClient);
 
 FRAM fram(&Wire);
 
+SolenoidManager solM;
+
 void localTimeSetup();
 void sensorSetup();
 bool setupWifiAndMqtt();
@@ -60,6 +64,7 @@ bool setupWifiAndMqtt();
 bool localTimeUpdate(LocalTime& p_data);
 bool sensorDataUpdate(SensorData& p_data);
 void reconnectMqtt();
+void callback(char* topic, byte* message, unsigned int length);
 
 void setup()
 {
@@ -196,7 +201,7 @@ bool setupWifiAndMqtt()
     Serial.println(WiFi.localIP());
 
     Serial.println("Setting up MQTT connection");
-    if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT))
+    if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT, callback))
     {
         Serial.println("Failed to set up the Mqtt server");
         return false;
@@ -315,4 +320,47 @@ bool sensorDataUpdate(SensorData& p_data)
 
     p_data.valid = true;
     return true;
+}
+
+//---------------------------------------------------------------
+void callback(char* topic, byte* message, unsigned int length)
+//---------------------------------------------------------------
+{
+    Serial.print("Message arrived on topic: ");
+    Serial.print(topic);
+    Serial.print(". Message: ");
+    String messageTemp;
+
+    for (int i = 0; i < length; i++)
+    {
+        Serial.print((char)message[i]);
+        messageTemp += (char)message[i];
+    }
+
+    // Feel free to add more if statements to control more GPIOs with MQTT
+
+    // If a message is received on the topic esp32/output, you check if the message is either "on" or "off".
+    // Changes the output state according to the message
+    if (String(topic) == "esp32/output")
+    {
+        Serial.print("Changing output to ");
+        // if (messageTemp == "on")
+        // {
+        //     Serial.println("on");
+        //     digitalWrite(LED_PIN, HIGH);
+        // }
+        // else if (messageTemp == "off")
+        // {
+        //     Serial.println("off");
+        //     digitalWrite(LED_PIN, LOW);
+        // }
+    }
+    if (String(topic) == MQTT_SUB_ADD_CMD)
+    {
+        Serial.println(messageTemp + ">> " + ToString(solM.appendCmd(messageTemp)));
+    }
+    else if (String(topic) == MQTT_SUB_REMOVE_CMD)
+    {
+        Serial.println(">>>>>>>>>> remove command ...");
+    }
 }

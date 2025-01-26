@@ -8,12 +8,16 @@ SolenoidManager::SolenoidManager() : m_currentCmdId(0)
     }
 }
 
-CommandState SolenoidManager::appendEvent(const String& p_eventStr)
+CommandState SolenoidManager::appendCmd(const String& p_cmdStr)
 {
-    SolenoidCtrlCmd eventToAdd(p_eventStr);
+    SolenoidCtrlCmd cmdToAdd(p_cmdStr);
+    if (false == cmdToAdd.valid)
+    {
+        return CommandState::Unknown;
+    }
     for (uint8_t i = 0; i < m_currentCmdId; ++i)
     {
-        if (m_cmdList[i] == eventToAdd)
+        if (m_cmdList[i] == cmdToAdd)
         {
             return CommandState::AlreadyPresent;
         }
@@ -23,17 +27,35 @@ CommandState SolenoidManager::appendEvent(const String& p_eventStr)
         return CommandState::MemoryFull;
     }
 
-    m_cmdList[m_currentCmdId] = eventToAdd;
+    m_cmdList[m_currentCmdId] = cmdToAdd;
     m_currentCmdId++;
     return CommandState::Added;
 }
 
-CommandState SolenoidManager::removeEvent(uint8_t p_id)
+CommandState SolenoidManager::removeCmd(const String& p_cmdStr)
+{
+    SolenoidCtrlCmd cmdToRemove(p_cmdStr);
+    for (uint8_t i = 0; i < m_currentCmdId; ++i)
+    {
+        if (m_cmdList[i] == cmdToRemove)
+        {
+            return removeCmd(i);
+        }
+    }
+    return CommandState::CantRemove;
+}
+
+// add remove based on string
+// invalidate current command, and update relayStates
+CommandState SolenoidManager::removeCmd(uint8_t p_id)
 {
     if (m_currentCmdId < p_id)
     {
         return CommandState::CantRemove;
     }
+
+    // TODOsz check if this command controlled one of the relays
+    // >>> invalidate in this case
 
     for (uint8_t i = p_id; i < m_currentCmdId - 1; i++)
     {
@@ -43,7 +65,7 @@ CommandState SolenoidManager::removeEvent(uint8_t p_id)
     return CommandState::Removed;
 }
 
-String SolenoidManager::getEventString(uint8_t p_id) const
+String SolenoidManager::getCmdString(uint8_t p_id) const
 {
     if (m_currentCmdId < p_id)
     {
@@ -52,7 +74,7 @@ String SolenoidManager::getEventString(uint8_t p_id) const
     return m_cmdList[p_id].toString();
 }
 
-RelayState SolenoidManager::updateRelayStatus(const SolenoidCtrlCmd& p_cmd)
+RelayState SolenoidManager::applyCmd(const SolenoidCtrlCmd& p_cmd)
 {
     switch (p_cmd.cmdType)
     {
@@ -70,7 +92,7 @@ RelayState SolenoidManager::updateRelayStatus(const SolenoidCtrlCmd& p_cmd)
     return RelayState::Unknown;
 }
 
-bool SolenoidManager::updateRelayStates()
+void SolenoidManager::updateRelayStates(const SensorData& p_sensorData)
 {
     for (uint8_t relayIdu8 = 0; relayIdu8 < NUMBER_OF_RELAYS; relayIdu8++)
     {
@@ -89,12 +111,11 @@ bool SolenoidManager::updateRelayStates()
                 continue;
             }
 
-            RelayState state = updateRelayStatus(m_cmdList[cmdId]);
+            // TODOsz Only update the state if the command is active.
+            RelayState state = applyCmd(m_cmdList[cmdId]);
             m_relayCmdIndexes[relayIdu8].set(cmdId, m_cmdList[cmdId].priority, state);
         }
     }
-
-    return false;
 }
 
-// bool SolenoidManager::publishAllEvents() {}
+// bool SolenoidManager::publishAllCmds() {}

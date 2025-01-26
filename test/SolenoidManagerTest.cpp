@@ -9,14 +9,14 @@ TEST(SampleTest, AddAndRemove)
     SolenoidManager sm;
     ASSERT_TRUE(true);
 
-    sm.appendEvent(ValidManualStr);
-    sm.appendEvent(ValidAutomaticStr);
+    EXPECT_EQ(CommandState::Added, sm.appendCmd(ValidManualStr));
+    EXPECT_EQ(CommandState::Added, sm.appendCmd(ValidAutomaticStr));
 
-    EXPECT_EQ(2, sm.getEventNumber());
-    EXPECT_EQ(ValidManualStr, sm.getEventString(0));
+    EXPECT_EQ(2, sm.getCmdNumber());
+    EXPECT_EQ(ValidManualStr, sm.getCmdString(0));
 
-    ASSERT_EQ(CommandState::CantRemove, sm.removeEvent(3));
-    ASSERT_EQ(CommandState::Removed, sm.removeEvent(0));
-    EXPECT_EQ(1, sm.getEventNumber());
-    EXPECT_EQ(ValidAutomaticStr, sm.getEventString(0));
+    ASSERT_EQ(CommandState::CantRemove, sm.removeCmd(3));
+    ASSERT_EQ(CommandState::Removed, sm.removeCmd(0));
+    EXPECT_EQ(1, sm.getCmdNumber());
+    EXPECT_EQ(ValidAutomaticStr, sm.getCmdString(0));
 }

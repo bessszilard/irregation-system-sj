@@ -14,7 +14,7 @@ String Utils::GetSubStr(const String& p_rawMsg, int p_startId, int p_endId, bool
         std::cout << subStr << std::endl;
 #else
     int end       = p_endId == -1 ? p_rawMsg.length() - 1 : p_endId;
-    String subStr = p_rawMsg.substring(p_startId, p_endId - p_startId);
+    String subStr = p_rawMsg.substring(p_startId, p_endId);
 #endif
     return subStr;
 }

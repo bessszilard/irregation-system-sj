@@ -11,24 +11,23 @@ class SolenoidManager
 public:
     SolenoidManager();
 
-    CommandState appendEvent(const String& p_eventStr);
-    CommandState removeEvent(uint8_t p_id);
-    String getEventString(uint8_t p_id) const;
+    CommandState appendCmd(const String& p_cmdStr);
+    CommandState removeCmd(const String& p_cmdStr);
+    CommandState removeCmd(uint8_t p_id);
 
-    inline uint8_t getEventNumber() const
+    String getCmdString(uint8_t p_id) const;
+
+    inline uint8_t getCmdNumber() const
     {
         return m_currentCmdId;
     }
 
-    // bool publishAllEvents();
-    bool updateRelayStates();
-
+    // bool publishAllCmds();
     RelayState updateAndGetRelayState(RelayIds p_relayId);
 
-    void setTemperature(int8_t p_temp);
-    void setHumidity(int8_t p_temp);
-    void setMoisture(uint8_t p_moisture, uint8_t p_id);
-    RelayState updateRelayStatus(const SolenoidCtrlCmd& p_cmd);
+    void updateRelayStates(const SensorData& p_sensorData);
+
+    RelayState applyCmd(const SolenoidCtrlCmd& p_cmd);
 
     struct RelayRunning
     {
@@ -44,10 +43,18 @@ public:
         }
     };
 
+protected:
+    // TODOsz implement
+    bool isCommandActive(const SolenoidCtrlCmd& p_cmd)
+    {
+        return false;
+    };
+
 private:
     SolenoidCtrlCmd m_cmdList[MAX_NUMBER_OF_CMDS];
     RelayRunning m_relayCmdIndexes[NUMBER_OF_RELAYS];
+    SensorData m_sensorData;
 
-    uint8_t m_maxEventId;
+    uint8_t m_maxCmdId;
     uint8_t m_currentCmdId;
 };

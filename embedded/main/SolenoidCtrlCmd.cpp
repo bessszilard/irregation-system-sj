@@ -8,13 +8,16 @@
 // ATime;R5;Closed;P4;15:00->20:00
 // ATime;RX;Closed;P5;>15:00
 
-SolenoidCtrlCmd::SolenoidCtrlCmd(const String& p_cmd)
+SolenoidCtrlCmd::SolenoidCtrlCmd(const String& p_cmd) : valid(false)
 {
     cmdType    = CommandTypeFromString(p_cmd, 0, 5);
     relayId    = RelayIdTypeFromString(p_cmd, 6, 9);
     relayState = RelayStateFromString(p_cmd, 10, 16);
     priority   = CmdPriorityFromString(p_cmd, 17, 19);
     action     = Utils::GetSubStr(p_cmd, 20, -1);
+
+    valid = cmdType != CommandType::Unknown && relayId != RelayIds::Unknown && relayState != RelayState::Unknown &&
+            priority != CmdPriority::Unknown;
 }
 
 String SolenoidCtrlCmd::toString() const

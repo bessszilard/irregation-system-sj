@@ -24,6 +24,7 @@ struct SolenoidCtrlCmd
     RelayIds relayId;
     RelayState relayState;
     String action;
+    bool valid;
 
     inline bool operator==(const SolenoidCtrlCmd& p_cmd) const
     {

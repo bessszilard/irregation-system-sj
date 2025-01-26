@@ -1,6 +1,11 @@
 #pragma once
 
+#ifdef PC_BUILD
+#include "../mock/EnumsAndConstants.h"
+#else
 #include "WiFiType.h"
+#endif
+
 #include "Utils.hpp"
 
 enum class RelayIds
@@ -110,12 +115,12 @@ String ToShortString(wl_status_t p_status);
 String ToShortString(SignalStrength p_strength);
 String ToShortString(RelayState p_state);
 // String ToString(SensorTypes type);
-// String ToString(CommandState type);
+String ToString(CommandState p_state);
 
 SignalStrength ToSignalStrength(int8_t p_rssi);
 
 RelayIds ToRelayId(uint8_t p_id);
 inline uint8_t RelayIdToUInt(RelayIds p_id)
 {
-    static_cast<uint8_t>(p_id);
+    return static_cast<uint8_t>(p_id);
 }
