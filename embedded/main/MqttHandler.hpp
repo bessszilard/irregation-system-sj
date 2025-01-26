@@ -2,6 +2,7 @@
 #include <PubSubClient.h>
 #include "Structures.hpp"
 #include "MqttTopics.hpp"
+#include "SolenoidManager.hpp"
 
 class MqttHandler
 {
@@ -13,6 +14,7 @@ public:
     void publish(const SensorData& sensors);
     void publish(const RelayArrayStates& sensors);
     void publish(const LocalTime& time);
+    void publish(const SolenoidManager& solm);
 
     bool loop();
 

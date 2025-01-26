@@ -15,6 +15,8 @@ public:
     CommandState removeCmd(const String& p_cmdStr);
     CommandState removeCmd(uint8_t p_id);
 
+    String getCmdListInJson() const;
+
     String getCmdString(uint8_t p_id) const;
 
     inline uint8_t getCmdNumber() const

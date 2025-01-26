@@ -61,6 +61,15 @@ void MqttHandler::publish(const LocalTime& time)
 }
 
 //---------------------------------------------------------------
+void MqttHandler::publish(const SolenoidManager& solm)
+//---------------------------------------------------------------
+{
+
+    // publish(MQTT_SENSORS, solm.getCmdListInJson());
+    publish(MQTT_CMD_LIST, solm.getCmdListInJson());
+}
+
+//---------------------------------------------------------------
 bool MqttHandler::loop()
 //---------------------------------------------------------------
 {
@@ -110,12 +119,13 @@ void MqttHandler::publish(const char* topic, const String& message)
 
     if (m_client->publish(topic, message.c_str()))
     {
-        Serial.print("Published to");
+        Serial.print("Published to ");
         Serial.println(topic);
+        Serial.println(message);
     }
     else
     {
-        Serial.print("Failed to");
+        Serial.print("Publishing failed to ");
         Serial.println(topic);
     }
 }

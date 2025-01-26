@@ -65,6 +65,22 @@ CommandState SolenoidManager::removeCmd(uint8_t p_id)
     return CommandState::Removed;
 }
 
+String SolenoidManager::getCmdListInJson() const
+{
+    String cmdList = "{ cmdList: [";
+    for (uint8_t i = 0; i < m_currentCmdId; i++)
+    {
+        String toAdd = "\"" + m_cmdList[i].toString() + "\"";
+        if (i < m_currentCmdId - 1)
+        {
+            toAdd += ", ";
+        }
+        cmdList += toAdd;
+    }
+    cmdList += "] }";
+    return cmdList;
+}
+
 String SolenoidManager::getCmdString(uint8_t p_id) const
 {
     if (m_currentCmdId < p_id)

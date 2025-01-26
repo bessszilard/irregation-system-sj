@@ -357,10 +357,12 @@ void callback(char* topic, byte* message, unsigned int length)
     }
     if (String(topic) == MQTT_SUB_ADD_CMD)
     {
-        Serial.println(messageTemp + ">> " + ToString(solM.appendCmd(messageTemp)));
+        Serial.println(messageTemp + ">> " + ToString(solM.appendCmd(messageTemp)) + " " + solM.getCmdNumber());
+        mqttHd.publish(solM);
     }
     else if (String(topic) == MQTT_SUB_REMOVE_CMD)
     {
-        Serial.println(">>>>>>>>>> remove command ...");
+        Serial.println(messageTemp + ">> " + ToString(solM.removeCmd(messageTemp)) + " " + solM.getCmdNumber());
+        mqttHd.publish(solM);
     }
 }
