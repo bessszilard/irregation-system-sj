@@ -13,6 +13,7 @@ CommandState SolenoidManager::appendCmd(const String& p_cmdStr)
     SolenoidCtrlCmd cmdToAdd(p_cmdStr);
     if (false == cmdToAdd.valid)
     {
+        Serial.println(p_cmdStr + " is unknown");
         return CommandState::Unknown;
     }
     for (uint8_t i = 0; i < m_currentCmdId; ++i)
@@ -135,18 +136,15 @@ void SolenoidManager::updateRelayStates() // const SensorData& p_sensorData)
         for (uint8_t cmdId = 0; cmdId < m_currentCmdId; cmdId++)
         {
             RelayIds relayId = ToRelayId(relayIdu8);
-            Serial.print("RelayId " + ToString(relayId));
             // skip if not the right relay selected
             if ((relayId != m_cmdList[cmdId].relayId) && (m_cmdList[cmdId].relayId != RelayIds::AllRelays))
             {
-                Serial.print("skip not right relay selected");
                 continue;
             }
 
             // skip if the running priority is higher
             if (m_relayCmdIndexes[relayIdu8].priority >= m_cmdList[cmdId].priority)
             {
-                Serial.print("skip since running priority is higher");
                 continue;
             }
 

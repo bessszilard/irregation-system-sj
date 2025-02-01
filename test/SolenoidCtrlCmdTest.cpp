@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include "../embedded/main/SolenoidCtrlCmd.hpp"
 
-const std::string ValidManualStr    = "Manua;R01;Closed;P0;F";
-const std::string ValidAutomaticStr = "ATime;RXX;Opened;P5;15:00->20:00";
+const std::string ValidManualStr    = "Manua;R01;Closed;P00;F";
+const std::string ValidAutomaticStr = "ATime;RXX;Opened;P05;15:00->20:00";
 
 TEST(SolenoidCtrlCmdTest, ManualValidStr)
 {

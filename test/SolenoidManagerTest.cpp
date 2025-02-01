@@ -2,9 +2,18 @@
 #include "../embedded/main/SolenoidManager.hpp"
 #include "../embedded/main/Enums.hpp"
 
-const std::string ValidManualStr    = "Manua;R01;Closed;P0;F";
-const std::string ValidManualAllOpenedStr = "Manua;RXX;Opened;P0;F";
-const std::string ValidAutomaticStr = "ATime;RXX;Opened;P5;15:00->20:00";
+#define EXPECT_EQS(A, B) EXPECT_STREQ(ToString(A).c_str(), ToString(B).c_str())
+
+const std::string ValidManualStr          = "Manua;R01;Closed;P00;F";
+const std::string ValidManualAllOpenedStr = "Manua;RXX;Opened;P00;F";
+const std::string ValidAutomaticStr       = "ATime;RXX;Opened;P05;15:00->20:00";
+
+void execInfoTest(const RelayExeInfo& p_execInfo, CmdPriority p_cmdPriority, uint8_t p_cmdId, RelayState p_relayState)
+{
+    EXPECT_EQS(p_cmdPriority, p_execInfo.priority);
+    EXPECT_EQ(p_cmdId, p_execInfo.cmdIdx);
+    EXPECT_EQS(p_relayState, p_execInfo.currentState);
+}
 
 TEST(SampleTest, AddAndRemove)
 {
@@ -26,7 +35,7 @@ TEST(SampleTest, AddAndRemove)
 TEST(SampleTest, ManualControlCloseAll)
 {
     SolenoidManager sm;
-    const std::string ValidManualAllClosedStr = "Manua;RXX;Closed;P0;F";
+    const std::string ValidManualAllClosedStr = "Manua;RXX;Closed;P00;F";
 
     EXPECT_EQ(CommandState::Added, sm.appendCmd(ValidManualAllClosedStr));
 
@@ -36,17 +45,14 @@ TEST(SampleTest, ManualControlCloseAll)
     for (uint8_t i = 0; i < NUMBER_OF_RELAYS; ++i)
     {
         sm.getRelayState(ToRelayId(i), relayExeInfo);
-        // std::cout << relayExeInfo.toString() << std::endl;
-        ASSERT_EQ(CmdPriority::Priority0, relayExeInfo.priority);
-        ASSERT_EQ(0, relayExeInfo.cmdIdx);
-        ASSERT_EQ(RelayState::Closed, relayExeInfo.currentState);
+        execInfoTest(relayExeInfo, CmdPriority::Priority0, 0, RelayState::Closed);
     }
 }
 
 TEST(SampleTest, ManualControlOpenAll)
 {
     SolenoidManager sm;
-    const std::string ValidManualAllClosedStr = "Manua;RXX;Opened;P0;F";
+    const std::string ValidManualAllClosedStr = "Manua;RXX;Opened;P00;F";
 
     EXPECT_EQ(CommandState::Added, sm.appendCmd(ValidManualAllClosedStr));
 
@@ -56,8 +62,29 @@ TEST(SampleTest, ManualControlOpenAll)
     for (uint8_t i = 0; i < NUMBER_OF_RELAYS; ++i)
     {
         sm.getRelayState(ToRelayId(i), relayExeInfo);
-        EXPECT_EQ(CmdPriority::Priority0, relayExeInfo.priority);
-        EXPECT_EQ(0, relayExeInfo.cmdIdx);
-        EXPECT_EQ(RelayState::Opened, relayExeInfo.currentState);
+        execInfoTest(relayExeInfo, CmdPriority::Priority0, 0, RelayState::Opened);
+    }
+}
+
+TEST(SampleTest, ManualControlCloseAllOpenTheFirst)
+{
+    SolenoidManager sm;
+    const std::string ClosedCmdStr    = "Manua;RXX;Closed;P00;F";
+    const std::string OpenFirstCmdStr = "Manua;R01;Opened;P01;F";
+
+    EXPECT_EQS(CommandState::Added, sm.appendCmd(ClosedCmdStr));
+    EXPECT_EQS(CommandState::Added, sm.appendCmd(OpenFirstCmdStr));
+
+    sm.updateRelayStates();
+
+    RelayExeInfo relayExeInfo;
+
+    sm.getRelayState(RelayIds::Relay1, relayExeInfo);
+    execInfoTest(relayExeInfo, CmdPriority::Priority1, 1, RelayState::Opened);
+
+    for (uint8_t i = 1; i < NUMBER_OF_RELAYS; ++i)
+    {
+        sm.getRelayState(ToRelayId(i), relayExeInfo);
+        execInfoTest(relayExeInfo, CmdPriority::Priority0, 0, RelayState::Closed);
     }
 }
