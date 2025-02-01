@@ -73,9 +73,13 @@ String ToString(RelayIds p_id)
         case RelayIds::Relay10:      return "R10";
         case RelayIds::Relay11:      return "R11";
         case RelayIds::Relay12:      return "R12";
+        case RelayIds::Relay13:      return "R13";
+        case RelayIds::Relay14:      return "R14";
+        case RelayIds::Relay15:      return "R15";
+        case RelayIds::Relay16:      return "R16";
         case RelayIds::AllRelays:    return "RXX";
     }
-    return "";
+    return "Uknown";
 }
 
 String ToString(RelayState p_state)
@@ -85,7 +89,7 @@ String ToString(RelayState p_state)
         case RelayState::Opened: return "Opened";
         case RelayState::Closed: return "Closed";
     }
-    return "";
+    return "Uknown";
 }
 
 String ToString(CmdPriority p_priority)
@@ -103,7 +107,7 @@ String ToString(CmdPriority p_priority)
         case CmdPriority::Priority8: return "P8";
         case CmdPriority::Priority9: return "P9";
     }
-    return "";
+    return "Unknown";
 }
 
 String ToString(CommandType p_type)
@@ -117,7 +121,7 @@ String ToString(CommandType p_type)
         case CommandType::AutoTimeCtrl:         return "ATime";
         case CommandType::AutoMoistureCtrl:     return "AMost";
     }
-    return "";
+    return "Unknown";
 }
 
 String ToString(CommandState p_state)
@@ -131,7 +135,7 @@ String ToString(CommandState p_state)
         case CommandState::MemoryFull:       return "MemoryFull";
         case CommandState::Unknown:          return "Unknown";
     }
-    return "";
+    return "Unknown";
 }
 
 String ToShortString(wl_status_t p_status)
@@ -148,7 +152,7 @@ String ToShortString(wl_status_t p_status)
         case WL_CONNECTION_LOST:return "CL";
         case WL_DISCONNECTED:   return "DI";
     }
-    return "";
+    return "Unknown";
 }
 
 String ToShortString(SignalStrength p_strength)
@@ -197,7 +201,11 @@ RelayIds ToRelayId(uint8_t p_id)
         case 9  : return RelayIds::Relay10;
         case 10 : return RelayIds::Relay11;
         case 11 : return RelayIds::Relay12;
-        case 14 : return RelayIds::AllRelays;
+        case 12 : return RelayIds::Relay13;
+        case 13 : return RelayIds::Relay14;
+        case 14 : return RelayIds::Relay15;
+        case 15 : return RelayIds::Relay16;
+        case 17 : return RelayIds::AllRelays;
     }
     return RelayIds::Unknown;
 }

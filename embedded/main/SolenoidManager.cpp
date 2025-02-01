@@ -128,22 +128,25 @@ RelayState SolenoidManager::applyCmd(const SolenoidCtrlCmd& p_cmd)
     return RelayState::Unknown;
 }
 
-void SolenoidManager::updateRelayStates(const SensorData& p_sensorData)
+void SolenoidManager::updateRelayStates() // const SensorData& p_sensorData)
 {
     for (uint8_t relayIdu8 = 0; relayIdu8 < NUMBER_OF_RELAYS; relayIdu8++)
     {
-        for (uint8_t cmdId = 0; cmdId < m_currentCmdId - 1; cmdId++)
+        for (uint8_t cmdId = 0; cmdId < m_currentCmdId; cmdId++)
         {
             RelayIds relayId = ToRelayId(relayIdu8);
+            Serial.print("RelayId " + ToString(relayId));
             // skip if not the right relay selected
-            if ((relayId != m_cmdList[cmdId].relayId) && (relayId != RelayIds::AllRelays))
+            if ((relayId != m_cmdList[cmdId].relayId) && (m_cmdList[cmdId].relayId != RelayIds::AllRelays))
             {
+                Serial.print("skip not right relay selected");
                 continue;
             }
 
             // skip if the running priority is higher
             if (m_relayCmdIndexes[relayIdu8].priority >= m_cmdList[cmdId].priority)
             {
+                Serial.print("skip since running priority is higher");
                 continue;
             }
 

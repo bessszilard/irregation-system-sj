@@ -2,6 +2,7 @@
 
 #ifdef PC_BUILD
 #include "../mock/EnumsAndConstants.h"
+#include <cstring>
 #else
 #include "WiFiType.h"
 #endif
@@ -42,6 +43,8 @@ enum class RelayState
 
 enum class CmdPriority
 {
+    Unknown = 0,
+    PriorityLowest,
     Priority0,
     Priority1,
     Priority2,
@@ -52,8 +55,7 @@ enum class CmdPriority
     Priority7,
     Priority8,
     Priority9,
-    PriorityLowest,
-    Unknown
+    PriorityHighest,
 };
 
 enum class CommandType

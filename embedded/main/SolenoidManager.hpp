@@ -27,23 +27,15 @@ public:
     // bool publishAllCmds();
     RelayState updateAndGetRelayState(RelayIds p_relayId);
 
-    void updateRelayStates(const SensorData& p_sensorData);
+    void updateRelayStates(); // const SensorData& p_sensorData);
 
     RelayState applyCmd(const SolenoidCtrlCmd& p_cmd);
 
-    struct RelayRunning
+    void getRelayState(RelayIds id, RelayExeInfo& relayState)
     {
-        CmdPriority priority;
-        uint8_t cmdIdx;
-        RelayState currentState;
-
-        inline void set(uint8_t p_cmdIdx, CmdPriority p_priority, RelayState p_state)
-        {
-            priority     = p_priority;
-            cmdIdx       = p_cmdIdx;
-            currentState = p_state;
-        }
-    };
+        // TODOsz striction
+        relayState = m_relayCmdIndexes[RelayIdToUInt(id)];
+    }
 
 protected:
     // TODOsz implement
@@ -54,7 +46,7 @@ protected:
 
 private:
     SolenoidCtrlCmd m_cmdList[MAX_NUMBER_OF_CMDS];
-    RelayRunning m_relayCmdIndexes[NUMBER_OF_RELAYS];
+    RelayExeInfo m_relayCmdIndexes[NUMBER_OF_RELAYS];
     SensorData m_sensorData;
 
     uint8_t m_maxCmdId;

@@ -130,3 +130,22 @@ struct SensorData
         return json;
     }
 };
+
+struct RelayExeInfo
+{
+    CmdPriority priority    = CmdPriority::Unknown;
+    uint8_t cmdIdx          = 0;
+    RelayState currentState = RelayState::Unknown;
+
+    inline void set(uint8_t p_cmdIdx, CmdPriority p_priority, RelayState p_state)
+    {
+        priority     = p_priority;
+        cmdIdx       = p_cmdIdx;
+        currentState = p_state;
+    }
+
+    inline String toString() const
+    {
+        return ToString(priority) + ";" + String(cmdIdx) + ";" + ToString(currentState) + ";";
+    }
+};
