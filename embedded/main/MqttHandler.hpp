@@ -15,6 +15,7 @@ public:
     void publish(const RelayArrayStates& sensors);
     void publish(const LocalTime& time);
     void publish(const SolenoidManager& solm);
+    void publish(CommandState cmdState);
 
     bool loop();
 

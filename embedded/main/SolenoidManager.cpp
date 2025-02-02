@@ -55,14 +55,31 @@ CommandState SolenoidManager::removeCmd(uint8_t p_id)
         return CommandState::CantRemove;
     }
 
-    // TODOsz check if this command controlled one of the relays
-    // >>> invalidate in this case
+    bool removedCmdControlledARelay = false;
+    // Check if this command controlled one of the relays
+    for (uint8_t relayIdu8 = 0; relayIdu8 < NUMBER_OF_RELAYS; relayIdu8++)
+    {
+        // relay controlled by this command
+        if (m_relayCmdIndexes[relayIdu8].cmdIdx == p_id)
+        {
+            m_relayCmdIndexes[relayIdu8].priority     = CmdPriority::PriorityLowest;
+            m_relayCmdIndexes[relayIdu8].currentState = RelayState::Unknown;
+            removedCmdControlledARelay                = true;
+        }
+    }
 
+    // >>> invalidate in this case
     for (uint8_t i = p_id; i < m_currentCmdId - 1; i++)
     {
         m_cmdList[i] = m_cmdList[i + 1];
     }
     m_currentCmdId--;
+
+    if (removedCmdControlledARelay)
+    {
+        updateRelayStates();
+    }
+
     return CommandState::Removed;
 }
 

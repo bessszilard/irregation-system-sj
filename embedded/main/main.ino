@@ -88,7 +88,8 @@ void setup()
     relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
     pinMode(LED_PIN, OUTPUT);
 
-    solM.appendCmd("Manua;RXX;Closed;P00;F");
+    // solM.appendCmd("Manua;RXX;Closed;P00;F");
+    solM.appendCmd("Manua;RXX;Opened;P00;F");
 
     // Serial2.begin(9600, SERIAL_8N1, HC12_RXD, HC12_TXD); // Hardware Serial of ESP32
 }
@@ -120,6 +121,7 @@ void loop()
     mqttHd.loop();
     solM.updateRelayStates();
 
+    bool atLeastOneRelayChanged = false;
     RelayExeInfo exeInfo;
     for (RelayIds relayId = RelayIds::Relay1; relayId < RelayIds::NumberOfRelays; relayId = incRelayId(relayId))
     {
@@ -128,10 +130,19 @@ void loop()
         {
             continue;
         }
+        atLeastOneRelayChanged = true;
         // Only apply if change happened
         Serial.println(ToString(relayId) + " updated to " + ToString(exeInfo.currentState));
         relayStates.setState(relayId, exeInfo.currentState);
         relayArray.setState(relayId, exeInfo.currentState);
+    }
+
+    // we be false next loop
+    if (atLeastOneRelayChanged)
+    {
+        lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
+        // TODOsz only publish if relayStates changed
+        mqttHd.publish(relayStates);
     }
 
     // Fast loop - each seconds ----------------------------------------------------
@@ -154,7 +165,7 @@ void loop()
         }
 
         // Update LCD
-        lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
+        // lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
         digitalWrite(LED_PIN, !digitalRead(LED_PIN));
     }
 
@@ -163,9 +174,6 @@ void loop()
     {
         slowLoopCalled_ms = currentTime_ms;
         mqttHd.publish(sensorData);
-
-        // TODOsz only publish if relayStates changed
-        mqttHd.publish(relayStates);
     }
 
     // relayStates.states[1]  = RelayState::Closed;
@@ -395,12 +403,16 @@ void callback(char* topic, byte* message, unsigned int length)
     }
     if (String(topic) == MQTT_SUB_ADD_CMD)
     {
-        Serial.println(messageTemp + ">> " + ToString(solM.appendCmd(messageTemp)) + " " + solM.getCmdNumber());
+        CommandState cmdState = solM.appendCmd(messageTemp);
+        Serial.println(messageTemp + ">> " + ToString(cmdState));
+        mqttHd.publish(cmdState);
         mqttHd.publish(solM);
     }
     else if (String(topic) == MQTT_SUB_REMOVE_CMD)
     {
-        Serial.println(messageTemp + ">> " + ToString(solM.removeCmd(messageTemp)) + " " + solM.getCmdNumber());
+        CommandState cmdState = solM.removeCmd(messageTemp);
+        mqttHd.publish(cmdState);
+        Serial.println(messageTemp + ">> " + ToString(cmdState));
         mqttHd.publish(solM);
     }
 }

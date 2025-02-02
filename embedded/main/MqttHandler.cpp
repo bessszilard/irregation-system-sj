@@ -64,9 +64,14 @@ void MqttHandler::publish(const LocalTime& time)
 void MqttHandler::publish(const SolenoidManager& solm)
 //---------------------------------------------------------------
 {
-
-    // publish(MQTT_SENSORS, solm.getCmdListInJson());
     publish(MQTT_CMD_LIST, solm.getCmdListInJson());
+}
+
+//---------------------------------------------------------------
+void MqttHandler::publish(CommandState cmdState)
+//---------------------------------------------------------------
+{
+    publish(MQTT_CMD_RESPONSE, ToString(cmdState));
 }
 
 //---------------------------------------------------------------
