@@ -44,16 +44,18 @@ RelayState RelayStateFromString(const String& p_rawMsg, int p_startId /*=0*/, in
 CmdPriority CmdPriorityFromString(const String& p_rawMsg, int p_startId /*=0*/, int p_endId /*=-1*/)
 {
     String subStr = Utils::GetSubStr(p_rawMsg, p_startId, p_endId);
-    if (subStr == "P0") return CmdPriority::Priority0;
-    if (subStr == "P1") return CmdPriority::Priority1;
-    if (subStr == "P2") return CmdPriority::Priority2;
-    if (subStr == "P3") return CmdPriority::Priority3;
-    if (subStr == "P4") return CmdPriority::Priority4;
-    if (subStr == "P5") return CmdPriority::Priority5;
-    if (subStr == "P6") return CmdPriority::Priority6;
-    if (subStr == "P7") return CmdPriority::Priority7;
-    if (subStr == "P8") return CmdPriority::Priority8;
-    if (subStr == "P9") return CmdPriority::Priority9;
+    if (subStr == "PLW") return CmdPriority::PriorityLowest;
+    if (subStr == "P00") return CmdPriority::Priority0;
+    if (subStr == "P01") return CmdPriority::Priority1;
+    if (subStr == "P02") return CmdPriority::Priority2;
+    if (subStr == "P03") return CmdPriority::Priority3;
+    if (subStr == "P04") return CmdPriority::Priority4;
+    if (subStr == "P05") return CmdPriority::Priority5;
+    if (subStr == "P06") return CmdPriority::Priority6;
+    if (subStr == "P07") return CmdPriority::Priority7;
+    if (subStr == "P08") return CmdPriority::Priority8;
+    if (subStr == "P09") return CmdPriority::Priority9;
+    if (subStr == "PHI") return CmdPriority::PriorityHighest;
     return CmdPriority::Unknown;    
 }
 
@@ -96,16 +98,19 @@ String ToString(CmdPriority p_priority)
 {
     switch(p_priority)
     {
-        case CmdPriority::Priority0: return "P0";
-        case CmdPriority::Priority1: return "P1";
-        case CmdPriority::Priority2: return "P2";
-        case CmdPriority::Priority3: return "P3";
-        case CmdPriority::Priority4: return "P4";
-        case CmdPriority::Priority5: return "P5";
-        case CmdPriority::Priority6: return "P6";
-        case CmdPriority::Priority7: return "P7";
-        case CmdPriority::Priority8: return "P8";
-        case CmdPriority::Priority9: return "P9";
+        case CmdPriority::Unknown:            return "PUN";
+        case CmdPriority::PriorityLowest:     return "PLW";
+        case CmdPriority::Priority0:          return "P00";
+        case CmdPriority::Priority1:          return "P01";
+        case CmdPriority::Priority2:          return "P02";
+        case CmdPriority::Priority3:          return "P03";
+        case CmdPriority::Priority4:          return "P04";
+        case CmdPriority::Priority5:          return "P05";
+        case CmdPriority::Priority6:          return "P06";
+        case CmdPriority::Priority7:          return "P07";
+        case CmdPriority::Priority8:          return "P08";
+        case CmdPriority::Priority9:          return "P09";
+        case CmdPriority::PriorityHighest:    return "PHI";
     }
     return "Unknown";
 }

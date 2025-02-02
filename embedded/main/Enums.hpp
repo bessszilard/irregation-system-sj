@@ -34,6 +34,13 @@ enum class RelayIds
 
 #define NUMBER_OF_RELAYS (static_cast<int>(RelayIds::NumberOfRelays))
 
+// Define operator++
+inline RelayIds incRelayId(RelayIds& relayId)
+{
+    relayId = static_cast<RelayIds>(static_cast<int>(relayId) + 1);
+    return relayId;
+}
+
 enum class RelayState
 {
     Opened,

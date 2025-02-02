@@ -76,6 +76,28 @@ struct RelayArrayStates
         }
     }
 
+    RelayState getState(RelayIds relayId)
+    {
+        uint8_t relayIdU8 = RelayIdToUInt(relayId);
+        if (relayIdU8 >= NUMBER_OF_RELAYS)
+        {
+            Serial.print("Invalid relay Id");
+            return RelayState::Unknown;
+        }
+        return states[relayIdU8];
+    }
+
+    void setState(RelayIds relayId, RelayState state)
+    {
+        uint8_t relayIdU8 = RelayIdToUInt(relayId);
+        if (relayIdU8 >= NUMBER_OF_RELAYS)
+        {
+            Serial.print("Invalid relay Id");
+            return;
+        }
+        states[relayIdU8] = state;
+    }
+
     String toString() const
     {
         uint8_t spaceAfterId = 16;

@@ -88,14 +88,21 @@ void setup()
     relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
     pinMode(LED_PIN, OUTPUT);
 
+    solM.appendCmd("Manua;RXX;Closed;P00;F");
+
     // Serial2.begin(9600, SERIAL_8N1, HC12_RXD, HC12_TXD); // Hardware Serial of ESP32
 }
 
 bool opened = false;
 LocalTime locTime;
 SensorData sensorData;
-RelayArrayStates relayStates(RelayState::Opened);
+RelayArrayStates relayStates(RelayState::Unknown);
 char myData[50];
+
+uint32_t slowLoopCalled_ms         = 0;     // Store the last time the code ran
+uint32_t fastLoopCalled_ms         = 0;     // Store the last time the code ran
+const uint32_t slowLoopInterval_ms = 20000; // 20 seconds in milliseconds
+const uint32_t fastLoopInterval_ms = 1000;  // 1 seconds in milliseconds
 
 void loop()
 {
@@ -106,8 +113,75 @@ void loop()
         Serial.println(myData);
         digitalWrite(LED_PIN, !digitalRead(LED_PIN));
     }
-    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+
+    uint32_t currentTime_ms = millis();
+
+    // each each time -------------------------------------------------------------
     mqttHd.loop();
+    solM.updateRelayStates();
+
+    RelayExeInfo exeInfo;
+    for (RelayIds relayId = RelayIds::Relay1; relayId < RelayIds::NumberOfRelays; relayId = incRelayId(relayId))
+    {
+        solM.getRelayState(relayId, exeInfo);
+        if (relayStates.getState(relayId) == exeInfo.currentState)
+        {
+            continue;
+        }
+        // Only apply if change happened
+        Serial.println(ToString(relayId) + " updated to " + ToString(exeInfo.currentState));
+        relayStates.setState(relayId, exeInfo.currentState);
+        relayArray.setState(relayId, exeInfo.currentState);
+    }
+
+    // Fast loop - each seconds ----------------------------------------------------
+    if (currentTime_ms - fastLoopCalled_ms >= fastLoopInterval_ms)
+    {
+        fastLoopCalled_ms = currentTime_ms;
+
+        if (false == localTimeUpdate(locTime))
+        {
+            Serial.println("Invalid local time");
+            return;
+        }
+        mqttHd.publish(locTime);
+
+        // Update sensors
+        if (false == sensorDataUpdate(sensorData))
+        {
+            Serial.println("Failed to updateSensor data");
+            return;
+        }
+
+        // Update LCD
+        lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
+        digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+    }
+
+    // Slow loop
+    if (currentTime_ms - slowLoopCalled_ms >= slowLoopInterval_ms)
+    {
+        slowLoopCalled_ms = currentTime_ms;
+        mqttHd.publish(sensorData);
+
+        // TODOsz only publish if relayStates changed
+        mqttHd.publish(relayStates);
+    }
+
+    // relayStates.states[1]  = RelayState::Closed;
+    // relayStates.states[8]  = opened ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[0]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[2]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[3]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[4]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[9]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // relayStates.states[15] = (false == opened) ? RelayState::Opened : RelayState::Closed;
+    // opened                 = !opened;
+
+    // // Update relay state
+    // relayArray.update(relayStates);
+
+    // // publish to MQTT
 
     // int rv = fram.begin(0x50);
     // if (rv != 0)
@@ -135,42 +209,6 @@ void loop()
 
     // slow loop
     // Update time
-    if (false == localTimeUpdate(locTime))
-    {
-        Serial.println("Invalid local time");
-        return;
-    }
-    mqttHd.publish(locTime);
-
-    // Update sensors
-    if (false == sensorDataUpdate(sensorData))
-    {
-        Serial.println("Invalid local time");
-        return;
-    }
-    mqttHd.publish(sensorData);
-
-    mqttHd.publish(relayStates);
-
-    // relayStates.states[1]  = RelayState::Closed;
-    // relayStates.states[8]  = opened ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[0]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[2]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[3]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[4]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[9]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[15] = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // opened                 = !opened;
-
-    // // Update relay state
-    // relayArray.update(relayStates);
-
-    // // publish to MQTT
-
-    // Update LCD
-    lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
-    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-    delay(1000);
 }
 
 //---------------------------------------------------------------
