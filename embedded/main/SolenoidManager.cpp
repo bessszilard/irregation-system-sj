@@ -119,6 +119,27 @@ String SolenoidManager::getCmdListInJson() const
     return result;
 }
 
+// clang-format off
+String SolenoidManager::getRelayStatesWithCmdIdsJson() const
+{
+    String relayStateWithId = "{\n";
+    for (uint8_t relayIdu8 = 0; relayIdu8 < NUMBER_OF_RELAYS; relayIdu8++)
+    {
+        RelayIds relayId = ToRelayId(relayIdu8);
+        relayStateWithId += "\"" + ToString(relayId) + "\": {\n";
+        relayStateWithId += "\"state\": \"" + ToString(m_relayCmdIndexes[relayIdu8].currentState) + "\",\n";
+        uint8_t currenCmdId =  m_relayCmdIndexes[relayIdu8].cmdIdx;
+        relayStateWithId += "\"cmd\": \"" + m_cmdList[currenCmdId].toString() + "\",\n";
+        // relayStateWithId += "\"cmd\": \"" + String(currenCmdId) + "\",\n";
+        relayStateWithId += "\"priority\": " + ToString(m_relayCmdIndexes[relayIdu8].priority) + ",\n";
+        relayStateWithId += "}";
+        relayStateWithId += relayIdu8 < NUMBER_OF_RELAYS - 1? ",\n" : "\n";
+    }
+    relayStateWithId += "}";
+    return relayStateWithId;
+}
+// clang-format on
+
 String SolenoidManager::getCmdString(uint8_t p_id) const
 {
     if (m_currentCmdId < p_id)

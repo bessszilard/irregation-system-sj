@@ -47,7 +47,7 @@ DS1307 rtc;
 BME280I2C bme; // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 // Default : forced mode, standby time = 1000 ms
 
-SignalStrength wifiSignalStrength = SignalStrength::Unknown;
+WifiSignalStrength wifiWifiSignalStrength = WifiSignalStrength::Unknown;
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -56,6 +56,7 @@ MqttHandler mqttHd(&mqttClient);
 FRAM fram(&Wire);
 
 SolenoidManager solM;
+WifiSignalStrength filteredRssi = WifiSignalStrength::Unknown;
 
 void localTimeSetup();
 void sensorSetup();
@@ -88,8 +89,7 @@ void setup()
     relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
     pinMode(LED_PIN, OUTPUT);
 
-    // solM.appendCmd("Manua;RXX;Closed;P00;F");
-    solM.appendCmd("Manua;RXX;Opened;P00;F");
+    solM.appendCmd("Manua;RXX;Closed;P00;F");
 
     // Serial2.begin(9600, SERIAL_8N1, HC12_RXD, HC12_TXD); // Hardware Serial of ESP32
 }
@@ -98,6 +98,10 @@ bool opened = false;
 LocalTime locTime;
 SensorData sensorData;
 RelayArrayStates relayStates(RelayState::Unknown);
+wl_status_t oldWifiStatus              = WL_NO_SHIELD;
+WifiSignalStrength oldRssi             = WifiSignalStrength::Unknown;
+WifiSignalStrength filteredWifiSignals = WifiSignalStrength::Unknown;
+
 char myData[50];
 
 uint32_t slowLoopCalled_ms         = 0;     // Store the last time the code ran
@@ -132,17 +136,12 @@ void loop()
         }
         atLeastOneRelayChanged = true;
         // Only apply if change happened
-        Serial.println(ToString(relayId) + " updated to " + ToString(exeInfo.currentState));
         relayStates.setState(relayId, exeInfo.currentState);
         relayArray.setState(relayId, exeInfo.currentState);
     }
-
-    // we be false next loop
     if (atLeastOneRelayChanged)
     {
-        lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
-        // TODOsz only publish if relayStates changed
-        mqttHd.publish(relayStates);
+        mqttHd.publishRelayInfo(solM.getRelayStatesWithCmdIdsJson());
     }
 
     // Fast loop - each seconds ----------------------------------------------------
@@ -164,8 +163,9 @@ void loop()
             return;
         }
 
+        filteredRssi = ToWifiSignalStrength(Utils::GetSmoothedRSSI(WiFi.RSSI()));
+
         // Update LCD
-        // lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), false, relayStates);
         digitalWrite(LED_PIN, !digitalRead(LED_PIN));
     }
 
@@ -175,21 +175,6 @@ void loop()
         slowLoopCalled_ms = currentTime_ms;
         mqttHd.publish(sensorData);
     }
-
-    // relayStates.states[1]  = RelayState::Closed;
-    // relayStates.states[8]  = opened ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[0]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[2]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[3]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[4]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[9]  = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // relayStates.states[15] = (false == opened) ? RelayState::Opened : RelayState::Closed;
-    // opened                 = !opened;
-
-    // // Update relay state
-    // relayArray.update(relayStates);
-
-    // // publish to MQTT
 
     // int rv = fram.begin(0x50);
     // if (rv != 0)
@@ -217,6 +202,15 @@ void loop()
 
     // slow loop
     // Update time
+
+    // atLeastOneRelayChanged will be false next loop
+    if (atLeastOneRelayChanged || oldRssi != filteredRssi || oldWifiStatus != WiFi.status())
+    {
+        Serial.println(ToShortString(oldRssi) + " != " + ToShortString(filteredRssi));
+        oldWifiStatus = WiFi.status();
+        oldRssi       = filteredRssi;
+        lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), mqttHd.connected(), relayStates);
+    }
 }
 
 //---------------------------------------------------------------
@@ -385,22 +379,7 @@ void callback(char* topic, byte* message, unsigned int length)
 
     // Feel free to add more if statements to control more GPIOs with MQTT
 
-    // If a message is received on the topic esp32/output, you check if the message is either "on" or "off".
-    // Changes the output state according to the message
-    if (String(topic) == "esp32/output")
-    {
-        Serial.print("Changing output to ");
-        // if (messageTemp == "on")
-        // {
-        //     Serial.println("on");
-        //     digitalWrite(LED_PIN, HIGH);
-        // }
-        // else if (messageTemp == "off")
-        // {
-        //     Serial.println("off");
-        //     digitalWrite(LED_PIN, LOW);
-        // }
-    }
+    // Subscribed topics
     if (String(topic) == MQTT_SUB_ADD_CMD)
     {
         CommandState cmdState = solM.appendCmd(messageTemp);

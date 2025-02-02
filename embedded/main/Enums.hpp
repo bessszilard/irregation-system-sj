@@ -94,7 +94,7 @@ enum class CommandState
     Unknown
 };
 
-enum class SignalStrength
+enum class WifiSignalStrength
 {
     Strength9of9,
     Strength8of9,
@@ -121,12 +121,12 @@ String ToString(CommandType p_type);
 
 // For LCD display
 String ToShortString(wl_status_t p_status);
-String ToShortString(SignalStrength p_strength);
+String ToShortString(WifiSignalStrength p_strength);
 String ToShortString(RelayState p_state);
 // String ToString(SensorTypes type);
 String ToString(CommandState p_state);
 
-SignalStrength ToSignalStrength(int8_t p_rssi);
+WifiSignalStrength ToWifiSignalStrength(int8_t p_rssi);
 
 RelayIds ToRelayId(uint8_t p_id);
 inline uint8_t RelayIdToUInt(RelayIds p_id)

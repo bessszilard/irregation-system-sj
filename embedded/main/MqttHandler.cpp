@@ -5,6 +5,7 @@ MqttHandler::MqttHandler(PubSubClient* p_client)
 //---------------------------------------------------------------
 {
     m_client = p_client;
+    m_client->setBufferSize(2048);
 }
 
 //---------------------------------------------------------------
@@ -54,6 +55,13 @@ void MqttHandler::publish(const RelayArrayStates& states)
 }
 
 //---------------------------------------------------------------
+void MqttHandler::publishRelayInfo(const String& relayInfo)
+//---------------------------------------------------------------
+{
+    publish(MQTT_RELAYS, relayInfo);
+}
+
+//---------------------------------------------------------------
 void MqttHandler::publish(const LocalTime& time)
 //---------------------------------------------------------------
 {
@@ -84,6 +92,13 @@ bool MqttHandler::loop()
         return false;
     }
     return m_client->loop();
+}
+
+//---------------------------------------------------------------
+bool MqttHandler::connected()
+//---------------------------------------------------------------
+{
+    return m_client->connected();
 }
 
 //---------------------------------------------------------------

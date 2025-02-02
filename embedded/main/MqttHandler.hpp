@@ -13,11 +13,13 @@ public:
 
     void publish(const SensorData& sensors);
     void publish(const RelayArrayStates& sensors);
+    void publishRelayInfo(const String& relayInfo);
     void publish(const LocalTime& time);
     void publish(const SolenoidManager& solm);
     void publish(CommandState cmdState);
 
     bool loop();
+    bool connected();
 
     void reconnectMqtt();
 

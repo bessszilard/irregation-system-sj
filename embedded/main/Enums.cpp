@@ -160,20 +160,20 @@ String ToShortString(wl_status_t p_status)
     return "Unknown";
 }
 
-String ToShortString(SignalStrength p_strength)
+String ToShortString(WifiSignalStrength p_strength)
 {
     switch(p_strength)
     {
-        case SignalStrength::Strength9of9: return "9";
-        case SignalStrength::Strength8of9: return "8";
-        case SignalStrength::Strength7of9: return "7";
-        case SignalStrength::Strength6of9: return "6";
-        case SignalStrength::Strength5of9: return "5";
-        case SignalStrength::Strength4of9: return "4";
-        case SignalStrength::Strength3of9: return "3";
-        case SignalStrength::Strength2of9: return "2";
-        case SignalStrength::Strength1of9: return "1";
-        case SignalStrength::Strength0of9: return "0";
+        case WifiSignalStrength::Strength9of9: return "9";
+        case WifiSignalStrength::Strength8of9: return "8";
+        case WifiSignalStrength::Strength7of9: return "7";
+        case WifiSignalStrength::Strength6of9: return "6";
+        case WifiSignalStrength::Strength5of9: return "5";
+        case WifiSignalStrength::Strength4of9: return "4";
+        case WifiSignalStrength::Strength3of9: return "3";
+        case WifiSignalStrength::Strength2of9: return "2";
+        case WifiSignalStrength::Strength1of9: return "1";
+        case WifiSignalStrength::Strength0of9: return "0";
     }
     return "U";
 }
@@ -215,19 +215,19 @@ RelayIds ToRelayId(uint8_t p_id)
     return RelayIds::Unknown;
 }
 
-SignalStrength ToSignalStrength(int8_t p_rssi)
+WifiSignalStrength ToWifiSignalStrength(int8_t p_rssi)
 {
-    if (p_rssi ==  0) return SignalStrength::Unknown;
-    if (p_rssi > -50) return SignalStrength::Strength9of9;
-    if (p_rssi > -55) return SignalStrength::Strength8of9;
-    if (p_rssi > -60) return SignalStrength::Strength7of9;
-    if (p_rssi > -65) return SignalStrength::Strength6of9;
-    if (p_rssi > -70) return SignalStrength::Strength5of9;
-    if (p_rssi > -75) return SignalStrength::Strength4of9;
-    if (p_rssi > -80) return SignalStrength::Strength3of9;
-    if (p_rssi > -85) return SignalStrength::Strength2of9;
-    if (p_rssi > -90) return SignalStrength::Strength1of9;
-    return SignalStrength::Strength0of9;
+    if (p_rssi ==  0) return WifiSignalStrength::Unknown;
+    if (p_rssi > -50) return WifiSignalStrength::Strength9of9;
+    if (p_rssi > -55) return WifiSignalStrength::Strength8of9;
+    if (p_rssi > -60) return WifiSignalStrength::Strength7of9;
+    if (p_rssi > -65) return WifiSignalStrength::Strength6of9;
+    if (p_rssi > -70) return WifiSignalStrength::Strength5of9;
+    if (p_rssi > -75) return WifiSignalStrength::Strength4of9;
+    if (p_rssi > -80) return WifiSignalStrength::Strength3of9;
+    if (p_rssi > -85) return WifiSignalStrength::Strength2of9;
+    if (p_rssi > -90) return WifiSignalStrength::Strength1of9;
+    return WifiSignalStrength::Strength0of9;
 }
 
 // clang-format on

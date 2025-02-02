@@ -17,6 +17,8 @@ public:
 
     String getCmdListInJson() const;
 
+    String getRelayStatesWithCmdIdsJson() const;
+
     String getCmdString(uint8_t p_id) const;
 
     inline uint8_t getCmdNumber() const

@@ -63,7 +63,10 @@ void LcdLayouts::updateDef(wl_status_t p_wifiState,
                            bool p_mqttState,
                            const RelayArrayStates& p_relayArrayState)
 {
-    String firstLine = "W:" + ToShortString(p_wifiState) + " " + ToShortString(ToSignalStrength(p_rssi_dBm)) + " ";
+    // TODOsz only update if needed
+    // static wl_status_t lastWifiState = WL_DISCONNECTED;
+
+    String firstLine = "W:" + ToShortString(p_wifiState) + " " + ToShortString(ToWifiSignalStrength(p_rssi_dBm)) + " ";
     firstLine += "M:" + String(p_mqttState);
 
     String secondLine = p_relayArrayState.toString();
