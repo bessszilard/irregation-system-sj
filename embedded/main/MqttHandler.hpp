@@ -20,6 +20,7 @@ public:
 
     bool loop();
     bool connected();
+    bool subscribeTopics();
 
     void reconnectMqtt();
 

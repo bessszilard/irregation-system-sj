@@ -122,7 +122,13 @@ void loop()
     uint32_t currentTime_ms = millis();
 
     // each each time -------------------------------------------------------------
-    mqttHd.loop();
+
+    // we only check mqtt if Wifi is connected.
+    if (WL_CONNECTED == WiFi.status())
+    {
+        mqttHd.loop();
+    }
+
     solM.updateRelayStates();
 
     bool atLeastOneRelayChanged = false;

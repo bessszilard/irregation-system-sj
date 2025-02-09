@@ -30,9 +30,12 @@ bool MqttHandler::init(const char* p_domain, uint16_t p_port, MQTT_CALLBACK_SIGN
         Serial.println("The MQTT server connection failed...");
         return false;
     }
-    m_client->subscribe("esp32/output");
-    m_client->subscribe(MQTT_SUB_ADD_CMD);
-    m_client->subscribe(MQTT_SUB_REMOVE_CMD);
+
+    Serial.println("connected");
+    if (false == subscribeTopics())
+    {
+        Serial.println("Failed to subscribe topics");
+    }
 
     // comes through the macro
     m_client->setCallback(callback);
@@ -65,7 +68,7 @@ void MqttHandler::publishRelayInfo(const String& relayInfo)
 void MqttHandler::publish(const LocalTime& time)
 //---------------------------------------------------------------
 {
-    publish(MQTT_LOCAL_TIME, time.toString());
+    publish(MQTT_LOCAL_TIME, "{ \"LocalTime\": \"" + time.toString() + "\" }");
 }
 
 //---------------------------------------------------------------
@@ -91,6 +94,10 @@ bool MqttHandler::loop()
         Serial.println("Invalid mqtt client");
         return false;
     }
+    if (false == connected())
+    {
+        reconnectMqtt();
+    }
     return m_client->loop();
 }
 
@@ -99,6 +106,22 @@ bool MqttHandler::connected()
 //---------------------------------------------------------------
 {
     return m_client->connected();
+}
+
+//---------------------------------------------------------------
+bool MqttHandler::subscribeTopics()
+//---------------------------------------------------------------
+{
+    if (m_client == nullptr)
+    {
+        Serial.println("Invalid mqtt client");
+        return false;
+    }
+
+    bool success = true;
+    success &= m_client->subscribe(MQTT_SUB_ADD_CMD);
+    success &= m_client->subscribe(MQTT_SUB_REMOVE_CMD);
+    return success;
 }
 
 //---------------------------------------------------------------
@@ -113,8 +136,10 @@ void MqttHandler::reconnectMqtt()
         if (m_client->connect("espClient"))
         {
             Serial.println("connected");
-            // Subscribe
-            m_client->subscribe("esp32/output");
+            if (false == subscribeTopics())
+            {
+                Serial.println("Failed to subscribe topics");
+            }
         }
         else
         {
