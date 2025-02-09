@@ -122,22 +122,50 @@ String SolenoidManager::getCmdListInJson() const
 // clang-format off
 String SolenoidManager::getRelayStatesWithCmdIdsJson() const
 {
-    String relayStateWithId = "{\n";
+    // First pass: Calculate required size
+    size_t totalSize = 3; // "{\n" + "}"
     for (uint8_t relayIdu8 = 0; relayIdu8 < NUMBER_OF_RELAYS; relayIdu8++)
     {
         RelayIds relayId = ToRelayId(relayIdu8);
-        relayStateWithId += "\"" + ToString(relayId) + "\": {\n";
-        relayStateWithId += "\"state\": \"" + ToString(m_relayCmdIndexes[relayIdu8].currentState) + "\",\n";
-        uint8_t currenCmdId =  m_relayCmdIndexes[relayIdu8].cmdIdx;
-        relayStateWithId += "\"cmd\": \"" + m_cmdList[currenCmdId].toString() + "\",\n";
-        // relayStateWithId += "\"cmd\": \"" + String(currenCmdId) + "\",\n";
-        relayStateWithId += "\"priority\": " + ToString(m_relayCmdIndexes[relayIdu8].priority) + ",\n";
-        relayStateWithId += "}";
-        relayStateWithId += relayIdu8 < NUMBER_OF_RELAYS - 1? ",\n" : "\n";
+        totalSize += ToString(relayId).length() + 10; // Quotes + `": {\n`
+        totalSize += ToString(m_relayCmdIndexes[relayIdu8].currentState).length() + 13; // `"state": "XXX",\n`
+        uint8_t currenCmdId = m_relayCmdIndexes[relayIdu8].cmdIdx;
+        totalSize += m_cmdList[currenCmdId].toString().length() + 10; // `"cmd": "XXX",\n`
+        totalSize += ToString(m_relayCmdIndexes[relayIdu8].priority).length() + 15; // `"priority": X,\n`
+        totalSize += (relayIdu8 < NUMBER_OF_RELAYS - 1) ? 2 : 1; // ",\n" or "\n"
     }
-    relayStateWithId += "}";
-    return relayStateWithId;
+
+    // Allocate memory
+    char *buffer = new char[totalSize + 1]; // +1 for null terminator
+    if (!buffer) return "{}"; // Memory allocation failed, return empty JSON
+
+    // Second pass: Build JSON string
+    size_t offset = 0;
+    offset += snprintf(buffer + offset, totalSize - offset + 1, "{\n");
+    
+    for (uint8_t relayIdu8 = 0; relayIdu8 < NUMBER_OF_RELAYS; relayIdu8++)
+    {
+        RelayIds relayId = ToRelayId(relayIdu8);
+        offset += snprintf(buffer + offset, totalSize - offset + 1, "\"%s\": {\n", ToString(relayId).c_str());
+        offset += snprintf(buffer + offset, totalSize - offset + 1, "\"state\": \"%s\",\n", 
+                           ToString(m_relayCmdIndexes[relayIdu8].currentState).c_str());
+        uint8_t currenCmdId = m_relayCmdIndexes[relayIdu8].cmdIdx;
+        offset += snprintf(buffer + offset, totalSize - offset + 1, "\"cmd\": \"%s\",\n", 
+                           m_cmdList[currenCmdId].toString().c_str());
+        offset += snprintf(buffer + offset, totalSize - offset + 1, "\"priority\": \"%s\"\n", 
+                           ToString(m_relayCmdIndexes[relayIdu8].priority).c_str());
+        offset += snprintf(buffer + offset, totalSize - offset + 1, "}%s\n", 
+                           (relayIdu8 < NUMBER_OF_RELAYS - 1) ? "," : "");
+    }
+
+    offset += snprintf(buffer + offset, totalSize - offset + 1, "}");
+
+    // Convert to String, free memory, and return
+    String jsonResult = String(buffer);
+    delete[] buffer;
+    return jsonResult;
 }
+
 // clang-format on
 
 String SolenoidManager::getCmdString(uint8_t p_id) const
