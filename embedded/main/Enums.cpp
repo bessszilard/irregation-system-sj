@@ -230,4 +230,106 @@ WifiSignalStrength ToWifiSignalStrength(int8_t p_rssi)
     return WifiSignalStrength::Strength0of9;
 }
 
+RelayIds& operator++(RelayIds& c)
+{
+    if (c == RelayIds::Unknown)
+    {
+        return c;
+    }
+    c = static_cast<RelayIds>(static_cast<int>(c) + 1);
+    return c;
+}
+
+CommandType& operator++(CommandType& c)
+{
+    if (c == CommandType::Unknown)
+    {
+        return c;
+    }
+    c = static_cast<CommandType>(static_cast<int>(c) + 1);
+    return c;
+}
+
+RelayState& operator++(RelayState& c)
+{
+    if (c == RelayState::Unknown)
+    {
+        return c;
+    }
+    c = static_cast<RelayState>(static_cast<int>(c) + 1);
+    return c;
+}
+
+CmdPriority& operator++(CmdPriority& c)
+{
+    if (c == CmdPriority::Unknown)
+    {
+        return c;
+    }
+    c = static_cast<CmdPriority>(static_cast<int>(c) + 1);
+    return c;
+}
+
 // clang-format on
+// ATime;RXX;Opened;P05;15:00->20:00
+void GetCommandBuilderJSON(String& json)
+{
+    json       = " {\"CommandType\": [";
+    bool first = true;
+    for (CommandType i = CommandType::ManCtrl; i < CommandType::Unknown; ++i)
+    {
+        if (!first)
+        {
+            json += ", ";
+        }
+        first = false;
+        json += "\"" + ToString(i) + "\"";
+    }
+    json += "],";
+
+    first = true;
+    json += " \"RelayIds\": [";
+    for (RelayIds i = RelayIds::Relay1; i <= RelayIds::AllRelays; ++i)
+    {
+        if (i == RelayIds::NumberOfRelays)
+        {
+            continue;
+        }
+
+        if (!first)
+        {
+            json += ", ";
+        }
+        first = false;
+        json += "\"" + ToString(i) + "\"";
+    }
+    json += "],";
+
+    first = true;
+    json += " \"RelayState\": [";
+    for (RelayState i = RelayState::Opened; i < RelayState::Unknown; ++i)
+    {
+        if (!first)
+        {
+            json += ", ";
+        }
+        first = false;
+        json += "\"" + ToString(i) + "\"";
+    }
+    json += "],";
+
+    first = true;
+    json += " \"CmdPriority\": [";
+    for (CmdPriority i = CmdPriority::PriorityLowest; i < CmdPriority::Unknown; ++i)
+    {
+        if (!first)
+        {
+            json += ", ";
+        }
+        first = false;
+        json += "\"" + ToString(i) + "\"";
+    }
+    json += "]";
+
+    json += "}";
+}

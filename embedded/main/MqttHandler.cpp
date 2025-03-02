@@ -86,6 +86,13 @@ void MqttHandler::publish(CommandState cmdState)
 }
 
 //---------------------------------------------------------------
+void MqttHandler::publishCmdOptions(const String& cmdOptions)
+//---------------------------------------------------------------
+{
+    publish(MQTT_CMD_OPTIONS, cmdOptions);
+}
+
+//---------------------------------------------------------------
 bool MqttHandler::loop()
 //---------------------------------------------------------------
 {
@@ -121,6 +128,7 @@ bool MqttHandler::subscribeTopics()
     bool success = true;
     success &= m_client->subscribe(MQTT_SUB_ADD_CMD);
     success &= m_client->subscribe(MQTT_SUB_REMOVE_CMD);
+    success &= m_client->subscribe(MQTT_SUB_GET_COMMAND_OPTIONS);
     return success;
 }
 

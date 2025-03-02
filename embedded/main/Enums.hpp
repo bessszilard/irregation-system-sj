@@ -29,7 +29,7 @@ enum class RelayIds
     Relay16,
     NumberOfRelays,
     AllRelays,
-    Unknown = 0xFF
+    Unknown
 };
 
 #define NUMBER_OF_RELAYS (static_cast<int>(RelayIds::NumberOfRelays))
@@ -50,7 +50,6 @@ enum class RelayState
 
 enum class CmdPriority
 {
-    Unknown = 0,
     PriorityLowest,
     Priority0,
     Priority1,
@@ -63,6 +62,7 @@ enum class CmdPriority
     Priority8,
     Priority9,
     PriorityHighest,
+    Unknown
 };
 
 enum class CommandType
@@ -133,3 +133,10 @@ inline uint8_t RelayIdToUInt(RelayIds p_id)
 {
     return static_cast<uint8_t>(p_id);
 }
+
+void GetCommandBuilderJSON(String& json);
+
+RelayIds& operator++(RelayIds& c);
+CommandType& operator++(CommandType& c);
+RelayState& operator++(RelayState& c);
+CmdPriority& operator++(CmdPriority& c);

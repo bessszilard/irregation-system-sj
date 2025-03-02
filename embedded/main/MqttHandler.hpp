@@ -18,6 +18,8 @@ public:
     void publish(const SolenoidManager& solm);
     void publish(CommandState cmdState);
 
+    void publishCmdOptions(const String& cmdOptions);
+
     bool loop();
     bool connected();
     bool subscribeTopics();

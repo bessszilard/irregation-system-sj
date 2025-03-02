@@ -1,5 +1,4 @@
 
-#include <BME280I2C.h>
 #include <Wire.h>
 #include <DS1307.h> // https://www.electronicwings.com/esp32/rtc-ds1307-interfacing-with-esp32
 
@@ -43,9 +42,6 @@ DHT humSensor(HUMIDITY_DATA_PIN, 11);
 LcdLayouts lcdLayout;
 YFG1FlowMeter fm(FLOW_METER_PIN);
 DS1307 rtc;
-
-BME280I2C bme; // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
-// Default : forced mode, standby time = 1000 ms
 
 WifiSignalStrength wifiWifiSignalStrength = WifiSignalStrength::Unknown;
 
@@ -331,24 +327,6 @@ bool localTimeUpdate(LocalTime& p_data)
 void sensorSetup()
 //---------------------------------------------------------------
 {
-    // TODOsz update
-    // while (!bme.begin())
-    // {
-    //     Serial.println("Could not find BME280 sensor!");
-    //     delay(1000);
-    // }
-
-    // switch (bme.chipModel())
-    // {
-    //     case BME280::ChipModel_BME280:
-    //         Serial.println("Found BME280 sensor! Success.");
-    //         break;
-    //     case BME280::ChipModel_BMP280:
-    //         Serial.println("Found BMP280 sensor! No Humidity available.");
-    //         break;
-    //     default:
-    //         Serial.println("Found UNKNOWN sensor! Error!");
-    // }
 }
 
 //---------------------------------------------------------------
@@ -399,5 +377,11 @@ void callback(char* topic, byte* message, unsigned int length)
         mqttHd.publish(cmdState);
         Serial.println(messageTemp + ">> " + ToString(cmdState));
         mqttHd.publish(solM);
+    }
+    else if (String(topic) == MQTT_SUB_GET_COMMAND_OPTIONS)
+    {
+        String json;
+        GetCommandBuilderJSON(json);
+        mqttHd.publishCmdOptions(json);
     }
 }
