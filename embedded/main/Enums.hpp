@@ -61,6 +61,8 @@ enum class CmdPriority
     Priority7,
     Priority8,
     Priority9,
+    PriorityToggleAll,
+    PriorityToggleOne,
     PriorityHighest,
     Unknown
 };

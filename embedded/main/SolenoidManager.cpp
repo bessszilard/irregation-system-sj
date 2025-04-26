@@ -1,5 +1,7 @@
 #include "SolenoidManager.hpp"
 
+#define DELIMITER "_"
+
 SolenoidManager::SolenoidManager() : m_currentCmdId(0)
 {
     for (uint8_t id = 0; id < NUMBER_OF_RELAYS; id++)
@@ -44,6 +46,19 @@ CommandState SolenoidManager::removeCmd(const String& p_cmdStr)
         }
     }
     return CommandState::CantRemove;
+}
+
+CommandState SolenoidManager::overrideCmd(const String& p_cmdStr)
+{
+    SolenoidCtrlCmd cmdToAdd(p_cmdStr);
+    for (uint8_t i = 0; i < m_currentCmdId; ++i)
+    {
+        if ((m_cmdList[i].priority == cmdToAdd.priority) && (m_cmdList[i].relayId == cmdToAdd.relayId))
+        {
+            removeCmd(i);
+        }
+    }
+    return appendCmd(p_cmdStr);
 }
 
 // add remove based on string
@@ -100,7 +115,7 @@ String SolenoidManager::getCmdListInJson() const
     }
 
     // Start building the JSON
-    strcpy(buffer, "{ cmdList: [");
+    strcpy(buffer, "{ \"cmdList\": [");
     for (uint8_t i = 0; i < m_currentCmdId; i++)
     {
         strcat(buffer, "\"");
@@ -117,6 +132,69 @@ String SolenoidManager::getCmdListInJson() const
     free(buffer);
 
     return result;
+}
+
+String SolenoidManager::getCmdListStr() const
+{
+    size_t estimatedSize = 0;
+
+    for (uint8_t i = 0; i < m_currentCmdId; i++)
+    {
+        estimatedSize += m_cmdList[i].toString().length();
+    }
+
+    estimatedSize += m_currentCmdId - 1; // for DELIMITER characters
+
+    String result;
+    result.reserve(estimatedSize); // Preallocate memory
+
+    for (uint8_t i = 0; i < m_currentCmdId; i++)
+    {
+        result += m_cmdList[i].toString();
+        result += DELIMITER;
+    }
+    return result;
+}
+
+bool SolenoidManager::loadCmdsFromString(const String& p_cmds)
+{
+    m_currentCmdId = 0;
+
+    int start = 0;
+    int end   = p_cmds.indexOf(DELIMITER);
+
+    while (end != -1 && m_currentCmdId < MAX_NUMBER_OF_CMDS)
+    {
+        String line = p_cmds.substring(start, end);
+
+        if (CommandState::Added != appendCmd(line))
+        {
+            Serial.print("Failed to parse line: ");
+            Serial.println(line);
+            return false;
+        }
+        start = end + 1;
+        end   = p_cmds.indexOf(DELIMITER, start);
+    }
+
+    // Handle last line (if not ending with newline)
+    if (start < p_cmds.length() && m_currentCmdId < MAX_NUMBER_OF_CMDS)
+    {
+        String line = p_cmds.substring(start);
+        line.trim();
+
+        if (line.length() > 0)
+        {
+            if (CommandState::Added != appendCmd(line))
+            {
+                Serial.print("Failed to parse final line: ");
+                Serial.println(line);
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 // clang-format off

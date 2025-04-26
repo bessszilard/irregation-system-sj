@@ -29,3 +29,14 @@ TEST(SolenoidCtrlCmdTest, toString)
     SolenoidCtrlCmd sm(ValidAutomaticStr);
     EXPECT_EQ(ValidAutomaticStr, sm.toString());
 }
+
+TEST(SolenoidCtrlCmdTest, Toggle)
+{
+    SolenoidCtrlCmd sm("Toggl;R13;Opened;PTO;");
+    Serial.print(sm.toString());
+    EXPECT_TRUE(sm.valid);
+    // EXPECT_EQ(sm.cmdType, CommandType::AutoTimeCtrl);
+    // EXPECT_EQ(sm.relayId, RelayIds::AllRelays);
+    // EXPECT_EQ(sm.relayState, RelayState::Opened);
+    // EXPECT_EQ(sm.priority, CmdPriority::Priority5);
+}

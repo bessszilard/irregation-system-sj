@@ -15,3 +15,8 @@
 
 #define HC12_RXD (16)
 #define HC12_TXD (17)
+
+// FRAM I2C
+#define SDA_2 19
+#define SCL_2 18
+#define I2C_FREQ 400000

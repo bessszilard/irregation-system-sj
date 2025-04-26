@@ -13,9 +13,12 @@ public:
 
     CommandState appendCmd(const String& p_cmdStr);
     CommandState removeCmd(const String& p_cmdStr);
+    CommandState overrideCmd(const String& p_cmdStr);
     CommandState removeCmd(uint8_t p_id);
 
     String getCmdListInJson() const;
+    String getCmdListStr() const;
+    bool loadCmdsFromString(const String& p_cmds);
 
     String getRelayStatesWithCmdIdsJson() const;
 

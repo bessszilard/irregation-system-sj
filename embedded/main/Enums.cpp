@@ -29,6 +29,10 @@ RelayIds RelayIdTypeFromString(const String& p_rawMsg, int p_startId /*=0*/, int
     if (subStr == "R10")     return RelayIds::Relay10;
     if (subStr == "R11")     return RelayIds::Relay11;
     if (subStr == "R12")     return RelayIds::Relay12;
+    if (subStr == "R13")     return RelayIds::Relay13;
+    if (subStr == "R14")     return RelayIds::Relay14;
+    if (subStr == "R15")     return RelayIds::Relay15;
+    if (subStr == "R16")     return RelayIds::Relay16;
     if (subStr == "RXX")     return RelayIds::AllRelays;
     return RelayIds::Unknown;
 }
@@ -55,6 +59,8 @@ CmdPriority CmdPriorityFromString(const String& p_rawMsg, int p_startId /*=0*/, 
     if (subStr == "P07") return CmdPriority::Priority7;
     if (subStr == "P08") return CmdPriority::Priority8;
     if (subStr == "P09") return CmdPriority::Priority9;
+    if (subStr == "PTX") return CmdPriority::PriorityToggleAll;
+    if (subStr == "PTO") return CmdPriority::PriorityToggleOne;
     if (subStr == "PHI") return CmdPriority::PriorityHighest;
     return CmdPriority::Unknown;    
 }
@@ -110,6 +116,8 @@ String ToString(CmdPriority p_priority)
         case CmdPriority::Priority7:          return "P07";
         case CmdPriority::Priority8:          return "P08";
         case CmdPriority::Priority9:          return "P09";
+        case CmdPriority::PriorityToggleAll:  return "PTX";
+        case CmdPriority::PriorityToggleOne:  return "PTO";
         case CmdPriority::PriorityHighest:    return "PHI";
     }
     return "Unknown";

@@ -9,7 +9,6 @@
 #include <DHT.h>
 #include <NTPClient.h> // https://randomnerdtutorials.com/esp32-date-time-ntp-client-server-arduino/
 #include <WiFiUdp.h>
-#include "FRAM.h"
 #include "uFire_SHT20.h"
 #include "time.h"
 
@@ -19,12 +18,16 @@
 #include "YFG1FlowMeter.hpp"
 #include "LcdLayouts.hpp"
 #include "MqttHandler.hpp"
+#include "FramManager.hpp"
 
 #include "SolenoidManager.hpp"
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 #define MQTT_SERVER "broker.emqx.io"
 #define MQTT_PORT 1883
+
+TwoWire I2C_2 = TwoWire(0);
+FramManager framM(&I2C_2);
 
 // Replace with your network credentials
 const char* ssid     = "Bbox-F6C5B3B2";
@@ -49,7 +52,8 @@ WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 MqttHandler mqttHd(&mqttClient);
 
-FRAM fram(&Wire);
+// FRAM fram(&Wire);
+// FramManager framM(&Wire);
 
 SolenoidManager solM;
 WifiSignalStrength filteredRssi = WifiSignalStrength::Unknown;
@@ -65,12 +69,16 @@ void callback(char* topic, byte* message, unsigned int length);
 
 void setup()
 {
+    relayArray.setState(RelayIds::AllRelays, RelayState::Closed);
+
     Serial.begin(115200);
     while (!Serial)
     {
         ; // wait for serial port to connect. Needed for native USB
     }
     Wire.begin();
+    I2C_2.begin(SDA_2, SCL_2, I2C_FREQ);
+
     lcdLayout.init();
 
     lcdLayout.connectingToSSID(ssid, false, 0);
@@ -81,8 +89,11 @@ void setup()
     localTimeSetup();
     sensorSetup();
     sht20.begin();
+    if (false != framM.begin())
+    {
+        Serial.println("Failed to connect to FRAM");
+    }
 
-    relayArray.setState(RelayIds::AllRelays, RelayState::Opened);
     pinMode(LED_PIN, OUTPUT);
 
     solM.appendCmd("Manua;RXX;Closed;P00;F");
@@ -90,7 +101,6 @@ void setup()
     // Serial2.begin(9600, SERIAL_8N1, HC12_RXD, HC12_TXD); // Hardware Serial of ESP32
 }
 
-bool opened = false;
 LocalTime locTime;
 SensorData sensorData;
 RelayArrayStates relayStates(RelayState::Unknown);
@@ -104,16 +114,18 @@ uint32_t slowLoopCalled_ms         = 0;     // Store the last time the code ran
 uint32_t fastLoopCalled_ms         = 0;     // Store the last time the code ran
 const uint32_t slowLoopInterval_ms = 20000; // 20 seconds in milliseconds
 const uint32_t fastLoopInterval_ms = 1000;  // 1 seconds in milliseconds
+bool storeCmdListToFRAMFlag        = false;
+bool loadCmdListFromFRAMFlag       = false;
 
 void loop()
 {
-    if (Serial2.available() > 0)
-    {
-        byte m    = Serial2.readBytesUntil('\n', myData, 50);
-        myData[m] = '\0';
-        Serial.println(myData);
-        digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-    }
+    // if (Serial2.available() > 0)
+    // {
+    //     byte m    = Serial2.readBytesUntil('\n', myData, 50);
+    //     myData[m] = '\0';
+    //     Serial.println(myData);
+    //     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+    // }
 
     uint32_t currentTime_ms = millis();
 
@@ -146,11 +158,45 @@ void loop()
         mqttHd.publishRelayInfo(solM.getRelayStatesWithCmdIdsJson());
     }
 
+    if (storeCmdListToFRAMFlag)
+    {
+        storeCmdListToFRAMFlag = false;
+        framM.saveCommands(solM.getCmdListStr());
+        // Serial.print("Commands saved");
+        // Serial.println(solM.getCmdListStr());
+    }
+    if (loadCmdListFromFRAMFlag)
+    {
+        loadCmdListFromFRAMFlag = false;
+        String cmdList;
+        if (framM.loadCommands(cmdList))
+        {
+            Serial.print("Loadded commands: ");
+            solM.loadCmdsFromString(cmdList);
+            Serial.println(cmdList);
+            mqttHd.publish(solM);
+        }
+        else
+            Serial.println("Failed to load commands from FRAM");
+    }
+
     // Fast loop - each seconds ----------------------------------------------------
     if (currentTime_ms - fastLoopCalled_ms >= fastLoopInterval_ms)
     {
         fastLoopCalled_ms = currentTime_ms;
+        // framM.saveCommands(
+        //     "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
+        //     0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
+        //     0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
+        //     0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
+        //     0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789");
 
+        // String framInfo;
+        // framM.getInfo(framInfo);
+        // Serial.println(framInfo);
+        // Serial.println(String(">>> ") + solM.getCmdListStr());
+
+        // TODOsz uncomment
         if (false == localTimeUpdate(locTime))
         {
             Serial.println("Invalid local time");
@@ -175,7 +221,7 @@ void loop()
     if (currentTime_ms - slowLoopCalled_ms >= slowLoopInterval_ms)
     {
         slowLoopCalled_ms = currentTime_ms;
-        mqttHd.publish(sensorData);
+        // mqttHd.publish(sensorData);
     }
 
     // int rv = fram.begin(0x50);
@@ -378,10 +424,40 @@ void callback(char* topic, byte* message, unsigned int length)
         Serial.println(messageTemp + ">> " + ToString(cmdState));
         mqttHd.publish(solM);
     }
+    else if (String(topic) == MQTT_SUB_OVERRIDE_CMD)
+    {
+        CommandState cmdState = solM.overrideCmd(messageTemp);
+        mqttHd.publish(cmdState);
+        Serial.println(messageTemp + ">> " + ToString(cmdState));
+        mqttHd.publish(solM);
+    }
     else if (String(topic) == MQTT_SUB_GET_COMMAND_OPTIONS)
     {
         String json;
         GetCommandBuilderJSON(json);
         mqttHd.publishCmdOptions(json);
+    }
+    else if (String(topic) == MQTT_SUB_GET_ALL_INFO)
+    {
+        String json;
+        GetCommandBuilderJSON(json);
+        mqttHd.publishCmdOptions(json);
+        mqttHd.publish(solM);
+        mqttHd.publishRelayInfo(solM.getRelayStatesWithCmdIdsJson());
+        mqttHd.publish(sensorData);
+    }
+    else if (String(topic) == MQTT_SUB_SAVE_ALL_CMDS)
+    {
+        Serial.println("Save all commands");
+        storeCmdListToFRAMFlag = true;
+    }
+    else if (String(topic) == MQTT_SUB_LOAD_ALL_CMDS)
+    {
+        Serial.println("MQTT_SUB_LOAD_ALL_CMDS");
+        loadCmdListFromFRAMFlag = true;
+    }
+    else if (String(topic) == MQTT_SUB_RESET_CMDS_TO_DEFAULT)
+    {
+        Serial.println("MQTT_SUB_RESET_CMDS_TO_DEFAULT");
     }
 }
