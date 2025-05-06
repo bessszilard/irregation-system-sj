@@ -1,6 +1,6 @@
 
 #include <Wire.h>
-#include <DS1307.h> // https://www.electronicwings.com/esp32/rtc-ds1307-interfacing-with-esp32
+#include <RtcDS3231.h>
 
 #include <PubSubClient.h>
 #include <WiFi.h>
@@ -44,7 +44,7 @@ uFire_SHT20 sht20;
 DHT humSensor(HUMIDITY_DATA_PIN, 11);
 LcdLayouts lcdLayout;
 YFG1FlowMeter fm(FLOW_METER_PIN);
-DS1307 rtc;
+RtcDS3231<TwoWire> rtc(Wire);
 
 WifiSignalStrength wifiWifiSignalStrength = WifiSignalStrength::Unknown;
 
@@ -254,7 +254,6 @@ void loop()
     // atLeastOneRelayChanged will be false next loop
     if (atLeastOneRelayChanged || oldRssi != filteredRssi || oldWifiStatus != WiFi.status())
     {
-        Serial.println(ToShortString(oldRssi) + " != " + ToShortString(filteredRssi));
         oldWifiStatus = WiFi.status();
         oldRssi       = filteredRssi;
         lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), mqttHd.connected(), relayStates);
@@ -305,9 +304,9 @@ void localTimeSetup()
     {
         configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
     }
-    rtc.begin();
-    rtc.stop();  /*stop/pause RTC*/
-    rtc.start(); /*start RTC*/
+    rtc.Begin();
+    // rtc.stop();  /*stop/pause RTC*/
+    // rtc.start(); /*start RTC*/
 }
 
 //---------------------------------------------------------------
@@ -316,9 +315,9 @@ bool localTimeUpdate(LocalTime& p_data)
 {
     if (WiFi.status() != WL_CONNECTED)
     {
-        LocalTime rtcTime;
-        int year, month;
-        rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
+        LocalTime rtcTime(rtc.GetDateTime());
+        // int year, month;
+        // rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
         p_data = rtcTime;
         Serial.println("Rtc time: " + rtcTime.toString());
         return true;
@@ -332,35 +331,37 @@ bool localTimeUpdate(LocalTime& p_data)
 
         // RTC
         int year, month;
-        LocalTime rtcTime;
-        rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
-        rtcTime.tm_mon  = month - 1;
-        rtcTime.tm_year = year - 1900;
+        LocalTime rtcTime(rtc.GetDateTime());
+        // rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
+        // rtcTime.tm_mon  = month - 1;
+        // rtcTime.tm_year = year - 1900;
 
         if (ntpTime.eq(rtcTime))
         {
             return true;
         }
+        // not eq
+        rtc.SetDateTime(ntpTime.toDt());
 
-        rtc.set(ntpTime.tm_sec,
-                ntpTime.tm_min,
-                ntpTime.tm_hour,
-                ntpTime.tm_mday,
-                ntpTime.tm_mon + 1,
-                ntpTime.tm_year + 1900);
+        // rtc.set(ntpTime.tm_sec,
+        //         ntpTime.tm_min,
+        //         ntpTime.tm_hour,
+        //         ntpTime.tm_mday,
+        //         ntpTime.tm_mon + 1,
+        //         ntpTime.tm_year + 1900);
 
-        rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
-        rtcTime.tm_mon  = month - 1;
-        rtcTime.tm_year = year - 1900;
+        // rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
+        // rtcTime.tm_mon  = month - 1;
+        // rtcTime.tm_year = year - 1900;
+        rtcTime = LocalTime(rtc.GetDateTime());
+        Serial.printf("ntp = rtc time %s vs %s\n", ntpTime.toString().c_str(), rtcTime.toString().c_str());
         Serial.println("Update RTC");
         Serial.println("Rtc time: " + rtcTime.toString());
     }
     else
     {
         Serial.println("Failed to obtain time from NTP");
-        LocalTime rtcTime;
-        int year, month;
-        rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
+        LocalTime rtcTime(rtc.GetDateTime());
         Serial.println("Update RTC");
         Serial.println("Rtc time: " + rtcTime.toString());
 

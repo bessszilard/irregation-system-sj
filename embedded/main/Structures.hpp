@@ -2,6 +2,7 @@
 
 #include "Enums.hpp"
 #include "time.h"
+#include <RtcDS3231.h>
 
 #define MAX_SOIL_MOISTURE_NODE (30)
 #define TOLERANCE_SEC (10)
@@ -18,6 +19,23 @@ struct SoilMoisture
 struct LocalTime : tm
 {
     bool valid = false;
+    LocalTime(){};
+
+    LocalTime(const RtcDateTime& dt)
+    {
+        tm_mon  = dt.Month();
+        tm_mday = dt.Day();
+        tm_year = dt.Year() - 2000;
+        tm_hour = dt.Hour();
+        tm_min  = dt.Minute();
+        tm_sec  = dt.Second();
+        valid   = true;
+    }
+
+    RtcDateTime toDt()
+    {
+        return RtcDateTime(tm_year, tm_mon, getDay(), tm_hour, tm_min, tm_sec);
+    }
 
     inline uint8_t getDay() const
     {

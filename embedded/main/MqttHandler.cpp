@@ -177,13 +177,10 @@ void MqttHandler::publish(const char* topic, const String& message)
 
     if (m_client->publish(topic, message.c_str()))
     {
-        Serial.print("Published to ");
-        Serial.println(topic);
-        Serial.println(message);
+        Serial.printf("Published to %s %s\n", topic, message.c_str());
     }
     else
     {
-        Serial.print("Publishing failed to ");
-        Serial.println(topic);
+        Serial.printf("Publishing failed to %s", topic);
     }
 }
