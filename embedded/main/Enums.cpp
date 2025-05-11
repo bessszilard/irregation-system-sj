@@ -191,10 +191,18 @@ String ToShortString(RelayState p_state)
 {
     switch(p_state)
     {
-        case RelayState::Opened: return "0";
-        case RelayState::Closed: return "1";
+        case RelayState::Opened: return "O";
+        case RelayState::Closed: return "C";
     }
     return "U";
+}
+
+
+RelayState ToRelayStateFromShortString(const String& p_str)
+{
+    if (p_str == "O") return RelayState::Opened;
+    if (p_str == "C") return RelayState::Closed;
+    return RelayState::Unknown;
 }
 
 

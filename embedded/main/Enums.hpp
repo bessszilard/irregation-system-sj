@@ -128,6 +128,8 @@ String ToShortString(RelayState p_state);
 // String ToString(SensorTypes type);
 String ToString(CommandState p_state);
 
+RelayState ToRelayStateFromShortString(const String& p_str);
+
 WifiSignalStrength ToWifiSignalStrength(int8_t p_rssi);
 
 RelayIds ToRelayId(uint8_t p_id);

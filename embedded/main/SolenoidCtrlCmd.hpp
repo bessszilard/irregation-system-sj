@@ -11,12 +11,17 @@
 // Aut;R5;Close;Time;>15:00
 // Aut;RX;Close;Time;>15:00
 
+// $Manua;P0;R01;C
+// $ATime;P5;RXX;O15:00->20:00
+// $ATime;P5;RXX;X15:00->20:00_O20m_C1h
+
 struct SolenoidCtrlCmd
 {
     SolenoidCtrlCmd(){};
     SolenoidCtrlCmd(const String& p_cmd);
     virtual ~SolenoidCtrlCmd(){};
 
+    String toStringShort() const;
     String toString() const;
 
     CommandType cmdType;

@@ -260,7 +260,7 @@ RelayState SolenoidManager::applyCmd(const SolenoidCtrlCmd& p_cmd)
     switch (p_cmd.cmdType)
     {
         case CommandType::ManCtrl:
-            return p_cmd.relayState;
+            return ToRelayStateFromShortString(p_cmd.action);
             // case CommandType::AutoTemperatureCtrl:
             //     return p_cmd.relayState;
             // case CommandType::AutoHumidityCtrl:

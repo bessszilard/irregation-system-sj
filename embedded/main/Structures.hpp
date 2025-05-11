@@ -2,7 +2,9 @@
 
 #include "Enums.hpp"
 #include "time.h"
+#ifndef PC_BUILD
 #include <RtcDS3231.h>
+#endif
 
 #define MAX_SOIL_MOISTURE_NODE (30)
 #define TOLERANCE_SEC (10)
@@ -20,7 +22,7 @@ struct LocalTime : tm
 {
     bool valid = false;
     LocalTime(){};
-
+#ifndef PC_BUILD
     LocalTime(const RtcDateTime& dt)
     {
         tm_mon  = dt.Month();
@@ -36,7 +38,7 @@ struct LocalTime : tm
     {
         return RtcDateTime(tm_year, tm_mon, getDay(), tm_hour, tm_min, tm_sec);
     }
-
+#endif
     inline uint8_t getDay() const
     {
         return tm_mday;

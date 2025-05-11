@@ -2,8 +2,8 @@
 find_package(GTest REQUIRED)
 
 set (SRC
-    SolenoidManagerTest.cpp
     SolenoidCtrlCmdTest.cpp
+    SolenoidManagerTest.cpp
     ../embedded/main/SolenoidManager.cpp
     ../embedded/main/SolenoidCtrlCmd.cpp
     ../embedded/main/Enums.cpp
