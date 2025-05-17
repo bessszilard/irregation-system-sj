@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include "../embedded/main/SolenoidCtrlCmd.hpp"
 
-const std::string ValidManualStr    = "Manua;R01;Closed;P0;F";
-const std::string ValidAutomaticStr = "ATime;RXX;Opened;P5;15:00->20:00";
+const std::string ValidManualStr    = "Manua;R01;Closed;P00;F";
+const std::string ValidAutomaticStr = "ATime;RXX;Opened;P05;15:00->20:00";
 
 TEST(SolenoidCtrlCmdTest, ManualValidStr)
 {
@@ -28,4 +28,15 @@ TEST(SolenoidCtrlCmdTest, toString)
 {
     SolenoidCtrlCmd sm(ValidAutomaticStr);
     EXPECT_EQ(ValidAutomaticStr, sm.toString());
+}
+
+TEST(SolenoidCtrlCmdTest, Toggle)
+{
+    SolenoidCtrlCmd sm("Toggl;R13;Opened;PTO;");
+    Serial.print(sm.toString());
+    EXPECT_TRUE(sm.valid);
+    // EXPECT_EQ(sm.cmdType, CommandType::AutoTimeCtrl);
+    // EXPECT_EQ(sm.relayId, RelayIds::AllRelays);
+    // EXPECT_EQ(sm.relayState, RelayState::Opened);
+    // EXPECT_EQ(sm.priority, CmdPriority::Priority5);
 }

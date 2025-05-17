@@ -24,10 +24,11 @@ struct SolenoidCtrlCmd
     RelayIds relayId;
     RelayState relayState;
     String action;
+    bool valid;
 
     inline bool operator==(const SolenoidCtrlCmd& p_cmd) const
     {
         return cmdType == p_cmd.cmdType && relayId == p_cmd.relayId && relayState == p_cmd.relayState &&
-               action == p_cmd.action;
+               priority == p_cmd.priority && action == p_cmd.action;
     }
 };

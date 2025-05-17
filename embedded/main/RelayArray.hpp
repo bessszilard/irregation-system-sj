@@ -1,24 +1,39 @@
-#include "Enums.hpp"
+#pragma once
 
-#define NUMBER_OF_RELAYS (static_cast<int>(RelayIds::NumberOfRelays))
+#include "Enums.hpp"
+#include "Structures.hpp"
+
+#ifdef PC_BUILD
+#include "../mock/Shifty.h"
+#else
+#include <Shifty.h>
+#endif
 
 class RelayArray
 {
 public:
-    RelayArray();
+    RelayArray(int dataPin, int clockPin, int latchPin);
 
-    bool init(int pins[NUMBER_OF_RELAYS]);
     ~RelayArray(){};
 
     bool setState(RelayIds p_id, RelayState p_state);
 
-    // TODOsz fix this
-    // inline RelayState getState(RelayIds p_id) { return m_states; }
+    void update(const RelayArrayStates& p_states);
+
+    inline RelayState getState(RelayIds p_id)
+    {
+        if (p_id == RelayIds::AllRelays || p_id == RelayIds::NumberOfRelays)
+            return RelayState::Unknown;
+        return m_states[RelayIdToUInt(p_id)];
+    }
+
+    void knTestIncr();
 
 private:
+    bool handleAllRelays(RelayState p_state);
     bool handleRelay(int p_id, RelayState p_state);
 
 private:
-    int m_pins[NUMBER_OF_RELAYS];
     RelayState m_states[NUMBER_OF_RELAYS];
+    Shifty m_shift;
 };
