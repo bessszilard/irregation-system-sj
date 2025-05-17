@@ -51,7 +51,10 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "format": "cpp",
+        "stop_token": "cpp",
+        "span": "cpp"
     },
     "C_Cpp.default.compilerPath": "/home/szilard_b/.arduino15/packages/esp32/tools/esp-x32/2302/bin/xtensa-esp32-elf-g++"
 }
