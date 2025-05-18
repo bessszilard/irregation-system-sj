@@ -21,14 +21,14 @@ struct SolenoidCtrlCmd
     SolenoidCtrlCmd(const String& p_cmd);
     virtual ~SolenoidCtrlCmd(){};
 
-    String toStringShort() const;
-    String toString() const;
+    String toString(bool addChecksum = false) const;
 
     CommandType cmdType;
     CmdPriority priority; // larger value means lower priority
     RelayIds relayId;
     RelayState relayState;
     String action;
+    uint8_t checksum;
     bool valid;
 
     inline bool operator==(const SolenoidCtrlCmd& p_cmd) const
@@ -36,4 +36,6 @@ struct SolenoidCtrlCmd
         return cmdType == p_cmd.cmdType && relayId == p_cmd.relayId && relayState == p_cmd.relayState &&
                priority == p_cmd.priority && action == p_cmd.action;
     }
+
+    uint8_t getChecksum(const String& p_cmd, bool checksumIncluded = true) const;
 };

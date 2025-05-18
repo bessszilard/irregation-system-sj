@@ -287,43 +287,12 @@ CmdPriority& operator++(CmdPriority& c)
 }
 
 // clang-format on
-// ATime;RXX;Opened;P05;15:00->20:00
+// $ATime;P05;RXX;O15:00->20:00#
 void GetCommandBuilderJSON(String& json)
 {
-    json       = " {\"CommandType\": [";
+    json       = " {\"startChar\": \"$\", \"endChar\": \"#\",  \"CommandType\": [";
     bool first = true;
     for (CommandType i = CommandType::ManCtrl; i < CommandType::Unknown; ++i)
-    {
-        if (!first)
-        {
-            json += ", ";
-        }
-        first = false;
-        json += "\"" + ToString(i) + "\"";
-    }
-    json += "],";
-
-    first = true;
-    json += " \"RelayIds\": [";
-    for (RelayIds i = RelayIds::Relay1; i <= RelayIds::AllRelays; ++i)
-    {
-        if (i == RelayIds::NumberOfRelays)
-        {
-            continue;
-        }
-
-        if (!first)
-        {
-            json += ", ";
-        }
-        first = false;
-        json += "\"" + ToString(i) + "\"";
-    }
-    json += "],";
-
-    first = true;
-    json += " \"RelayState\": [";
-    for (RelayState i = RelayState::Opened; i < RelayState::Unknown; ++i)
     {
         if (!first)
         {
@@ -346,6 +315,24 @@ void GetCommandBuilderJSON(String& json)
         json += "\"" + ToString(i) + "\"";
     }
     json += "]";
+
+    first = true;
+    json += " \"RelayIds\": [";
+    for (RelayIds i = RelayIds::Relay1; i <= RelayIds::AllRelays; ++i)
+    {
+        if (i == RelayIds::NumberOfRelays)
+        {
+            continue;
+        }
+
+        if (!first)
+        {
+            json += ", ";
+        }
+        first = false;
+        json += "\"" + ToString(i) + "\"";
+    }
+    json += "],";
 
     json += "}";
 }

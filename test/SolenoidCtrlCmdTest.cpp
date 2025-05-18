@@ -40,3 +40,13 @@ TEST(SolenoidCtrlCmdTest, toString)
         EXPECT_EQ(str, sm.toString());
     }
 }
+
+TEST(SolenoidCtrlCmdTest, ValidChecksum)
+{
+    SolenoidCtrlCmd sm(ValidManualStr);
+    EXPECT_EQ(sm.cmdType, CommandType::ManCtrl);
+    EXPECT_EQ(sm.relayId, RelayIds::Relay1);
+    EXPECT_EQ(sm.priority, CmdPriority::Priority0);
+    EXPECT_EQ(sm.checksum, 0x55);
+    EXPECT_EQ(sm.action, "C");
+}
