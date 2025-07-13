@@ -90,6 +90,7 @@ enum class CommandState
 {
     Added,
     Removed,
+    Overriden,
     AlreadyPresent,
     CantRemove,
     MemoryFull,

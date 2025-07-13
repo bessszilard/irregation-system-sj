@@ -20,7 +20,7 @@ public:
     String getCmdListStr() const;
     bool loadCmdsFromString(const String& p_cmds);
 
-    String getRelayStatesWithCmdIdsJson() const;
+    void getRelayStatesWithCmdIdsJson(String& jsonResult) const;
 
     String getCmdString(uint8_t p_id) const;
 

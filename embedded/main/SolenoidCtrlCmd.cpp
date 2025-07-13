@@ -20,7 +20,7 @@ SolenoidCtrlCmd::SolenoidCtrlCmd(const String& p_cmd) : valid(false)
     relayId = RelayIdTypeFromString(p_cmd, idx, idx + RelayIdStrLen);
     idx += RelayIdStrLen + 1;
 
-    if (p_cmd.endsWith('#')) // no checksum
+    if (p_cmd.endsWith("#")) // no checksum
     {
         action   = Utils::GetSubStr(p_cmd, idx, -1);
         checksum = getChecksum(p_cmd);
@@ -28,7 +28,7 @@ SolenoidCtrlCmd::SolenoidCtrlCmd(const String& p_cmd) : valid(false)
     else
     {
         action = Utils::GetSubStr(p_cmd, idx, -3);
-        idx    = p_cmd.size() - 2; // last two characters
+        idx    = strlen(p_cmd.c_str()) - 2; // last two characters
 
         String receivedChecksum = Utils::GetSubStr(p_cmd, idx, -3);
 
@@ -60,7 +60,7 @@ uint8_t SolenoidCtrlCmd::getChecksum(const String& p_cmd, bool checksumIncluded)
 {
     uint8_t checksum = 0;
     // payload only
-    uint8_t end = checksumIncluded ? p_cmd.size() - 3 : p_cmd.size();
+    uint8_t end = checksumIncluded ? strlen(p_cmd.c_str()) - 3 : strlen(p_cmd.c_str());
     for (uint8_t i = 1; i < end; i++)
     {
         // std::cout << std::hex << static_cast<int>(checksum) << "^";

@@ -143,6 +143,7 @@ String ToString(CommandState p_state)
     {
         case CommandState::Added:            return "Added";
         case CommandState::Removed:          return "Removed";
+        case CommandState::Overriden:        return "Overriden";
         case CommandState::AlreadyPresent:   return "AlreadyPresent";
         case CommandState::CantRemove:       return "CantRemove";
         case CommandState::MemoryFull:       return "MemoryFull";
@@ -314,7 +315,7 @@ void GetCommandBuilderJSON(String& json)
         first = false;
         json += "\"" + ToString(i) + "\"";
     }
-    json += "]";
+    json += "],";
 
     first = true;
     json += " \"RelayIds\": [";
@@ -332,7 +333,7 @@ void GetCommandBuilderJSON(String& json)
         first = false;
         json += "\"" + ToString(i) + "\"";
     }
-    json += "],";
+    json += "]";
 
     json += "}";
 }
