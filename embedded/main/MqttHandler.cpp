@@ -5,7 +5,7 @@ MqttHandler::MqttHandler(PubSubClient* p_client)
 //---------------------------------------------------------------
 {
     m_client = p_client;
-    m_client->setBufferSize(2048);
+    m_client->setBufferSize(4096);
 }
 
 //---------------------------------------------------------------
@@ -61,7 +61,9 @@ void MqttHandler::publish(const RelayArrayStates& states)
 void MqttHandler::publishRelayInfo(const String& relayInfo)
 //---------------------------------------------------------------
 {
+    // publish(MQTT_RELAYS, "123456");
     publish(MQTT_RELAYS, relayInfo);
+    // publish(MQTT_RELAYS, "7890");
 }
 
 //---------------------------------------------------------------

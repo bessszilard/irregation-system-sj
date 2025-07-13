@@ -1,7 +1,7 @@
 
 #include <Wire.h>
 #include <RtcDS3231.h>
-
+#define MQTT_MAX_TRANSFER_SIZE 512 // or 256
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <DallasTemperature.h>
@@ -11,6 +11,7 @@
 #include <WiFiUdp.h>
 #include "uFire_SHT20.h"
 #include "time.h"
+#include "ADS1X15.h"
 
 #include "Structures.hpp"
 #include "Pinout.hpp"
@@ -26,8 +27,8 @@
 #define MQTT_SERVER "broker.emqx.io"
 #define MQTT_PORT 1883
 
-TwoWire I2C_2 = TwoWire(0);
-FramManager framM(&I2C_2);
+// TwoWire I2C_2 = TwoWire(0);
+FramManager framM;
 
 // Replace with your network credentials
 const char* ssid     = "Bbox-F6C5B3B2";
@@ -45,6 +46,7 @@ DHT humSensor(HUMIDITY_DATA_PIN, 11);
 LcdLayouts lcdLayout;
 YFG1FlowMeter fm(FLOW_METER_PIN);
 RtcDS3231<TwoWire> rtc(Wire);
+ADS1115 ADS(0x48);
 
 WifiSignalStrength wifiWifiSignalStrength = WifiSignalStrength::Unknown;
 
@@ -77,26 +79,34 @@ void setup()
         ; // wait for serial port to connect. Needed for native USB
     }
     Wire.begin();
-    I2C_2.begin(SDA_2, SCL_2, I2C_FREQ);
+    // I2C_2.begin(SDA_2, SCL_2, I2C_FREQ);
 
     lcdLayout.init();
 
     lcdLayout.connectingToSSID(ssid, false, 0);
-    if (setupWifiAndMqtt())
-    {
-        lcdLayout.connectingToSSID(ssid, true);
-    }
-    localTimeSetup();
+    Serial.println("Setup started");
+
     sensorSetup();
     sht20.begin();
-    if (false != framM.begin())
+    if (framM.begin())
+    {
+        Serial.println("Connected to FRAM");
+    }
+    else
     {
         Serial.println("Failed to connect to FRAM");
     }
 
     pinMode(LED_PIN, OUTPUT);
 
-    solM.appendCmd("Manua;RXX;Closed;P00;F");
+    solM.appendCmd("$Manua;P00;RXX;C#");
+    ADS.begin();
+
+    if (setupWifiAndMqtt())
+    {
+        lcdLayout.connectingToSSID(ssid, true);
+    }
+    localTimeSetup();
 
     // Serial2.begin(9600, SERIAL_8N1, HC12_RXD, HC12_TXD); // Hardware Serial of ESP32
 }
@@ -155,7 +165,9 @@ void loop()
     }
     if (atLeastOneRelayChanged)
     {
-        mqttHd.publishRelayInfo(solM.getRelayStatesWithCmdIdsJson());
+        String json;
+        solM.getRelayStatesWithCmdIdsJson(json);
+        mqttHd.publishRelayInfo(json);
     }
 
     if (storeCmdListToFRAMFlag)
@@ -184,6 +196,7 @@ void loop()
     if (currentTime_ms - fastLoopCalled_ms >= fastLoopInterval_ms)
     {
         fastLoopCalled_ms = currentTime_ms;
+
         // framM.saveCommands(
         //     "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
         //     0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
@@ -215,13 +228,18 @@ void loop()
 
         // Update LCD
         digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+        // mqttHd.publish(sensorData);
+        // String json;
+        // solM.getRelayStatesWithCmdIdsJson(json);
+        // mqttHd.publishRelayInfo(json);
+        mqttHd.publish(sensorData);
     }
 
     // Slow loop
     if (currentTime_ms - slowLoopCalled_ms >= slowLoopInterval_ms)
     {
         slowLoopCalled_ms = currentTime_ms;
-        // mqttHd.publish(sensorData);
+        mqttHd.publish(sensorData);
     }
 
     // int rv = fram.begin(0x50);
@@ -386,8 +404,13 @@ bool sensorDataUpdate(SensorData& p_data)
 
     tempSensor.requestTemperatures();
     p_data.externalTemp_C = tempSensor.getTempCByIndex(0);
+    p_data.humidity_RH    = sht20.humidity();
 
-    p_data.humidity = sht20.humidity();
+    ADS.setGain(0);
+    p_data.rainSensor    = Utils::scaleTo99(ADS.readADC(0));
+    p_data.lightSensor   = Utils::scaleTo99(ADS.readADC(1));
+    p_data.soilMoisture1 = Utils::scaleTo99(ADS.readADC(2));
+    p_data.soilMoisture2 = Utils::scaleTo99(ADS.readADC(3));
 
     p_data.valid = true;
     return true;
@@ -444,7 +467,9 @@ void callback(char* topic, byte* message, unsigned int length)
         GetCommandBuilderJSON(json);
         mqttHd.publishCmdOptions(json);
         mqttHd.publish(solM);
-        mqttHd.publishRelayInfo(solM.getRelayStatesWithCmdIdsJson());
+        json = "";
+        solM.getRelayStatesWithCmdIdsJson(json);
+        mqttHd.publishRelayInfo(json);
         mqttHd.publish(sensorData);
     }
     else if (String(topic) == MQTT_SUB_SAVE_ALL_CMDS)
