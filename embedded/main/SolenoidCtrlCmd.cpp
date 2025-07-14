@@ -1,27 +1,77 @@
 #include "SolenoidCtrlCmd.hpp"
 
-// Manua;R1;Closed;P00;F << not overridable by automation
-// Manua;R1;Closed;P00;T << overridable by automation
-// ATemp;R2;Opened;P01;<15
-// AFlow;R3;Closed;P02;>10
-// AHumi;R4;Closed;P03;>10
-// ATime;R5;Closed;P04;15:00->20:00
-// ATime;RX;Closed;P05;>15:00
+#define START_CHAR "$"
+#define TERMINATOR_CHAR "#"
+
+static const uint8_t CmdTypeStrLen    = 5;
+static const uint8_t RelayIdStrLen    = 3;
+static const uint8_t RelayStateStrLen = 6;
+static const uint8_t PriorityStateLen = 3;
 
 SolenoidCtrlCmd::SolenoidCtrlCmd(const String& p_cmd) : valid(false)
 {
-    cmdType    = CommandTypeFromString(p_cmd, 0, 5);
-    relayId    = RelayIdTypeFromString(p_cmd, 6, 9);
-    relayState = RelayStateFromString(p_cmd, 10, 16);
-    priority   = CmdPriorityFromString(p_cmd, 17, 20);
-    action     = Utils::GetSubStr(p_cmd, 21, -1);
+    int idx = 1; // first char is $
+    cmdType = CommandTypeFromString(p_cmd, idx, idx + CmdTypeStrLen);
+    idx += CmdTypeStrLen + 1;
 
-    valid = cmdType != CommandType::Unknown && relayId != RelayIds::Unknown && relayState != RelayState::Unknown &&
-            priority != CmdPriority::Unknown;
+    priority = CmdPriorityFromString(p_cmd, idx, idx + PriorityStateLen);
+    idx += PriorityStateLen + 1;
+
+    relayId = RelayIdTypeFromString(p_cmd, idx, idx + RelayIdStrLen);
+    idx += RelayIdStrLen + 1;
+
+    if (p_cmd.endsWith("#")) // no checksum
+    {
+        action   = Utils::GetSubStr(p_cmd, idx, -1);
+        checksum = getChecksum(p_cmd);
+    }
+    else
+    {
+        action = Utils::GetSubStr(p_cmd, idx, -3);
+        idx    = strlen(p_cmd.c_str()) - 2; // last two characters
+
+        String receivedChecksum = Utils::GetSubStr(p_cmd, idx, -3);
+
+        checksum                  = getChecksum(p_cmd, true);
+        String calculatedChecksum = String(checksum, HEX);
+        if (receivedChecksum != calculatedChecksum)
+        {
+            Serial.printf("Invalid checksum. Received: %s vs calculated: %s",
+                          receivedChecksum.c_str(),
+                          calculatedChecksum.c_str());
+            valid = false;
+            return;
+        }
+    }
+    valid = true;
 }
 
-String SolenoidCtrlCmd::toString() const
+String SolenoidCtrlCmd::toString(bool addChecksum) const
 {
-    return ToString(cmdType) + ";" + ToString(relayId) + ";" + ToString(relayState) + ";" + ToString(priority) + ";" +
-           action;
+    if (addChecksum)
+        return START_CHAR + ToString(cmdType) + ";" + ToString(priority) + ";" + ToString(relayId) + ";" + action +
+               TERMINATOR_CHAR + String(checksum, HEX);
+    else
+        return START_CHAR + ToString(cmdType) + ";" + ToString(priority) + ";" + ToString(relayId) + ";" + action +
+               TERMINATOR_CHAR;
+}
+
+uint8_t SolenoidCtrlCmd::getChecksum(const String& p_cmd, bool checksumIncluded) const
+{
+    uint8_t checksum = 0;
+    // payload only
+    uint8_t end = checksumIncluded ? strlen(p_cmd.c_str()) - 3 : strlen(p_cmd.c_str());
+    for (uint8_t i = 1; i < end; i++)
+    {
+        // std::cout << std::hex << static_cast<int>(checksum) << "^";
+        checksum ^= p_cmd[i];
+        // std::cout << std::hex << static_cast<int>(p_cmd[i]) << "=" << static_cast<int>(checksum) << std::endl;
+    }
+    return checksum;
+}
+// TODOsz add evaluate command -> we need time and sensor data
+
+RelayState evaluate(const SensorData& sensors, const LocalTime& loctime)
+{
+    return RelayState::Unknown;
 }

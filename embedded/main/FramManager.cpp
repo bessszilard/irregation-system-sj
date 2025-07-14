@@ -1,9 +1,9 @@
 #include "FramManager.hpp"
 #include "FramMap.hpp"
 
-FramManager::FramManager(TwoWire* wire) : m_fram() {}
+FramManager::FramManager() : m_fram() {}
 
-int FramManager::begin()
+bool FramManager::begin()
 {
     // save to FRAM
     return m_fram.begin(0x50);
@@ -14,6 +14,15 @@ int FramManager::begin()
 //     return m_fram.isConnected();
 // }
 
+void FramManager::printId()
+{
+    uint16_t manufacturerID;
+    uint16_t productID;
+
+    m_fram.getDeviceID(&manufacturerID, &productID);
+    Serial.printf("manufacturerID %d, SerialId %d", manufacturerID, productID);
+}
+
 bool FramManager::saveCommands(const String& cmdList)
 {
     if (false == writeAndVerify16(CMDS_ID_ADDR, CMDS_ID_NUMBER))
@@ -21,7 +30,6 @@ bool FramManager::saveCommands(const String& cmdList)
         Serial.println("Failed to write CMDS_ID_ADDR");
         return false;
     }
-
     Serial.printf("Writing string %s to FRAM\n", cmdList.c_str());
     uint16_t stringLen = cmdList.length() + 1; // +1 is the \0
     if (false == writeAndVerify16(CMDS_MEM_LEN_ADDR, stringLen))
@@ -29,7 +37,6 @@ bool FramManager::saveCommands(const String& cmdList)
         Serial.println("Failed to write CMDS_ID_ADDR");
         return false;
     }
-
     if (false == writeStringAndVerify(CMDS_MEM_START_ADDR, cmdList))
     {
         Serial.println("Failed to write the string to FRAM");
@@ -46,7 +53,6 @@ bool FramManager::loadCommands(String& cmdList)
         Serial.printf("Failed to read CMDS_ID_NUMBER: %d\n", cmdId);
         return false;
     }
-    Serial.printf(">>> CMD ID is OK.\n");
 
     uint16_t cmdListLen = 0;
     if (false == read16(CMDS_MEM_LEN_ADDR, cmdListLen) || cmdListLen == 0)
@@ -54,7 +60,7 @@ bool FramManager::loadCommands(String& cmdList)
         Serial.printf("Failed to read cmd list length: %d\n", cmdListLen);
         return false;
     }
-    Serial.printf(">>> Command id len is %d\n", cmdListLen);
+    Serial.printf("Command id len is %d\n", cmdListLen);
 
     String cmdListVerification;
     if (false == readString(CMDS_MEM_START_ADDR, cmdList, cmdListLen))
@@ -63,7 +69,8 @@ bool FramManager::loadCommands(String& cmdList)
         return false;
     }
 
-    Serial.printf("Read back string %s\n", cmdList);
+    // Serial.print("Read back string");
+    // Serial.println(cmdList);
     return true;
 }
 
@@ -92,8 +99,15 @@ bool FramManager::writeAndVerify16(uint16_t address, uint16_t data)
 
 bool FramManager::writeStringAndVerify(uint16_t address, const String& strData)
 {
+    Serial.println(">>>>>>>>>>>>>>>>> adasdsadasd a");
     Serial.printf("writing str len %d %s\n", strData.length(), strData.c_str());
-    int chuckSize = 64;
+    // if (false == m_fram.write(address, (uint8_t*)strData.c_str(), strData.length()+1))
+    // {
+    //     Serial.println("Failed to write string");
+    //     return false;
+    // }
+
+    int chuckSize    = 16;
     const char* data = strData.c_str();
     int len          = strlen(data) + 1;
     for (int i = 0; i < len; i += chuckSize)
@@ -102,26 +116,33 @@ bool FramManager::writeStringAndVerify(uint16_t address, const String& strData)
         m_fram.write(address + i, (uint8_t*)(data + i), chunkLen);
         // delay(5); // short pause for I2C to settle
     }
+    // dumpFram(address, len);
 
     String strVerification;
-    if (false == readString(address, strVerification, strData.length()+1))
+    if (false == readString(address, strVerification, strData.length() + 1))
     {
         Serial.println("Failed to read back the string");
         return false;
     }
 
     bool everythingOkay = true;
-    for(int i=0; i<strData.length() + 1; ++i)
+    for (int i = 0; i < strData.length() + 1; ++i)
     {
         if (strData[i] != strVerification[i])
         {
             Serial.printf("Mismatch at index %d: wrote '%c' (0x%02X), read '%c' (0x%02X)\n",
-                          i, strData[i], strData[i], strVerification[i], strVerification[i]);
+                          i,
+                          strData[i],
+                          strData[i],
+                          strVerification[i],
+                          strVerification[i]);
             // return false;
             everythingOkay = false;
         }
     }
-    Serial.printf(">>>>> Everything okay? %d %s\n", everythingOkay, strVerification.c_str());
+    Serial.println(" everything okay? >>>>>>");
+    Serial.println(everythingOkay);
+
     return true;
 }
 
@@ -138,39 +159,46 @@ bool FramManager::read16(uint16_t address, uint16_t& data)
 bool FramManager::readString(uint16_t address, String& strData, uint16_t length)
 {
     const int chunkSize = 64;
-    uint8_t* buffer = (uint8_t*)malloc(length);
-    if (!buffer) {
+    uint8_t* buffer     = (uint8_t*)malloc(length);
+    if (!buffer)
+    {
         Serial.println("Failed to allocate buffer");
         return false;
     }
 
-    for (uint16_t i = 0; i < length; i += chunkSize) {
+    for (uint16_t i = 0; i < length; i += chunkSize)
+    {
         int thisChunk = (length - i < chunkSize) ? (length - i) : chunkSize;
-        if (!m_fram.read(address + i, buffer + i, thisChunk)) {
+        if (!m_fram.read(address + i, buffer + i, thisChunk))
+        {
             Serial.println("Chunked read failed");
             free(buffer);
             return false;
         }
     }
-    strData = String((char*)buffer);  // null terminátorig konvertál
+
+    // Serial.printf("Buffer: %s\n", buffer);
+    strData = String((char*)buffer); // null terminátorig konvertál
     free(buffer);
 
     return true;
 }
 
-void FramManager::dumpFram(uint16_t address, uint16_t length) {
-    uint8_t buf[64];
-    for (uint16_t i = 0; i < length; i += 16) {
-        uint16_t chunk = min(16, length - i);
-        m_fram.read(address + i, buf, chunk);
-        Serial.printf("0x%04X: ", address + i);
-        for (int j = 0; j < chunk; ++j) {
-            Serial.printf("%02X ", buf[j]);
-        }
-        Serial.println();
-    }
-}
-
+// void FramManager::dumpFram(uint16_t address, uint16_t length)
+// {
+//     uint8_t buf[64];
+//     for (uint16_t i = 0; i < length; i += 16)
+//     {
+//         uint16_t chunk = min(16, length - i);
+//         m_fram.read(address + i, buf, chunk);
+//         Serial.printf("0x%04X: ", address + i);
+//         for (int j = 0; j < chunk; ++j)
+//         {
+//             Serial.printf("%02X ", buf[j]);
+//         }
+//         Serial.println();
+//     }
+// }
 
 // uint32_t FramManager::clear()
 // {

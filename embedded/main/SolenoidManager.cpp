@@ -58,7 +58,9 @@ CommandState SolenoidManager::overrideCmd(const String& p_cmdStr)
             removeCmd(i);
         }
     }
-    return appendCmd(p_cmdStr);
+    CommandState result = appendCmd(p_cmdStr);
+
+    return result == CommandState::Added ? CommandState::Overriden : result;
 }
 
 // add remove based on string
@@ -198,7 +200,7 @@ bool SolenoidManager::loadCmdsFromString(const String& p_cmds)
 }
 
 // clang-format off
-String SolenoidManager::getRelayStatesWithCmdIdsJson() const
+void SolenoidManager::getRelayStatesWithCmdIdsJson(String& jsonResult) const
 {
     // First pass: Calculate required size
     size_t totalSize = 3; // "{\n" + "}"
@@ -208,40 +210,41 @@ String SolenoidManager::getRelayStatesWithCmdIdsJson() const
         totalSize += ToString(relayId).length() + 10; // Quotes + `": {\n`
         totalSize += ToString(m_relayCmdIndexes[relayIdu8].currentState).length() + 13; // `"state": "XXX",\n`
         uint8_t currenCmdId = m_relayCmdIndexes[relayIdu8].cmdIdx;
-        totalSize += m_cmdList[currenCmdId].toString().length() + 10; // `"cmd": "XXX",\n`
+        totalSize += 3; // `"cmd": "XXX",\n`
         totalSize += ToString(m_relayCmdIndexes[relayIdu8].priority).length() + 15; // `"priority": X,\n`
         totalSize += (relayIdu8 < NUMBER_OF_RELAYS - 1) ? 2 : 1; // ",\n" or "\n"
     }
-
+    // totalSize += 200;
     // Allocate memory
     char *buffer = new char[totalSize + 1]; // +1 for null terminator
-    if (!buffer) return "{}"; // Memory allocation failed, return empty JSON
+    if (!buffer) return;
 
     // Second pass: Build JSON string
     size_t offset = 0;
-    offset += snprintf(buffer + offset, totalSize - offset + 1, "{\n");
+    offset += snprintf(buffer + offset, totalSize - offset + 1, "{");
     
     for (uint8_t relayIdu8 = 0; relayIdu8 < NUMBER_OF_RELAYS; relayIdu8++)
     {
         RelayIds relayId = ToRelayId(relayIdu8);
-        offset += snprintf(buffer + offset, totalSize - offset + 1, "\"%s\": {\n", ToString(relayId).c_str());
-        offset += snprintf(buffer + offset, totalSize - offset + 1, "\"state\": \"%s\",\n", 
+        offset += snprintf(buffer + offset, totalSize - offset + 1, "\"%s\":{", ToString(relayId).c_str());
+        offset += snprintf(buffer + offset, totalSize - offset + 1, "\"state\":\"%s\",", 
                            ToString(m_relayCmdIndexes[relayIdu8].currentState).c_str());
         uint8_t currenCmdId = m_relayCmdIndexes[relayIdu8].cmdIdx;
-        offset += snprintf(buffer + offset, totalSize - offset + 1, "\"cmd\": \"%s\",\n", 
-                           m_cmdList[currenCmdId].toString().c_str());
-        offset += snprintf(buffer + offset, totalSize - offset + 1, "\"priority\": \"%s\"\n", 
-                           ToString(m_relayCmdIndexes[relayIdu8].priority).c_str());
-        offset += snprintf(buffer + offset, totalSize - offset + 1, "}%s\n", 
+        offset += snprintf(buffer + offset, totalSize - offset + 1, "\"cmd\":\"%d\"", 
+                          currenCmdId);
+        // offset += snprintf(buffer + offset, totalSize - offset + 1, "\"priority\":\"%s\"", 
+        //                    ToString(m_relayCmdIndexes[relayIdu8].priority).c_str());
+        offset += snprintf(buffer + offset, totalSize - offset + 1, "}%s", 
                            (relayIdu8 < NUMBER_OF_RELAYS - 1) ? "," : "");
     }
 
     offset += snprintf(buffer + offset, totalSize - offset + 1, "}");
 
+    Serial.printf(">>>>>>>>>>>> total %d vs %d", totalSize, offset);
+
     // Convert to String, free memory, and return
-    String jsonResult = String(buffer);
+    jsonResult = String(buffer);
     delete[] buffer;
-    return jsonResult;
 }
 
 // clang-format on
@@ -260,7 +263,9 @@ RelayState SolenoidManager::applyCmd(const SolenoidCtrlCmd& p_cmd)
     switch (p_cmd.cmdType)
     {
         case CommandType::ManCtrl:
-            return p_cmd.relayState;
+            return ToRelayStateFromShortString(p_cmd.action);
+        case CommandType::AutoTimeCtrl:
+            return RelayState::Unknown;
             // case CommandType::AutoTemperatureCtrl:
             //     return p_cmd.relayState;
             // case CommandType::AutoHumidityCtrl:
@@ -280,6 +285,7 @@ void SolenoidManager::updateRelayStates() // const SensorData& p_sensorData)
         for (uint8_t cmdId = 0; cmdId < m_currentCmdId; cmdId++)
         {
             RelayIds relayId = ToRelayId(relayIdu8);
+            // TODOsz group check
             // skip if not the right relay selected
             if ((relayId != m_cmdList[cmdId].relayId) && (m_cmdList[cmdId].relayId != RelayIds::AllRelays))
             {
@@ -292,8 +298,11 @@ void SolenoidManager::updateRelayStates() // const SensorData& p_sensorData)
                 continue;
             }
 
-            // TODOsz Only update the state if the command is active.
             RelayState state = applyCmd(m_cmdList[cmdId]);
+            if (state == RelayState::Unknown)
+            {
+                continue;
+            }
             m_relayCmdIndexes[relayIdu8].set(cmdId, m_cmdList[cmdId].priority, state);
         }
     }

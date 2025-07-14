@@ -2,7 +2,9 @@
 
 #include "Enums.hpp"
 #include "time.h"
+#ifndef PC_BUILD
 #include <RtcDS3231.h>
+#endif
 
 #define MAX_SOIL_MOISTURE_NODE (30)
 #define TOLERANCE_SEC (10)
@@ -20,7 +22,7 @@ struct LocalTime : tm
 {
     bool valid = false;
     LocalTime(){};
-
+#ifndef PC_BUILD
     LocalTime(const RtcDateTime& dt)
     {
         tm_mon  = dt.Month();
@@ -36,7 +38,7 @@ struct LocalTime : tm
     {
         return RtcDateTime(tm_year, tm_mon, getDay(), tm_hour, tm_min, tm_sec);
     }
-
+#endif
     inline uint8_t getDay() const
     {
         return tm_mday;
@@ -140,11 +142,14 @@ struct RelayArrayStates
 
 struct SensorData
 {
-    float externalTemp_C = NAN;
-    float humidity       = NAN;
-    float pressure_Pa    = NAN;
+    float externalTemp_C  = NAN;
+    float humidity_RH     = NAN;
+    float pressure_Pa     = NAN;
     float flowRate_LitMin = NAN;
-    uint8_t rainSensor   = 0;
+    int16_t rainSensor    = 0;
+    int16_t lightSensor   = 0;
+    int16_t soilMoisture1 = 0;
+    int16_t soilMoisture2 = 0;
     SoilMoisture soilMoisture[MAX_SOIL_MOISTURE_NODE];
 
     bool valid = false;
@@ -153,10 +158,13 @@ struct SensorData
     {
         String json = "{";
         json += "\"externalTemp_C\": " + String(isnan(externalTemp_C) ? "null" : String(externalTemp_C, 2)) + ",";
-        json += "\"humidity\": " + String(isnan(humidity) ? "null" : String(humidity, 2)) + ",";
+        json += "\"humidity_%RH\": " + String(isnan(humidity_RH) ? "null" : String(humidity_RH, 2)) + ",";
         json += "\"flowRate_LitMin\": " + String(isnan(flowRate_LitMin) ? "null" : String(flowRate_LitMin, 2)) + ",";
         json += "\"pressure_Pa\": " + String(isnan(pressure_Pa) ? "null" : String(pressure_Pa, 2)) + ",";
-        json += "\"rainSensor\": " + String(rainSensor) + ",";
+        json += "\"rainSensor_0-99\": " + String(rainSensor) + ",";
+        json += "\"light_0-99\": " + String(lightSensor) + ",";
+        json += "\"soilMoisture1_0-99\": " + String(soilMoisture1) + ",";
+        json += "\"soilMoisture2_0-99\": " + String(soilMoisture2) + ",";
         json += "\"soilMoisture\": [";
         for (int i = 0; i < MAX_SOIL_MOISTURE_NODE; ++i)
         {
