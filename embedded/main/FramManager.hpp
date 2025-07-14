@@ -4,12 +4,13 @@
 
 class FramManager {
 public:
-    FramManager(TwoWire *wire = &Wire);
-    int begin();
+    FramManager();
+    bool begin();
     // bool isConnected();
     bool saveCommands(const String& cmdList);
     bool loadCommands(String& cmdList);
     // uint32_t clear();
+    void printId();
 
     // bool getInfo(String& infoStr);
 protected:

@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include "String.h"
+#include <cstdarg> // For va_list
+#include <cstdio>  // For vsnprintf
 
 class SerialClass
 {
@@ -35,6 +37,19 @@ public:
     static void print(const std::string& input)
     {
         std::cout << input;
+    }
+
+    static void printf(const char* format, ...)
+    {
+        constexpr size_t BUFFER_SIZE = 1024;
+        char buffer[BUFFER_SIZE];
+
+        va_list args;
+        va_start(args, format);
+        vsnprintf(buffer, BUFFER_SIZE, format, args);
+        va_end(args);
+
+        std::cout << buffer;
     }
 };
 

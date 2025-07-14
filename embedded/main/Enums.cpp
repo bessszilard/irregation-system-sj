@@ -90,6 +90,22 @@ String ToString(RelayIds p_id)
     return "Uknown";
 }
 
+String ToString(RelayGroups p_group)
+{
+    switch(p_group)
+    {
+        case RelayGroups::A: return "A";
+        case RelayGroups::B: return "B";
+        case RelayGroups::C: return "C";
+        case RelayGroups::D: return "D";
+        case RelayGroups::E: return "E";
+        case RelayGroups::F: return "F";
+        case RelayGroups::G: return "G";
+        case RelayGroups::H: return "H";
+    }
+    return "Uknown";
+}
+
 String ToString(RelayState p_state)
 {
     switch(p_state)
@@ -143,6 +159,7 @@ String ToString(CommandState p_state)
     {
         case CommandState::Added:            return "Added";
         case CommandState::Removed:          return "Removed";
+        case CommandState::Overriden:        return "Overriden";
         case CommandState::AlreadyPresent:   return "AlreadyPresent";
         case CommandState::CantRemove:       return "CantRemove";
         case CommandState::MemoryFull:       return "MemoryFull";
@@ -191,10 +208,18 @@ String ToShortString(RelayState p_state)
 {
     switch(p_state)
     {
-        case RelayState::Opened: return "0";
-        case RelayState::Closed: return "1";
+        case RelayState::Opened: return "O";
+        case RelayState::Closed: return "C";
     }
     return "U";
+}
+
+
+RelayState ToRelayStateFromShortString(const String& p_str)
+{
+    if (p_str == "O") return RelayState::Opened;
+    if (p_str == "C") return RelayState::Closed;
+    return RelayState::Unknown;
 }
 
 
@@ -279,12 +304,25 @@ CmdPriority& operator++(CmdPriority& c)
 }
 
 // clang-format on
-// ATime;RXX;Opened;P05;15:00->20:00
+// $ATime;P05;RXX;O15:00->20:00#
 void GetCommandBuilderJSON(String& json)
 {
-    json       = " {\"CommandType\": [";
+    json       = " {\"startChar\": \"$\", \"endChar\": \"#\",  \"CommandType\": [";
     bool first = true;
     for (CommandType i = CommandType::ManCtrl; i < CommandType::Unknown; ++i)
+    {
+        if (!first)
+        {
+            json += ", ";
+        }
+        first = false;
+        json += "\"" + ToString(i) + "\"";
+    }
+    json += "],";
+
+    first = true;
+    json += " \"CmdPriority\": [";
+    for (CmdPriority i = CmdPriority::PriorityLowest; i < CmdPriority::Unknown; ++i)
     {
         if (!first)
         {
@@ -304,32 +342,6 @@ void GetCommandBuilderJSON(String& json)
             continue;
         }
 
-        if (!first)
-        {
-            json += ", ";
-        }
-        first = false;
-        json += "\"" + ToString(i) + "\"";
-    }
-    json += "],";
-
-    first = true;
-    json += " \"RelayState\": [";
-    for (RelayState i = RelayState::Opened; i < RelayState::Unknown; ++i)
-    {
-        if (!first)
-        {
-            json += ", ";
-        }
-        first = false;
-        json += "\"" + ToString(i) + "\"";
-    }
-    json += "],";
-
-    first = true;
-    json += " \"CmdPriority\": [";
-    for (CmdPriority i = CmdPriority::PriorityLowest; i < CmdPriority::Unknown; ++i)
-    {
         if (!first)
         {
             json += ", ";
