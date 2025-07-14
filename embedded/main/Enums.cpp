@@ -90,6 +90,22 @@ String ToString(RelayIds p_id)
     return "Uknown";
 }
 
+String ToString(RelayGroups p_group)
+{
+    switch(p_group)
+    {
+        case RelayGroups::A: return "A";
+        case RelayGroups::B: return "B";
+        case RelayGroups::C: return "C";
+        case RelayGroups::D: return "D";
+        case RelayGroups::E: return "E";
+        case RelayGroups::F: return "F";
+        case RelayGroups::G: return "G";
+        case RelayGroups::H: return "H";
+    }
+    return "Uknown";
+}
+
 String ToString(RelayState p_state)
 {
     switch(p_state)

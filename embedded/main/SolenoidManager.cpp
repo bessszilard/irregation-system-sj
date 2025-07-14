@@ -264,6 +264,8 @@ RelayState SolenoidManager::applyCmd(const SolenoidCtrlCmd& p_cmd)
     {
         case CommandType::ManCtrl:
             return ToRelayStateFromShortString(p_cmd.action);
+        case CommandType::AutoTimeCtrl:
+            return RelayState::Unknown;
             // case CommandType::AutoTemperatureCtrl:
             //     return p_cmd.relayState;
             // case CommandType::AutoHumidityCtrl:
@@ -283,6 +285,7 @@ void SolenoidManager::updateRelayStates() // const SensorData& p_sensorData)
         for (uint8_t cmdId = 0; cmdId < m_currentCmdId; cmdId++)
         {
             RelayIds relayId = ToRelayId(relayIdu8);
+            // TODOsz group check
             // skip if not the right relay selected
             if ((relayId != m_cmdList[cmdId].relayId) && (m_cmdList[cmdId].relayId != RelayIds::AllRelays))
             {
@@ -295,8 +298,11 @@ void SolenoidManager::updateRelayStates() // const SensorData& p_sensorData)
                 continue;
             }
 
-            // TODOsz Only update the state if the command is active.
             RelayState state = applyCmd(m_cmdList[cmdId]);
+            if (state == RelayState::Unknown)
+            {
+                continue;
+            }
             m_relayCmdIndexes[relayIdu8].set(cmdId, m_cmdList[cmdId].priority, state);
         }
     }

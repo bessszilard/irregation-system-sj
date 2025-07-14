@@ -69,3 +69,9 @@ uint8_t SolenoidCtrlCmd::getChecksum(const String& p_cmd, bool checksumIncluded)
     }
     return checksum;
 }
+// TODOsz add evaluate command -> we need time and sensor data
+
+RelayState evaluate(const SensorData& sensors, const LocalTime& loctime)
+{
+    return RelayState::Unknown;
+}

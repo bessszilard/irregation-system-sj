@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Enums.hpp"
-
+#include "Structures.hpp"
 // p_cmd example starts with [ ends with ]
 // TODOsz add priority
 // Man;R1;Close;1 << overridable by automation
@@ -38,4 +38,6 @@ struct SolenoidCtrlCmd
     }
 
     uint8_t getChecksum(const String& p_cmd, bool checksumIncluded = true) const;
+
+    RelayState evaluate(const SensorData& sensors, const LocalTime& loctime);
 };

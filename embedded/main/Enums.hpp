@@ -41,6 +41,38 @@ inline RelayIds incRelayId(RelayIds& relayId)
     return relayId;
 }
 
+inline bool isLastElement(RelayIds relayId)
+{
+    return relayId == RelayIds::Relay16;
+}
+
+enum class RelayGroups
+{
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    NumberOfGroups
+};
+
+#define NUMBER_OF_RELAY_GROUPS (static_cast<int>(RelayGroups::NumberOfGroups))
+
+inline RelayGroups incRelayGroup(RelayGroups& p_group)
+{
+    // TODOsz simplify
+    p_group = static_cast<RelayGroups>(static_cast<int>(p_group) + 1);
+    return p_group;
+}
+
+inline bool isLastElement(RelayGroups p_group)
+{
+    return p_group == RelayGroups::H;
+}
+
 enum class RelayState
 {
     Opened,
@@ -67,6 +99,7 @@ enum class CmdPriority
     Unknown
 };
 
+// TODOsz 3 cases: MA, AT, AS
 enum class CommandType
 {
     ManCtrl,
@@ -118,6 +151,7 @@ RelayState RelayStateFromString(const String& p_typeStr, int p_startId = 0, int 
 CmdPriority CmdPriorityFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 
 String ToString(RelayIds p_id);
+String ToString(RelayGroups p_group);
 String ToString(RelayState p_type);
 String ToString(CmdPriority p_type);
 String ToString(CommandType p_type);
@@ -145,3 +179,9 @@ RelayIds& operator++(RelayIds& c);
 CommandType& operator++(CommandType& c);
 RelayState& operator++(RelayState& c);
 CmdPriority& operator++(CmdPriority& c);
+
+// Define operator++
+inline uint8_t RelayGroupToArrayPos(RelayGroups p_group)
+{
+    return static_cast<int>(p_group);
+}

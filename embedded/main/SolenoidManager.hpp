@@ -3,6 +3,7 @@
 #include "Enums.hpp"
 #include "SolenoidCtrlCmd.hpp"
 #include "RelayArray.hpp"
+#include "RelayGroupManager.hpp"
 
 #define MAX_NUMBER_OF_CMDS (50)
 
@@ -42,8 +43,18 @@ public:
         relayState = m_relayCmdIndexes[RelayIdToUInt(id)];
     }
 
+    RelayGroupManager& relayGroups()
+    {
+        return m_relayGroups;
+    }
+
+    const RelayGroupManager& relayGroups() const
+    {
+        return m_relayGroups;
+    }
+
 protected:
-    // TODOsz implement
+    // TODOsz remove this since it's inside the commands
     bool isCommandActive(const SolenoidCtrlCmd& p_cmd)
     {
         return false;
@@ -53,6 +64,8 @@ private:
     SolenoidCtrlCmd m_cmdList[MAX_NUMBER_OF_CMDS];
     RelayExeInfo m_relayCmdIndexes[NUMBER_OF_RELAYS];
     SensorData m_sensorData;
+    LocalTime m_localTime;
+    RelayGroupManager m_relayGroups;
 
     uint8_t m_maxCmdId;
     uint8_t m_currentCmdId;
