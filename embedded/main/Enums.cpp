@@ -37,6 +37,20 @@ RelayIds RelayIdTypeFromString(const String& p_rawMsg, int p_startId /*=0*/, int
     return RelayIds::Unknown;
 }
 
+RelayGroups RelayGroupsFromString(const String& p_rawMsg, int p_startId /*=0*/, int p_endId /*=-1*/)
+{
+    String subStr = Utils::GetSubStr(p_rawMsg, p_startId, p_endId);
+    if (subStr == "RGA") return RelayGroups::A;
+    if (subStr == "RGB") return RelayGroups::B;
+    if (subStr == "RGC") return RelayGroups::C;
+    if (subStr == "RGD") return RelayGroups::D;
+    if (subStr == "RGE") return RelayGroups::E;
+    if (subStr == "RGF") return RelayGroups::F;
+    if (subStr == "RGG") return RelayGroups::G;
+    if (subStr == "RGH") return RelayGroups::H;
+    return RelayGroups::Unknown;
+}
+
 RelayState RelayStateFromString(const String& p_rawMsg, int p_startId /*=0*/, int p_endId /*=-1*/)
 {
     String subStr = Utils::GetSubStr(p_rawMsg, p_startId, p_endId);

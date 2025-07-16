@@ -1,6 +1,14 @@
 #include <gtest/gtest.h>
 #include "../embedded/main/RelayGroupManager.hpp"
 
+class RelayGroupManagerTest : public RelayGroupManager
+{
+public:
+    using RelayGroupManager::addRelay;
+    using RelayGroupManager::groupAndIdFromStirng;
+    using RelayGroupManager::removeRelay;
+};
+
 TEST(RelayGroupsTest, NumberOfRelayGroups)
 {
     EXPECT_EQ(NUMBER_OF_RELAY_GROUPS, 8);
@@ -14,7 +22,7 @@ TEST(RelayGroupsTest, RelayGroupToArrayPos)
 
 TEST(RelayGroupsTest, AddRelay)
 {
-    RelayGroupManager rm;
+    RelayGroupManagerTest rm;
     rm.addRelay(RelayGroups::A, RelayIds::Relay1);
 
     EXPECT_TRUE(rm.isInGroup(RelayGroups::A, RelayIds::Relay1));
@@ -36,7 +44,7 @@ TEST(RelayGroupsTest, AddRelay)
 
 TEST(RelayGroupsTest, RemoveRelay)
 {
-    RelayGroupManager rm;
+    RelayGroupManagerTest rm;
     rm.addRelay(RelayGroups::A, RelayIds::Relay1);
 
     EXPECT_TRUE(rm.isInGroup(RelayGroups::A, RelayIds::Relay1));
@@ -47,7 +55,7 @@ TEST(RelayGroupsTest, RemoveRelay)
 
 TEST(RelayGroupsTest, OnlyRelayIsOnlyInOneGroup)
 {
-    RelayGroupManager rm;
+    RelayGroupManagerTest rm;
     rm.addRelay(RelayGroups::A, RelayIds::Relay1);
     rm.addRelay(RelayGroups::B, RelayIds::Relay1);
 
@@ -55,4 +63,18 @@ TEST(RelayGroupsTest, OnlyRelayIsOnlyInOneGroup)
     EXPECT_TRUE(rm.isInGroup(RelayGroups::B, RelayIds::Relay1));
 
     std::cout << rm.toJson() << std::endl;
+}
+
+TEST(RelayGroupsTest, StringToGroupIds)
+{
+    String cmd = "RGC;R13";
+
+    RelayGroups group = RelayGroups::Unknown;
+    RelayIds relayId  = RelayIds::Unknown;
+    RelayGroupManagerTest::groupAndIdFromStirng(cmd, group, relayId);
+
+    std::cout << ToString(group) << " vs " << ToString(relayId) << std::endl;
+
+    EXPECT_EQ(group, RelayGroups::C);
+    EXPECT_EQ(ToString(relayId), ToString(RelayIds::Relay13));
 }

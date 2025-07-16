@@ -1,5 +1,9 @@
 #include "RelayGroupManager.hpp"
 
+// RGA;R01
+static const uint8_t RelayGroupStrLen = 3;
+static const uint8_t RelayIdStrLen    = 3;
+
 RelayGroupManager::RelayGroupManager()
 {
     // reset all values
@@ -23,6 +27,31 @@ bool RelayGroupManager::addRelay(RelayGroups p_group, RelayIds p_relay)
     }
     m_groups[groupArrayPos] |= (1 << RelayIdToUInt(p_relay));
     return true;
+}
+
+void RelayGroupManager::groupAndIdFromStirng(const String& p_cmd, RelayGroups& p_group, RelayIds& p_relayId)
+{
+    int idx = 0;
+    p_group = RelayGroupsFromString(p_cmd, idx, idx + RelayGroupStrLen);
+    idx += RelayGroupStrLen + 1;
+    p_relayId = RelayIdTypeFromString(p_cmd, idx, idx + RelayIdStrLen);
+}
+
+bool RelayGroupManager::addRelay(const String& p_cmd)
+{
+    RelayGroups group;
+    RelayIds relayId;
+    groupAndIdFromStirng(p_cmd, group, relayId);
+    return addRelay(group, relayId);
+}
+
+// RGA;R01
+bool RelayGroupManager::removeRelay(const String& p_cmd)
+{
+    RelayGroups group;
+    RelayIds relayId;
+    groupAndIdFromStirng(p_cmd, group, relayId);
+    return removeRelay(group, relayId);
 }
 
 bool RelayGroupManager::removeRelay(RelayGroups p_group, RelayIds p_relay)
@@ -67,6 +96,7 @@ String RelayGroupManager::toJson() const
             }
         }
 
+        // TODOsz optimize -> only show what needed
         result += "\"" + ToString(relayId) + "\":" + "\"" + groupStr + "\"";
         if (false == isLastElement(relayId))
         {

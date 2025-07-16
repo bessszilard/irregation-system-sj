@@ -56,7 +56,8 @@ enum class RelayGroups
     F,
     G,
     H,
-    NumberOfGroups
+    NumberOfGroups,
+    Unknown
 };
 
 #define NUMBER_OF_RELAY_GROUPS (static_cast<int>(RelayGroups::NumberOfGroups))
@@ -147,6 +148,7 @@ enum class WifiSignalStrength
 
 CommandType CommandTypeFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 RelayIds RelayIdTypeFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
+RelayGroups RelayGroupsFromString(const String& p_rawMsg, int p_startId = 0, int p_endId = -1);
 RelayState RelayStateFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 CmdPriority CmdPriorityFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 

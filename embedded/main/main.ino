@@ -486,4 +486,14 @@ void callback(char* topic, byte* message, unsigned int length)
     {
         Serial.println("MQTT_SUB_RESET_CMDS_TO_DEFAULT");
     }
+    else if (String(topic) == MQTT_SUB_RELAY_GROUP_ID_ADD)
+    {
+        Serial.println("MQTT_SUB_RELAY_GROUP_ID_ADD");
+        solM.relayGroups().addRelay(messageTemp);
+    }
+    else if (String(topic) == MQTT_SUB_RELAY_GROUP_ID_REMOVE)
+    {
+        Serial.println("MQTT_SUB_RELAY_GROUP_ID_REMOVE");
+        solM.relayGroups().removeRelay(messageTemp);
+    }
 }
