@@ -12,6 +12,9 @@ public:
     // uint32_t clear();
     void printId();
 
+    bool saveRelayGroups(uint16_t* p_data, uint16_t p_length);
+    bool loadRelayGroups(uint16_t* p_data, uint16_t p_length);
+
     // bool getInfo(String& infoStr);
 protected:
     bool writeAndVerify16(uint16_t address, uint16_t data);

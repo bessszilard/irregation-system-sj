@@ -6,7 +6,6 @@ class RelayGroupManagerTest : public RelayGroupManager
 public:
     using RelayGroupManager::addRelay;
     using RelayGroupManager::groupAndIdFromStirng;
-    using RelayGroupManager::removeRelay;
 };
 
 TEST(RelayGroupsTest, NumberOfRelayGroups)
@@ -42,17 +41,6 @@ TEST(RelayGroupsTest, AddRelay)
     }
 }
 
-TEST(RelayGroupsTest, RemoveRelay)
-{
-    RelayGroupManagerTest rm;
-    rm.addRelay(RelayGroups::A, RelayIds::Relay1);
-
-    EXPECT_TRUE(rm.isInGroup(RelayGroups::A, RelayIds::Relay1));
-    rm.removeRelay(RelayGroups::A, RelayIds::Relay1);
-
-    EXPECT_FALSE(rm.isInGroup(RelayGroups::A, RelayIds::Relay1));
-}
-
 TEST(RelayGroupsTest, OnlyRelayIsOnlyInOneGroup)
 {
     RelayGroupManagerTest rm;
@@ -67,14 +55,47 @@ TEST(RelayGroupsTest, OnlyRelayIsOnlyInOneGroup)
 
 TEST(RelayGroupsTest, StringToGroupIds)
 {
-    String cmd = "RGC;R13";
+    String cmd = "RGC:R13;";
 
     RelayGroups group = RelayGroups::Unknown;
     RelayIds relayId  = RelayIds::Unknown;
-    RelayGroupManagerTest::groupAndIdFromStirng(cmd, group, relayId);
-
-    std::cout << ToString(group) << " vs " << ToString(relayId) << std::endl;
+    EXPECT_TRUE(RelayGroupManagerTest::groupAndIdFromStirng(cmd, group, relayId));
 
     EXPECT_EQ(group, RelayGroups::C);
     EXPECT_EQ(ToString(relayId), ToString(RelayIds::Relay13));
+}
+
+TEST(RelayGroupsTest, LoadFromString)
+{
+    String cmd = "RGA:R01;RGB:R02;RGC:R13;";
+
+    RelayGroupManagerTest rm;
+    EXPECT_TRUE(rm.loadFromStr(cmd));
+
+    // std::cout << ToString(group) << " vs " << ToString(relayId) << std::endl;
+
+    // EXPECT_EQ(group, RelayGroups::C);
+    // EXPECT_EQ(ToString(relayId), ToString(RelayIds::Relay13));
+}
+
+TEST(RelayGroupsTest, LoadFromARray)
+{
+    uint16_t groupsArray[NUMBER_OF_RELAY_GROUPS] = {0};
+
+    groupsArray[0] = 0x1;
+    groupsArray[2] = 0x2;
+
+    RelayGroupManagerTest rm;
+    rm.loadfromFRAMArray(groupsArray);
+
+    EXPECT_TRUE(rm.isInGroup(RelayGroups::A, RelayIds::Relay1));
+    EXPECT_TRUE(rm.isInGroup(RelayGroups::C, RelayIds::Relay2));
+
+    uint16_t groupsArrayOut[NUMBER_OF_RELAY_GROUPS] = {0};
+    rm.getFRAMArray(groupsArrayOut);
+
+    for (uint8_t i = 0; i < NUMBER_OF_RELAY_GROUPS; i++)
+    {
+        EXPECT_EQ(groupsArray[i], groupsArrayOut[i]);
+    }
 }

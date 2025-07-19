@@ -11,10 +11,14 @@
 // 1  Cmd = max 60 Char / byte
 // 50 cmd -> 50*60 = 3000 byte = 3 kByte
 
-// #define CMDS_ID_ADDR     (200)
-// #define CMDS_MEM_LEN_ADDR   (202)
-// #define CMDS_MEM_START_ADDR (204)
-#define CMDS_ID_ADDR 0       // 2 bytes
-#define CMDS_MEM_LEN_ADDR 20  // 2 bytes
-#define CMDS_MEM_START_ADDR 40  // Start writing data here
+#define RELAY_GROUPS_ID_ADDR (100)
+#define RELAY_GROUPS_ADDR (102)
+#define RELAY_GROUPS_ID (0x1111)
+
+#define CMDS_ID_ADDR (200)
+#define CMDS_MEM_LEN_ADDR (202)
+#define CMDS_MEM_START_ADDR (204)
+// #define CMDS_ID_ADDR 0       // 2 bytes
+// #define CMDS_MEM_LEN_ADDR 20  // 2 bytes
+// #define CMDS_MEM_START_ADDR 40  // Start writing data here
 #define CMDS_ID_NUMBER 0x1234

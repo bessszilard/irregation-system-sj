@@ -68,51 +68,32 @@ bool localTimeUpdate(LocalTime& p_data);
 bool sensorDataUpdate(SensorData& p_data);
 void reconnectMqtt();
 void callback(char* topic, byte* message, unsigned int length);
+void setupFRAM();
 
 void setup()
 {
     relayArray.setState(RelayIds::AllRelays, RelayState::Closed);
 
     Serial.begin(115200);
+    pinMode(LED_PIN, OUTPUT);
+
     while (!Serial)
     {
         ; // wait for serial port to connect. Needed for native USB
     }
     Wire.begin();
-    // I2C_2.begin(SDA_2, SCL_2, I2C_FREQ);
-
     lcdLayout.init();
 
     lcdLayout.connectingToSSID(ssid, false, 0);
     Serial.println("Setup started");
 
     sensorSetup();
-    sht20.begin();
-    if (framM.begin())
-    {
-        Serial.println("Connected to FRAM");
-    }
-    else
-    {
-        Serial.println("Failed to connect to FRAM");
-    }
+    sht20.begin(); // TODOsz move to sensorSetup
+    setupFRAM();
 
-    pinMode(LED_PIN, OUTPUT);
+    ADS.begin(); // TODOsz move to sensorSetup
 
-    String cmdList;
-    if (framM.loadCommands(cmdList))
-    {
-        Serial.print("Loadded commands: ");
-        solM.loadCmdsFromString(cmdList);
-    }
-    else
-    {
-        // Default
-        solM.appendCmd("$Manua;P00;RXX;C#");
-    }
-
-    ADS.begin();
-
+    // TODOsz move to the loop -> handle case if wifi not available at startup
     if (setupWifiAndMqtt())
     {
         lcdLayout.connectingToSSID(ssid, true);
@@ -158,8 +139,8 @@ void loop()
         mqttHd.loop();
     }
 
+    // TODOsz move to separate function as updateRelayStateAndApply
     solM.updateRelayStates();
-
     bool atLeastOneRelayChanged = false;
     RelayExeInfo exeInfo;
     for (RelayIds relayId = RelayIds::Relay1; relayId < RelayIds::NumberOfRelays; relayId = incRelayId(relayId))
@@ -174,6 +155,8 @@ void loop()
         relayStates.setState(relayId, exeInfo.currentState);
         relayArray.setState(relayId, exeInfo.currentState);
     }
+    // <<<
+
     if (atLeastOneRelayChanged)
     {
         String json;
@@ -185,8 +168,6 @@ void loop()
     {
         storeCmdListToFRAMFlag = false;
         framM.saveCommands(solM.getCmdListStr());
-        // Serial.print("Commands saved");
-        // Serial.println(solM.getCmdListStr());
     }
     if (loadCmdListFromFRAMFlag)
     {
@@ -204,23 +185,10 @@ void loop()
     }
 
     // Fast loop - each seconds ----------------------------------------------------
+    // TODOsz move to function as fastLoopEach_1sec
     if (currentTime_ms - fastLoopCalled_ms >= fastLoopInterval_ms)
     {
         fastLoopCalled_ms = currentTime_ms;
-
-        // framM.saveCommands(
-        //     "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
-        //     0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
-        //     0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
-        //     0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\
-        //     0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789");
-
-        // String framInfo;
-        // framM.getInfo(framInfo);
-        // Serial.println(framInfo);
-        // Serial.println(String(">>> ") + solM.getCmdListStr());
-
-        // TODOsz uncomment
         if (false == localTimeUpdate(locTime))
         {
             Serial.println("Invalid local time");
@@ -247,39 +215,14 @@ void loop()
     }
 
     // Slow loop
+    // TODOsz move to function as slowLoopEach_10sec
     if (currentTime_ms - slowLoopCalled_ms >= slowLoopInterval_ms)
     {
         slowLoopCalled_ms = currentTime_ms;
         mqttHd.publish(sensorData);
     }
 
-    // int rv = fram.begin(0x50);
-    // if (rv != 0)
-    // {
-    //     Serial.println(rv);
-    // }
-    // else
-    // {
-    //     Serial.println();
-    //     Serial.println(__FUNCTION__);
-    //     Serial.print("ManufacturerID: ");
-    //     Serial.println(fram.getManufacturerID());
-    //     Serial.print("     ProductID: ");
-    //     Serial.println(fram.getProductID());
-    //     Serial.print("     memory KB: ");
-    //     Serial.println(fram.getSize());
-
-    //     Serial.println();
-    // }
-    // Serial.println("done...");
-
-    // fast loop
-    // Process MQTT updates
-    // Store the messages from the moisture nodes
-
-    // slow loop
-    // Update time
-
+    // Update LCD if needed
     // atLeastOneRelayChanged will be false next loop
     if (atLeastOneRelayChanged || oldRssi != filteredRssi || oldWifiStatus != WiFi.status())
     {
@@ -427,6 +370,7 @@ bool sensorDataUpdate(SensorData& p_data)
     return true;
 }
 
+// TODOsz rename
 //---------------------------------------------------------------
 void callback(char* topic, byte* message, unsigned int length)
 //---------------------------------------------------------------
@@ -444,6 +388,7 @@ void callback(char* topic, byte* message, unsigned int length)
 
     // Feel free to add more if statements to control more GPIOs with MQTT
 
+    // TODOsz String(topic) move to variable
     // Subscribed topics
     if (String(topic) == MQTT_SUB_ADD_CMD)
     {
@@ -498,14 +443,71 @@ void callback(char* topic, byte* message, unsigned int length)
     {
         Serial.println("MQTT_SUB_RESET_CMDS_TO_DEFAULT");
     }
-    else if (String(topic) == MQTT_SUB_RELAY_GROUP_ID_ADD)
+    else if (String(topic) == MQTT_RELAY_GROUPS_SET)
     {
-        Serial.println("MQTT_SUB_RELAY_GROUP_ID_ADD");
-        solM.relayGroups().addRelay(messageTemp);
+        // TODOsz remove this topic print later
+        solM.relayGroups().loadFromStr(messageTemp);
+        Serial.printf("RelayGroups: %s\n", solM.relayGroups().toJson().c_str());
+        saveRelayGroupsFormFRAM();
+        mqttHd.publish(solM.relayGroups());
     }
-    else if (String(topic) == MQTT_SUB_RELAY_GROUP_ID_REMOVE)
+    else if (String(topic) == MQTT_RELAY_GROUPS_LOAD)
     {
-        Serial.println("MQTT_SUB_RELAY_GROUP_ID_REMOVE");
-        solM.relayGroups().removeRelay(messageTemp);
+        Serial.println(MQTT_RELAY_GROUPS_LOAD);
+        loadRelayGroupsFormFRAM();
+        mqttHd.publish(solM.relayGroups());
     }
+}
+
+// FRAM functions
+void loadRelayGroupsFormFRAM()
+{
+    uint16_t relayGroupArray[NUMBER_OF_RELAY_GROUPS] = {0};
+    if (framM.loadRelayGroups(relayGroupArray, NUMBER_OF_RELAY_GROUPS))
+    {
+        solM.relayGroups().loadfromFRAMArray(relayGroupArray);
+    }
+    else
+    {
+        Serial.println("Relay group array FRAM is empty");
+    }
+}
+
+void saveRelayGroupsFormFRAM()
+{
+    uint16_t relayGroupArray[NUMBER_OF_RELAY_GROUPS] = {0};
+    solM.relayGroups().getFRAMArray(relayGroupArray);
+    if (framM.saveRelayGroups(relayGroupArray, NUMBER_OF_RELAY_GROUPS))
+    {
+        Serial.println("Save to group array");
+    }
+    else
+    {
+        Serial.println("Relay group array FRAM is empty");
+    }
+}
+
+void setupFRAM()
+{
+    if (framM.begin())
+    {
+        Serial.println("Connected to FRAM");
+    }
+    else
+    {
+        Serial.println("Failed to connect to FRAM");
+    }
+
+    // TODOsz move to a function
+    String cmdList;
+    if (framM.loadCommands(cmdList))
+    {
+        Serial.print("Loadded commands: ");
+        solM.loadCmdsFromString(cmdList);
+    }
+    else
+    {
+        solM.appendCmd("$Manua;P00;RXX;C#"); // Default
+    }
+    loadRelayGroupsFormFRAM();
 }

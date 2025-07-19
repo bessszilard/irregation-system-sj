@@ -20,3 +20,4 @@
 #define MQTT_SUB_GET_COMMAND_OPTIONS "sjirs/cmd/command-options/get"
 #define MQTT_SUB_GET_ALL_INFO "sjirs/get-all-info"
 #define MQTT_RELAY_GROUPS_SET "sjirs/relay-groups/set"
+#define MQTT_RELAY_GROUPS_LOAD "sjirs/relay-groups/load"

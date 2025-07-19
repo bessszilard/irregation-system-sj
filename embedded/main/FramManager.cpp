@@ -5,14 +5,10 @@ FramManager::FramManager() : m_fram() {}
 
 bool FramManager::begin()
 {
-    // save to FRAM
     return m_fram.begin(0x50);
 }
 
-// bool FramManager::isConnected()
-// {
-//     return m_fram.isConnected();
-// }
+// TODOsz clean up
 
 void FramManager::printId()
 {
@@ -184,45 +180,43 @@ bool FramManager::readString(uint16_t address, String& strData, uint16_t length)
     return true;
 }
 
-// void FramManager::dumpFram(uint16_t address, uint16_t length)
-// {
-//     uint8_t buf[64];
-//     for (uint16_t i = 0; i < length; i += 16)
-//     {
-//         uint16_t chunk = min(16, length - i);
-//         m_fram.read(address + i, buf, chunk);
-//         Serial.printf("0x%04X: ", address + i);
-//         for (int j = 0; j < chunk; ++j)
-//         {
-//             Serial.printf("%02X ", buf[j]);
-//         }
-//         Serial.println();
-//     }
-// }
+bool FramManager::saveRelayGroups(uint16_t* p_data, uint16_t p_length)
+{
+    if (false == writeAndVerify16(RELAY_GROUPS_ID_ADDR, RELAY_GROUPS_ID))
+    {
+        Serial.println("Failed to write CMDS_ID_ADDR");
+        return false;
+    }
 
-// uint32_t FramManager::clear()
-// {
-//     return m_fram.clear();
-// }
+    for (uint16_t i = 0; i < p_length; ++i)
+    {
+        if (false == writeAndVerify16(RELAY_GROUPS_ADDR + (i * 2), p_data[i]))
+        {
+            Serial.println("Failed to write RELAY_GROUPS_ADDR");
+            return false;
+        }
+        Serial.printf("FRAM Wrote %d %d", RELAY_GROUPS_ADDR + (i * 2), p_data[i]);
+    }
+    return true;
+}
 
-// bool FramManager::getInfo(String& infoStr)
-// {
-//     infoStr = String("ManufacturerID: ") + String(m_fram.getManufacturerID())
-//             + " ProductID:" + String(m_fram.getProductID())
-//             + " memory KB:" + String(m_fram.getSize());
-//     return true;
-// }
+bool FramManager::loadRelayGroups(uint16_t* p_data, uint16_t p_length)
+{
+    uint16_t relayGroupId = 0;
+    if (false == read16(RELAY_GROUPS_ID_ADDR, relayGroupId) && relayGroupId == RELAY_GROUPS_ID)
+    {
+        Serial.println("Failed to read RELAY_GROUPS_ID_ADDR");
+        return false;
+    }
 
-// void testRawWrite() {
-//     uint8_t testData[16];
-//     for (int i = 0; i < 16; ++i) testData[i] = i;
-
-//     Serial.println("Writing raw bytes 0-15...");
-//     if (!m_fram.write(0x0000, testData, 16)) {
-//         Serial.println("Raw write failed!");
-//         return;
-//     }
-
-//     Serial.println("Dumping FRAM...");
-//     dumpFram(0x0000, 16);
-// }
+    for (uint16_t i = 0; i < p_length; ++i)
+    {
+        if (false == read16(RELAY_GROUPS_ADDR + (i * 2), p_data[i]))
+        {
+            Serial.println("Failed to write RELAY_GROUPS_ADDR");
+            return false;
+        }
+        Serial.printf("FRAM read %d %d", RELAY_GROUPS_ADDR + (i * 2), p_data[i]);
+    }
+    return true;
+}
