@@ -99,7 +99,18 @@ void setup()
 
     pinMode(LED_PIN, OUTPUT);
 
-    solM.appendCmd("$Manua;P00;RXX;C#");
+    String cmdList;
+    if (framM.loadCommands(cmdList))
+    {
+        Serial.print("Loadded commands: ");
+        solM.loadCmdsFromString(cmdList);
+    }
+    else
+    {
+        // Default
+        solM.appendCmd("$Manua;P00;RXX;C#");
+    }
+
     ADS.begin();
 
     if (setupWifiAndMqtt())
@@ -232,7 +243,7 @@ void loop()
         // String json;
         // solM.getRelayStatesWithCmdIdsJson(json);
         // mqttHd.publishRelayInfo(json);
-        mqttHd.publish(sensorData);
+        // mqttHd.publish(sensorData);
     }
 
     // Slow loop
@@ -470,6 +481,7 @@ void callback(char* topic, byte* message, unsigned int length)
         json = "";
         solM.getRelayStatesWithCmdIdsJson(json);
         mqttHd.publishRelayInfo(json);
+        mqttHd.publish(solM.relayGroups());
         mqttHd.publish(sensorData);
     }
     else if (String(topic) == MQTT_SUB_SAVE_ALL_CMDS)

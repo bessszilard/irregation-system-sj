@@ -67,6 +67,13 @@ void MqttHandler::publishRelayInfo(const String& relayInfo)
 }
 
 //---------------------------------------------------------------
+void MqttHandler::publish(const RelayGroupManager& p_relayGroups)
+//---------------------------------------------------------------
+{
+    publish(MQTT_RELAY_GROUPS_INFO, p_relayGroups.toJson());
+}
+
+//---------------------------------------------------------------
 void MqttHandler::publish(const LocalTime& time)
 //---------------------------------------------------------------
 {

@@ -54,7 +54,16 @@
         "typeinfo": "cpp",
         "format": "cpp",
         "stop_token": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "charconv": "cpp",
+        "condition_variable": "cpp",
+        "optional": "cpp",
+        "ratio": "cpp",
+        "mutex": "cpp",
+        "semaphore": "cpp",
+        "text_encoding": "cpp",
+        "thread": "cpp",
+        "variant": "cpp"
     },
     "C_Cpp.default.compilerPath": "/home/szilard_b/.arduino15/packages/esp32/tools/esp-x32/2302/bin/xtensa-esp32-elf-g++"
 }

@@ -26,6 +26,7 @@
                 "/home/szilard/Arduino/libraries/DHT_sensor_library",
                 "/home/szilard/Arduino/libraries/NTPClient",
                 "/home/szilard/Arduino/libraries/uFire_SHT20/src",
+                "/home/szilard/Arduino/libraries/ADS1X15",
                 "/home/szilard/Arduino/libraries/Shifty/src",
                 "/home/szilard/Arduino/libraries/LiquidCrystal_I2C",
                 "/home/szilard/Arduino/libraries/Adafruit_FRAM_I2C",

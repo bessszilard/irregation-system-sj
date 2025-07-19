@@ -7,6 +7,7 @@ class RelayGroupManager
 public:
     RelayGroupManager();
 
+    bool loadFromStr(const String& p_str);
     bool addRelay(RelayGroups p_group, RelayIds p_relay);
     bool removeRelay(RelayGroups p_group, RelayIds p_relay);
 

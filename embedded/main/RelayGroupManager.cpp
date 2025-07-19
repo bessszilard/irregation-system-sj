@@ -70,6 +70,7 @@ bool RelayGroupManager::isInGroup(RelayGroups p_group, RelayIds p_relay) const
     return (m_groups[RelayGroupToArrayPos(p_group)] & (1 << RelayIdToUInt(p_relay))) != 0;
 }
 
+// TODOsz arduino JSON
 String RelayGroupManager::toJson() const
 {
     String result = "{ \"RelayGroups\": [";
