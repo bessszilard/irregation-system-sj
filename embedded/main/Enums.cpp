@@ -124,14 +124,14 @@ String ToString(RelayGroups p_group)
 {
     switch(p_group)
     {
-        case RelayGroups::A: return "A";
-        case RelayGroups::B: return "B";
-        case RelayGroups::C: return "C";
-        case RelayGroups::D: return "D";
-        case RelayGroups::E: return "E";
-        case RelayGroups::F: return "F";
-        case RelayGroups::G: return "G";
-        case RelayGroups::H: return "H";
+        case RelayGroups::A: return "RGA";
+        case RelayGroups::B: return "RGB";
+        case RelayGroups::C: return "RGC";
+        case RelayGroups::D: return "RGD";
+        case RelayGroups::E: return "RGE";
+        case RelayGroups::F: return "RGF";
+        case RelayGroups::G: return "RGG";
+        case RelayGroups::H: return "RGH";
     }
     return "Uknown";
 }
@@ -372,6 +372,15 @@ void GetCommandBuilderJSON(String& json)
             continue;
         }
 
+        if (!first)
+        {
+            json += ", ";
+        }
+        first = false;
+        json += "\"" + ToString(i) + "\"";
+    }
+    for (RelayGroups i = RelayGroups::A; i < RelayGroups::NumberOfGroups; incRelayGroup(i))
+    {
         if (!first)
         {
             json += ", ";

@@ -319,7 +319,8 @@ void SolenoidManager::updateRelayStates(bool verbose /*=false*/)
             // skip if the running priority is higher
             if (m_relayCmdIndexes[relayIdu8].priority >= m_cmdList[cmdId].priority)
             {
-                Serial.print("Skipped since higher priority was already applied");
+                if (verbose)
+                    Serial.print("Skipped since higher priority was already applied");
                 continue;
             }
 

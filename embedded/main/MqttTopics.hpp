@@ -17,6 +17,7 @@
 #define MQTT_SUB_LOAD_ALL_CMDS "sjirs/cmd/load_all"
 #define MQTT_SUB_RESET_CMDS_TO_DEFAULT "sjirs/cmd/reset_cmd_to_def"
 #define MQTT_SUB_OVERRIDE_CMD "sjirs/cmd/override"
+#define MQTT_SUB_CMD_IMPORT "sjirs/cmd/import"
 #define MQTT_SUB_GET_COMMAND_OPTIONS "sjirs/cmd/command-options/get"
 #define MQTT_SUB_GET_ALL_INFO "sjirs/get-all-info"
 #define MQTT_RELAY_GROUPS_SET "sjirs/relay-groups/set"

@@ -175,3 +175,13 @@ TEST(SampleTest, OpenAllRelaysCloseGroupF)
         }
     }
 }
+
+TEST(SolenoidManager, LoadCmdsFromString)
+{
+    String cmdsRaw = ValidManualAllClosedStr + "_" + ValidManualAllOpenStr + "_" + ValidAutomaticStr + "_";
+
+    SolenoidManager sm;
+    EXPECT_TRUE(sm.loadCmdsFromString(cmdsRaw));
+    EXPECT_EQ(sm.getCmdNumber(), 3);
+    EXPECT_EQ(sm.getCmdListStr(), cmdsRaw);
+}

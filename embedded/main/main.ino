@@ -388,36 +388,44 @@ void callback(char* topic, byte* message, unsigned int length)
 
     // Feel free to add more if statements to control more GPIOs with MQTT
 
-    // TODOsz String(topic) move to variable
+    String topicStr(topic);
+    // TODOsz topicStr move to variable
     // Subscribed topics
-    if (String(topic) == MQTT_SUB_ADD_CMD)
+    if (topicStr == MQTT_SUB_ADD_CMD)
     {
         CommandState cmdState = solM.appendCmd(messageTemp);
         Serial.println(messageTemp + ">> " + ToString(cmdState));
         mqttHd.publish(cmdState);
         mqttHd.publish(solM);
     }
-    else if (String(topic) == MQTT_SUB_REMOVE_CMD)
+    else if (topicStr == MQTT_SUB_REMOVE_CMD)
     {
         CommandState cmdState = solM.removeCmd(messageTemp);
         mqttHd.publish(cmdState);
         Serial.println(messageTemp + ">> " + ToString(cmdState));
         mqttHd.publish(solM);
     }
-    else if (String(topic) == MQTT_SUB_OVERRIDE_CMD)
+    else if (topicStr == MQTT_SUB_OVERRIDE_CMD)
     {
         CommandState cmdState = solM.overrideCmd(messageTemp);
         mqttHd.publish(cmdState);
         Serial.println(messageTemp + ">> " + ToString(cmdState));
         mqttHd.publish(solM);
     }
-    else if (String(topic) == MQTT_SUB_GET_COMMAND_OPTIONS)
+    else if (topicStr == MQTT_SUB_CMD_IMPORT)
+    {
+        bool results = solM.loadCmdsFromString(messageTemp);
+        mqttHd.publish(results ? CommandState::Added : CommandState::Unknown);
+        Serial.println(messageTemp);
+        mqttHd.publish(solM);
+    }
+    else if (topicStr == MQTT_SUB_GET_COMMAND_OPTIONS)
     {
         String json;
         GetCommandBuilderJSON(json);
         mqttHd.publishCmdOptions(json);
     }
-    else if (String(topic) == MQTT_SUB_GET_ALL_INFO)
+    else if (topicStr == MQTT_SUB_GET_ALL_INFO)
     {
         String json;
         GetCommandBuilderJSON(json);
@@ -429,21 +437,21 @@ void callback(char* topic, byte* message, unsigned int length)
         mqttHd.publish(solM.relayGroups());
         mqttHd.publish(sensorData);
     }
-    else if (String(topic) == MQTT_SUB_SAVE_ALL_CMDS)
+    else if (topicStr == MQTT_SUB_SAVE_ALL_CMDS)
     {
         Serial.println("Save all commands");
         storeCmdListToFRAMFlag = true;
     }
-    else if (String(topic) == MQTT_SUB_LOAD_ALL_CMDS)
+    else if (topicStr == MQTT_SUB_LOAD_ALL_CMDS)
     {
         Serial.println("MQTT_SUB_LOAD_ALL_CMDS");
         loadCmdListFromFRAMFlag = true;
     }
-    else if (String(topic) == MQTT_SUB_RESET_CMDS_TO_DEFAULT)
+    else if (topicStr == MQTT_SUB_RESET_CMDS_TO_DEFAULT)
     {
         Serial.println("MQTT_SUB_RESET_CMDS_TO_DEFAULT");
     }
-    else if (String(topic) == MQTT_RELAY_GROUPS_SET)
+    else if (topicStr == MQTT_RELAY_GROUPS_SET)
     {
         // TODOsz remove this topic print later
         solM.relayGroups().loadFromStr(messageTemp);
@@ -451,7 +459,7 @@ void callback(char* topic, byte* message, unsigned int length)
         saveRelayGroupsFormFRAM();
         mqttHd.publish(solM.relayGroups());
     }
-    else if (String(topic) == MQTT_RELAY_GROUPS_LOAD)
+    else if (topicStr == MQTT_RELAY_GROUPS_LOAD)
     {
         Serial.println(MQTT_RELAY_GROUPS_LOAD);
         loadRelayGroupsFormFRAM();
