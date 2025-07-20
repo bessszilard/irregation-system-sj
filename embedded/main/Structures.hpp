@@ -9,6 +9,19 @@
 #define MAX_SOIL_MOISTURE_NODE (30)
 #define TOLERANCE_SEC (10)
 
+struct RelayTarget
+{
+    RelayTargetType type;
+    RelayIds relayId;    // Valid if type == SingleRelay
+    RelayGroups groupId; // Valid if type == Group
+
+    String toString() const;
+
+    static RelayTarget FromString(const String& p_rawMsg, int p_startId = 0, int p_endId = -1);
+
+    bool operator==(const RelayTarget& p_other) const;
+};
+
 struct SoilMoisture
 {
     uint8_t id               = 0;
@@ -60,84 +73,24 @@ struct LocalTime : tm
             Serial.println(String(a) + "!=" + String(b));
     }
 
-    bool eq(LocalTime& time)
-    {
-        bool result = tm_min == time.tm_min && tm_hour == time.tm_hour && getDay() == time.getDay() &&
-                      getMonth() == time.getMonth() && getYear() == time.getYear() &&
-                      (abs(tm_sec - time.tm_sec) < TOLERANCE_SEC);
-        if (result)
-            return true;
-        notEqPrint(tm_sec, time.tm_sec);
-        notEqPrint(tm_min, time.tm_min);
-        notEqPrint(tm_hour, time.tm_hour);
-        notEqPrint(getDay(), time.getDay());
-        notEqPrint(getMonth(), time.getMonth());
-        notEqPrint(getYear(), time.getYear());
-        return false;
-    }
+    bool eq(LocalTime& time);
 
-    String toString() const
-    {
-        return String(getYear()) + "-" + String(getMonth()) + "-" + String(getDay()) + " " + String(tm_hour) + ":" +
-               String(tm_min) + ":" + String(tm_sec);
-    }
+    String toString() const;
 };
 
 struct RelayArrayStates
 {
     RelayState states[NUMBER_OF_RELAYS];
     const uint8_t relayCnt = NUMBER_OF_RELAYS;
+    bool valid             = false;
 
-    RelayArrayStates(RelayState p_state)
-    {
-        for (uint8_t relayId = 0; relayId < relayCnt; ++relayId)
-        {
-            states[relayId] = p_state;
-        }
-    }
+    RelayArrayStates(RelayState p_state);
 
-    RelayState getState(RelayIds relayId)
-    {
-        uint8_t relayIdU8 = RelayIdToUInt(relayId);
-        if (relayIdU8 >= NUMBER_OF_RELAYS)
-        {
-            Serial.print("Invalid relay Id");
-            return RelayState::Unknown;
-        }
-        return states[relayIdU8];
-    }
+    RelayState getState(RelayIds relayId);
 
-    void setState(RelayIds relayId, RelayState state)
-    {
-        uint8_t relayIdU8 = RelayIdToUInt(relayId);
-        if (relayIdU8 >= NUMBER_OF_RELAYS)
-        {
-            Serial.print("Invalid relay Id");
-            return;
-        }
-        states[relayIdU8] = state;
-    }
+    void setState(RelayIds relayId, RelayState state);
 
-    String toString() const
-    {
-        uint8_t spaceAfterId = 16;
-        String str;
-        if (NUMBER_OF_RELAYS < 16)
-        {
-            spaceAfterId = 5;
-            str += "R:";
-        }
-        for (uint8_t relayId = 0; relayId < NUMBER_OF_RELAYS; ++relayId)
-        {
-            str += ToShortString(states[relayId]);
-            if (relayId != 0 && (relayId % spaceAfterId == 0))
-            {
-                str += " ";
-            }
-        }
-        return str;
-    }
-    bool valid = false;
+    String toString() const;
 };
 
 struct SensorData
@@ -154,29 +107,7 @@ struct SensorData
 
     bool valid = false;
 
-    String toJSON() const
-    {
-        String json = "{";
-        json += "\"externalTemp_C\": " + String(isnan(externalTemp_C) ? "null" : String(externalTemp_C, 2)) + ",";
-        json += "\"humidity_%RH\": " + String(isnan(humidity_RH) ? "null" : String(humidity_RH, 2)) + ",";
-        json += "\"flowRate_LitMin\": " + String(isnan(flowRate_LitMin) ? "null" : String(flowRate_LitMin, 2)) + ",";
-        json += "\"pressure_Pa\": " + String(isnan(pressure_Pa) ? "null" : String(pressure_Pa, 2)) + ",";
-        json += "\"rainSensor_0-99\": " + String(rainSensor) + ",";
-        json += "\"light_0-99\": " + String(lightSensor) + ",";
-        json += "\"soilMoisture1_0-99\": " + String(soilMoisture1) + ",";
-        json += "\"soilMoisture2_0-99\": " + String(soilMoisture2) + ",";
-        json += "\"soilMoisture\": [";
-        for (int i = 0; i < MAX_SOIL_MOISTURE_NODE; ++i)
-        {
-            json += isnan(soilMoisture[i].measurement) ? "null" : String(soilMoisture[i].measurement, 2);
-            if (i < MAX_SOIL_MOISTURE_NODE - 1)
-                json += ",";
-        }
-        json += "],";
-        json += "\"valid\": " + String(valid ? "true" : "false");
-        json += "}";
-        return json;
-    }
+    String toJSON() const;
 };
 
 struct RelayExeInfo
