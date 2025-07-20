@@ -9,6 +9,14 @@
 
 #include "Utils.hpp"
 
+enum class RelayTargetType
+{
+    SingleRelay,
+    Group,
+    All,
+    Unknown
+};
+
 enum class RelayIds
 {
     Relay1,
@@ -152,6 +160,7 @@ RelayGroups RelayGroupsFromString(const String& p_rawMsg, int p_startId = 0, int
 RelayState RelayStateFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 CmdPriority CmdPriorityFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 
+String ToString(RelayTargetType p_type);
 String ToString(RelayIds p_id);
 String ToString(RelayGroups p_group);
 String ToString(RelayState p_type);

@@ -2,6 +2,9 @@
 #include "../embedded/main/SolenoidManager.hpp"
 #include "../embedded/main/Enums.hpp"
 
+#include <vector>
+#include <algorithm>
+
 #define EXPECT_EQS(A, B) EXPECT_STREQ(ToString(A).c_str(), ToString(B).c_str())
 
 const std::string ValidManualAllClosedStr = "$Manua;P00;RXX;C#";
@@ -84,7 +87,7 @@ TEST(SampleTest, ManualControlCloseAllOpenTheFirst)
     }
 }
 
-TEST(SampleTest, CloseAllRelays)
+TEST(SampleTest, CloseAllOpenGroupBRelays)
 {
     SolenoidManager sm;
     ASSERT_TRUE(true);
@@ -101,13 +104,74 @@ TEST(SolenoidManager, AddRemoveRelayToGroup) {
     sm.relayGroups().addRelay(targetGroup, targetRelay);
 
     // only target group and target relay
-    for (RelayIds relayId = RelayIds::Relay1;
-         relayId < RelayIds::NumberOfRelays; relayId = incRelayId(relayId)) {
-        for (RelayGroups group = RelayGroups::A;
-             group < RelayGroups::NumberOfGroups;
-             group = incRelayGroup(group)) {
-          EXPECT_EQ(sm.relayGroups().isInGroup(group, relayId),
-                    targetRelay == relayId && targetGroup == group);
+    for (RelayIds relayId = RelayIds::Relay1; relayId < RelayIds::NumberOfRelays; relayId = incRelayId(relayId))
+    {
+        for (RelayGroups group = RelayGroups::A; group < RelayGroups::NumberOfGroups; group = incRelayGroup(group))
+        {
+            EXPECT_EQ(sm.relayGroups().isInGroup(group, relayId), targetRelay == relayId && targetGroup == group);
+        }
+    }
+}
+
+TEST(SampleTest, CloseAllRelaysOpenGroupB)
+{
+    const std::string OpenGroupB             = "$Manua;P01;RGB;O#";
+    const std::vector<RelayIds> targetRelays = {RelayIds::Relay1, RelayIds::Relay5, RelayIds::Relay6};
+    const RelayGroups targetGroup            = RelayGroups::B;
+
+    SolenoidManager sm;
+    for (const RelayIds& relayId : targetRelays)
+    {
+        sm.relayGroups().addRelay(targetGroup, relayId);
+    }
+
+    sm.appendCmd(ValidManualAllClosedStr);
+    sm.appendCmd(OpenGroupB);
+    sm.updateRelayStates();
+
+    RelayExeInfo relayExeInfo;
+    for (RelayIds relayId = RelayIds::Relay1; relayId < RelayIds::NumberOfRelays; relayId = incRelayId(relayId))
+    {
+        sm.getRelayState(relayId, relayExeInfo);
+
+        if (std::find(targetRelays.begin(), targetRelays.end(), relayId) != targetRelays.end())
+        {
+            execInfoTest(relayExeInfo, CmdPriority::Priority1, 1, RelayState::Opened);
+        }
+        else
+        {
+            execInfoTest(relayExeInfo, CmdPriority::Priority0, 0, RelayState::Closed);
+        }
+    }
+}
+
+TEST(SampleTest, OpenAllRelaysCloseGroupF)
+{
+    const std::string CloseGroupF            = "$Manua;P09;RGF;C#";
+    const std::vector<RelayIds> targetRelays = {RelayIds::Relay3, RelayIds::Relay7, RelayIds::Relay14};
+    const RelayGroups targetGroup            = RelayGroups::F;
+
+    SolenoidManager sm;
+    for (const RelayIds& relayId : targetRelays)
+    {
+        sm.relayGroups().addRelay(targetGroup, relayId);
+    }
+
+    sm.appendCmd(ValidManualAllOpenStr);
+    sm.appendCmd(CloseGroupF);
+    sm.updateRelayStates();
+
+    RelayExeInfo relayExeInfo;
+    for (RelayIds relayId = RelayIds::Relay1; relayId < RelayIds::NumberOfRelays; relayId = incRelayId(relayId))
+    {
+        sm.getRelayState(relayId, relayExeInfo);
+        if (std::find(targetRelays.begin(), targetRelays.end(), relayId) != targetRelays.end())
+        {
+            execInfoTest(relayExeInfo, CmdPriority::Priority9, 1, RelayState::Closed);
+        }
+        else
+        {
+            execInfoTest(relayExeInfo, CmdPriority::Priority0, 0, RelayState::Opened);
         }
     }
 }

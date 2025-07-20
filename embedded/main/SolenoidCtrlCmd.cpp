@@ -17,17 +17,17 @@ SolenoidCtrlCmd::SolenoidCtrlCmd(const String& p_cmd) : valid(false)
     priority = CmdPriorityFromString(p_cmd, idx, idx + PriorityStateLen);
     idx += PriorityStateLen + 1;
 
-    relayId = RelayIdTypeFromString(p_cmd, idx, idx + RelayIdStrLen);
+    relayTarget = RelayTarget::FromString(p_cmd, idx, idx + RelayIdStrLen);
     idx += RelayIdStrLen + 1;
 
     if (p_cmd.endsWith("#")) // no checksum
     {
-        action   = Utils::GetSubStr(p_cmd, idx, -1);
+        action   = Utils::GetSubStr(p_cmd, idx, -2); // skip last
         checksum = getChecksum(p_cmd);
     }
     else
     {
-        action = Utils::GetSubStr(p_cmd, idx, -3);
+        action = Utils::GetSubStr(p_cmd, idx, -4); // skip last two
         idx    = strlen(p_cmd.c_str()) - 2; // last two characters
 
         String receivedChecksum = Utils::GetSubStr(p_cmd, idx, -3);
@@ -49,10 +49,10 @@ SolenoidCtrlCmd::SolenoidCtrlCmd(const String& p_cmd) : valid(false)
 String SolenoidCtrlCmd::toString(bool addChecksum) const
 {
     if (addChecksum)
-        return START_CHAR + ToString(cmdType) + ";" + ToString(priority) + ";" + ToString(relayId) + ";" + action +
+        return START_CHAR + ToString(cmdType) + ";" + ToString(priority) + ";" + relayTarget.toString() + ";" + action +
                TERMINATOR_CHAR + String(checksum, HEX);
     else
-        return START_CHAR + ToString(cmdType) + ";" + ToString(priority) + ";" + ToString(relayId) + ";" + action +
+        return START_CHAR + ToString(cmdType) + ";" + ToString(priority) + ";" + relayTarget.toString() + ";" + action +
                TERMINATOR_CHAR;
 }
 

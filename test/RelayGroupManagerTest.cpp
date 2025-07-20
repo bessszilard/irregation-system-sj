@@ -50,7 +50,20 @@ TEST(RelayGroupsTest, OnlyRelayIsOnlyInOneGroup)
     EXPECT_FALSE(rm.isInGroup(RelayGroups::A, RelayIds::Relay1));
     EXPECT_TRUE(rm.isInGroup(RelayGroups::B, RelayIds::Relay1));
 
-    std::cout << rm.toJson() << std::endl;
+    // std::cout << rm.toJson() << std::endl;
+}
+
+TEST(RelayGroupsTest, toJsonNoCrash)
+{
+    RelayGroupManagerTest rm;
+    rm.addRelay(RelayGroups::A, RelayIds::Relay1);
+    rm.addRelay(RelayGroups::B, RelayIds::Relay1);
+
+    EXPECT_FALSE(rm.isInGroup(RelayGroups::A, RelayIds::Relay1));
+    EXPECT_TRUE(rm.isInGroup(RelayGroups::B, RelayIds::Relay1));
+    String json = rm.toJson();
+
+    EXPECT_NE(json.length(), 0);
 }
 
 TEST(RelayGroupsTest, StringToGroupIds)
@@ -72,10 +85,9 @@ TEST(RelayGroupsTest, LoadFromString)
     RelayGroupManagerTest rm;
     EXPECT_TRUE(rm.loadFromStr(cmd));
 
-    // std::cout << ToString(group) << " vs " << ToString(relayId) << std::endl;
-
-    // EXPECT_EQ(group, RelayGroups::C);
-    // EXPECT_EQ(ToString(relayId), ToString(RelayIds::Relay13));
+    EXPECT_TRUE(rm.isInGroup(RelayGroups::A, RelayIds::Relay1));
+    EXPECT_TRUE(rm.isInGroup(RelayGroups::B, RelayIds::Relay2));
+    EXPECT_TRUE(rm.isInGroup(RelayGroups::C, RelayIds::Relay13));
 }
 
 TEST(RelayGroupsTest, LoadFromARray)

@@ -34,6 +34,7 @@ RelayIds RelayIdTypeFromString(const String& p_rawMsg, int p_startId /*=0*/, int
     if (subStr == "R15")     return RelayIds::Relay15;
     if (subStr == "R16")     return RelayIds::Relay16;
     if (subStr == "RXX")     return RelayIds::AllRelays;
+    Serial.printf(">> %s is unknown\n", subStr.c_str());
     return RelayIds::Unknown;
 }
 
@@ -79,6 +80,21 @@ CmdPriority CmdPriorityFromString(const String& p_rawMsg, int p_startId /*=0*/, 
     return CmdPriority::Unknown;    
 }
 
+
+String ToString(RelayTargetType p_type)
+{
+    switch(p_type)
+    {
+        case RelayTargetType::SingleRelay:      return "SingleRelay";
+        case RelayTargetType::Group:            return "Group";
+        case RelayTargetType::All:              return "All";
+        case RelayTargetType::Unknown: 
+        default:
+                 return "Unknown";
+    }
+    return "Unkown";
+}
+    
 String ToString(RelayIds p_id)
 {
     switch(p_id)

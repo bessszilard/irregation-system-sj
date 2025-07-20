@@ -33,7 +33,7 @@ public:
     // bool publishAllCmds();
     RelayState updateAndGetRelayState(RelayIds p_relayId);
 
-    void updateRelayStates(); // const SensorData& p_sensorData);
+    void updateRelayStates(bool verbose = false);
 
     RelayState applyCmd(const SolenoidCtrlCmd& p_cmd);
 

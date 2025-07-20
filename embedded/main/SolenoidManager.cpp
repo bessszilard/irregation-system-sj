@@ -52,7 +52,7 @@ CommandState SolenoidManager::overrideCmd(const String& p_cmdStr)
     SolenoidCtrlCmd cmdToAdd(p_cmdStr);
     for (uint8_t i = 0; i < m_currentCmdId; ++i)
     {
-        if ((m_cmdList[i].priority == cmdToAdd.priority) && (m_cmdList[i].relayId == cmdToAdd.relayId))
+        if ((m_cmdList[i].priority == cmdToAdd.priority) && (m_cmdList[i].relayTarget == cmdToAdd.relayTarget))
         {
             removeCmd(i);
         }
@@ -277,24 +277,55 @@ RelayState SolenoidManager::applyCmd(const SolenoidCtrlCmd& p_cmd)
     return RelayState::Unknown;
 }
 
-void SolenoidManager::updateRelayStates() // const SensorData& p_sensorData)
+void SolenoidManager::updateRelayStates(bool verbose /*=false*/)
 {
     for (uint8_t relayIdu8 = 0; relayIdu8 < NUMBER_OF_RELAYS; relayIdu8++)
     {
         for (uint8_t cmdId = 0; cmdId < m_currentCmdId; cmdId++)
         {
             RelayIds relayId = ToRelayId(relayIdu8);
-            // TODOsz group check
-            // skip if not the right relay selected
-            if ((relayId != m_cmdList[cmdId].relayId) && (m_cmdList[cmdId].relayId != RelayIds::AllRelays))
+            const SolenoidCtrlCmd& cmd = m_cmdList[cmdId];
+
+            if (verbose)
             {
-                continue;
+                Serial.printf("%s: %s -> ", ToString(relayId).c_str(), cmd.toString().c_str());
+            }
+
+            // skip if not the right relay selected
+            if (cmd.relayTarget.type == RelayTargetType::SingleRelay)
+            {
+                if (cmd.relayTarget.relayId != relayId)
+                {
+                    if ((verbose))
+                        Serial.printf("%s != %s -> skipped\n",
+                                      ToString(relayId).c_str(),
+                                      ToString(cmd.relayTarget.relayId).c_str());
+                    continue;
+                }
+            }
+            // skip if command effects on a group, and relay not selected
+            else if (cmd.relayTarget.type == RelayTargetType::Group)
+            {
+                if (false == m_relayGroups.isInGroup(cmd.relayTarget.groupId, relayId))
+                {
+                    if (verbose)
+                        Serial.printf("%s not in %s group -> skipped\n",
+                                      ToString(relayId).c_str(),
+                                      ToString(cmd.relayTarget.groupId).c_str());
+                    continue;
+                }
             }
 
             // skip if the running priority is higher
             if (m_relayCmdIndexes[relayIdu8].priority >= m_cmdList[cmdId].priority)
             {
+                Serial.print("Skipped since higher priority was already applied");
                 continue;
+            }
+
+            if (verbose)
+            {
+                Serial.println("Applied");
             }
 
             RelayState state = applyCmd(m_cmdList[cmdId]);

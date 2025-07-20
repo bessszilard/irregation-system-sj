@@ -25,7 +25,7 @@ struct SolenoidCtrlCmd
 
     CommandType cmdType;
     CmdPriority priority; // larger value means lower priority
-    RelayIds relayId;
+    RelayTarget relayTarget;
     RelayState relayState;
     String action;
     uint8_t checksum;
@@ -33,7 +33,7 @@ struct SolenoidCtrlCmd
 
     inline bool operator==(const SolenoidCtrlCmd& p_cmd) const
     {
-        return cmdType == p_cmd.cmdType && relayId == p_cmd.relayId && relayState == p_cmd.relayState &&
+        return cmdType == p_cmd.cmdType && relayTarget == p_cmd.relayTarget && relayState == p_cmd.relayState &&
                priority == p_cmd.priority && action == p_cmd.action;
     }
 

@@ -49,6 +49,11 @@ public:
         this->assign(oss.str());
     }
 
+    bool startsWith(const std::string& prefix) const
+    {
+        return this->compare(0, prefix.length(), prefix) == 0;
+    }
+
     // Arduino-style indexOf
     int indexOf(const std::string& substr, size_t fromIndex = 0) const
     {

@@ -2,6 +2,7 @@
 find_package(GTest REQUIRED)
 
 set (SRC
+    StructuresTest.cpp
     SolenoidCtrlCmdTest.cpp
     SolenoidManagerTest.cpp
     RelayGroupManagerTest.cpp
@@ -10,6 +11,7 @@ set (SRC
     ../embedded/main/Enums.cpp
     ../embedded/main/Utils.cpp
     ../embedded/main/RelayGroupManager.cpp
+    ../embedded/main/Structures.cpp
 )
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")

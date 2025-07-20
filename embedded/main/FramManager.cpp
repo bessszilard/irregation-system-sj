@@ -203,7 +203,7 @@ bool FramManager::saveRelayGroups(uint16_t* p_data, uint16_t p_length)
 bool FramManager::loadRelayGroups(uint16_t* p_data, uint16_t p_length)
 {
     uint16_t relayGroupId = 0;
-    if (false == read16(RELAY_GROUPS_ID_ADDR, relayGroupId) && relayGroupId == RELAY_GROUPS_ID)
+    if (false == read16(RELAY_GROUPS_ID_ADDR, relayGroupId) || relayGroupId != RELAY_GROUPS_ID)
     {
         Serial.println("Failed to read RELAY_GROUPS_ID_ADDR");
         return false;

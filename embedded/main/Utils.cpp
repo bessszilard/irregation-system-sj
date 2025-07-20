@@ -7,12 +7,15 @@ String Utils::GetSubStr(const String& p_rawMsg, int p_startId, int p_endId, bool
     {
         return "";
     }
-    int end = p_endId < 0 ? strlen(p_rawMsg.c_str()) + p_endId : p_endId;
+    int end = p_endId < 0 ? strlen(p_rawMsg.c_str()) + p_endId + 1 : p_endId; // Make inclusive
 
     String subStr = p_rawMsg.substring(p_startId, end);
 #ifdef PC_BUILD
     if (p_verbose)
-        std::cout << subStr << std::endl;
+    {
+        std::cout << "Input:" << p_rawMsg << ", StartId:" << p_startId << ", end:" << end << ", substr:" << subStr
+                  << std::endl;
+    }
 #endif
     return subStr;
 }
@@ -34,7 +37,8 @@ int32_t Utils::GetSmoothedRSSI(int32_t newRSSI)
     return sum / NUM_SAMPLES;
 }
 
-uint8_t Utils::scaleTo99(uint16_t value)
+// TODOsz add proper boundaries
+uint16_t Utils::scaleTo99(uint16_t value)
 {
-    return (uint32_t)value * 99 / 65535;
+    return (uint32_t)value; // * 99 / 65535;
 }
