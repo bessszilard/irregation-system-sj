@@ -257,26 +257,6 @@ String SolenoidManager::getCmdString(uint8_t p_id) const
     return m_cmdList[p_id].toString();
 }
 
-RelayState SolenoidManager::applyCmd(const SolenoidCtrlCmd& p_cmd)
-{
-    switch (p_cmd.cmdType)
-    {
-        case CommandType::ManCtrl:
-            return ToRelayStateFromShortString(p_cmd.action);
-        case CommandType::AutoTimeCtrl:
-            return RelayState::Unknown;
-            // case CommandType::AutoTemperatureCtrl:
-            //     return p_cmd.relayState;
-            // case CommandType::AutoHumidityCtrl:
-            //     return p_cmd.relayState;
-            // case CommandType::AutoTimeCtrl:
-            //     return p_cmd.relayState;
-            // case CommandType::AutoFlowCtrl:
-            //     return p_cmd.relayState;
-    }
-    return RelayState::Unknown;
-}
-
 void SolenoidManager::updateRelayStates(bool verbose /*=false*/)
 {
     for (uint8_t relayIdu8 = 0; relayIdu8 < NUMBER_OF_RELAYS; relayIdu8++)
@@ -329,7 +309,7 @@ void SolenoidManager::updateRelayStates(bool verbose /*=false*/)
                 Serial.println("Applied");
             }
 
-            RelayState state = applyCmd(m_cmdList[cmdId]);
+            RelayState state = m_cmdList[cmdId].evaluate(m_sensorData, m_localTime);
             if (state == RelayState::Unknown)
             {
                 continue;

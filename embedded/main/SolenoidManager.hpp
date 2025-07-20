@@ -35,8 +35,6 @@ public:
 
     void updateRelayStates(bool verbose = false);
 
-    RelayState applyCmd(const SolenoidCtrlCmd& p_cmd);
-
     void getRelayState(RelayIds id, RelayExeInfo& relayState)
     {
         // TODOsz striction

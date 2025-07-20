@@ -2,18 +2,6 @@
 
 #include "Enums.hpp"
 #include "Structures.hpp"
-// p_cmd example starts with [ ends with ]
-// TODOsz add priority
-// Man;R1;Close;1 << overridable by automation
-// Aut;R2;Open;Temp;<15
-// Aut;R3;Close;Flow;>10
-// Aut;R4;Close;Hum;>10
-// Aut;R5;Close;Time;>15:00
-// Aut;RX;Close;Time;>15:00
-
-// $Manua;P0;R01;C
-// $ATime;P5;RXX;O15:00->20:00
-// $ATime;P5;RXX;X15:00->20:00_O20m_C1h
 
 struct SolenoidCtrlCmd
 {
@@ -39,5 +27,5 @@ struct SolenoidCtrlCmd
 
     uint8_t getChecksum(const String& p_cmd, bool checksumIncluded = true) const;
 
-    RelayState evaluate(const SensorData& sensors, const LocalTime& loctime);
+    RelayState evaluate(const SensorData& sensors, const LocalTime& loctime) const;
 };
