@@ -8,7 +8,7 @@
 #define EXPECT_EQS(A, B) EXPECT_STREQ(ToString(A).c_str(), ToString(B).c_str())
 
 const std::string ValidManualAllClosedStr = "$Manua;P00;RXX;C#";
-const std::string ValidManualAllOpenStr   = "$Manua;P00;RXX;O#";
+const std::string ValidManualAllOpenStr   = "$Manua;P01;RXX;O#";
 const std::string ValidAutomaticStr       = "$ATime;P05;RXX;O15:00->20:00#";
 
 void execInfoTest(const RelayExeInfo& p_execInfo, CmdPriority p_cmdPriority, uint8_t p_cmdId, RelayState p_relayState)
@@ -61,7 +61,7 @@ TEST(SampleTest, ManualControlOpenAll)
     for (uint8_t i = 0; i < NUMBER_OF_RELAYS; ++i)
     {
         sm.getRelayState(ToRelayId(i), relayExeInfo);
-        execInfoTest(relayExeInfo, CmdPriority::Priority0, 0, RelayState::Opened);
+        execInfoTest(relayExeInfo, CmdPriority::Priority1, 0, RelayState::Opened);
     }
 }
 
@@ -171,7 +171,7 @@ TEST(SampleTest, OpenAllRelaysCloseGroupF)
         }
         else
         {
-            execInfoTest(relayExeInfo, CmdPriority::Priority0, 0, RelayState::Opened);
+            execInfoTest(relayExeInfo, CmdPriority::Priority1, 0, RelayState::Opened);
         }
     }
 }
@@ -184,4 +184,21 @@ TEST(SolenoidManager, LoadCmdsFromString)
     EXPECT_TRUE(sm.loadCmdsFromString(cmdsRaw));
     EXPECT_EQ(sm.getCmdNumber(), 3);
     EXPECT_EQ(sm.getCmdListStr(), cmdsRaw);
+}
+
+TEST(SolenoidManager, ResetCommands)
+{
+    String cmdsRaw = ValidManualAllClosedStr + "_" + ValidManualAllOpenStr + "_" + ValidAutomaticStr + "_";
+
+    SolenoidManager sm;
+    EXPECT_TRUE(sm.loadCmdsFromString(cmdsRaw));
+    EXPECT_EQ(sm.getCmdNumber(), 3);
+    EXPECT_EQ(sm.getCmdListStr(), cmdsRaw);
+
+    EXPECT_TRUE(sm.loadCmdsFromString(ValidManualAllClosedStr));
+    EXPECT_EQ(sm.getCmdNumber(), 1);
+
+    sm.updateRelayStates(true);
+
+    // EXPECT_EQ(sm.getCmdListStr(), ValidManualAllClosedStr);
 }

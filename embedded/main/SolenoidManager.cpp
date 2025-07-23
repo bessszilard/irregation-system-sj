@@ -2,11 +2,17 @@
 
 #define DELIMITER "_"
 
-SolenoidManager::SolenoidManager() : m_currentCmdId(0), m_relayGroups() {
-  for (uint8_t id = 0; id < NUMBER_OF_RELAYS; id++) {
-    m_relayCmdIndexes[id].set(0, CmdPriority::PriorityLowest,
-                              RelayState::Unknown);
-  }
+SolenoidManager::SolenoidManager() : m_currentCmdId(0), m_relayGroups()
+{
+    resetPriorities();
+}
+
+void SolenoidManager::resetPriorities()
+{
+    for (uint8_t id = 0; id < NUMBER_OF_RELAYS; id++)
+    {
+        m_relayCmdIndexes[id].set(0, CmdPriority::PriorityLowest, RelayState::Unknown);
+    }
 }
 
 CommandState SolenoidManager::appendCmd(const String& p_cmdStr)
@@ -93,6 +99,7 @@ CommandState SolenoidManager::removeCmd(uint8_t p_id)
 
     if (removedCmdControlledARelay)
     {
+        resetPriorities();
         updateRelayStates();
     }
 
@@ -160,6 +167,7 @@ String SolenoidManager::getCmdListStr() const
 bool SolenoidManager::loadCmdsFromString(const String& p_cmds)
 {
     m_currentCmdId = 0;
+    resetPriorities();
 
     int start = 0;
     int end   = p_cmds.indexOf(DELIMITER);
@@ -257,8 +265,9 @@ String SolenoidManager::getCmdString(uint8_t p_id) const
     return m_cmdList[p_id].toString();
 }
 
-void SolenoidManager::updateRelayStates(bool verbose /*=false*/)
+bool SolenoidManager::updateRelayStates(bool verbose /*=false*/)
 {
+    bool atLeastOneChanged = false;
     for (uint8_t relayIdu8 = 0; relayIdu8 < NUMBER_OF_RELAYS; relayIdu8++)
     {
         for (uint8_t cmdId = 0; cmdId < m_currentCmdId; cmdId++)
@@ -314,9 +323,15 @@ void SolenoidManager::updateRelayStates(bool verbose /*=false*/)
             {
                 continue;
             }
+            RelayState oldState = m_relayCmdIndexes[relayIdu8].currentState;
             m_relayCmdIndexes[relayIdu8].set(cmdId, m_cmdList[cmdId].priority, state);
+            if (m_relayCmdIndexes[relayIdu8].currentState != oldState)
+            {
+                atLeastOneChanged = true;
+            }
         }
     }
+    return atLeastOneChanged;
 }
 
 // bool SolenoidManager::publishAllCmds() {}

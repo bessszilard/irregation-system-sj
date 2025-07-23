@@ -135,14 +135,14 @@ bool MqttHandler::subscribeTopics()
     }
 
     bool success = true;
-    success &= m_client->subscribe(MQTT_SUB_ADD_CMD);
-    success &= m_client->subscribe(MQTT_SUB_REMOVE_CMD);
-    success &= m_client->subscribe(MQTT_SUB_OVERRIDE_CMD);
+    success &= m_client->subscribe(MQTT_SUB_CMD_ADD);
+    success &= m_client->subscribe(MQTT_SUB_CMD_REMOVE);
+    success &= m_client->subscribe(MQTT_SUB_CMD_OVERRIDE);
     success &= m_client->subscribe(MQTT_SUB_CMD_IMPORT);
-    success &= m_client->subscribe(MQTT_SUB_GET_COMMAND_OPTIONS);
-    success &= m_client->subscribe(MQTT_SUB_SAVE_ALL_CMDS);
-    success &= m_client->subscribe(MQTT_SUB_LOAD_ALL_CMDS);
-    success &= m_client->subscribe(MQTT_SUB_RESET_CMDS_TO_DEFAULT);
+    success &= m_client->subscribe(MQTT_SUB_CMD_GET_OPTIONS);
+    success &= m_client->subscribe(MQTT_SUB_CMDS_SAVE_ALL);
+    success &= m_client->subscribe(MQTT_SUB_CMDS_LOAD_ALL);
+    success &= m_client->subscribe(MQTT_SUB_CMDS_RESET_TO_DEFAULT);
     success &= m_client->subscribe(MQTT_RELAY_GROUPS_SET);
     success &= m_client->subscribe(MQTT_RELAY_GROUPS_LOAD);
     success &= m_client->subscribe(MQTT_SUB_GET_ALL_INFO);

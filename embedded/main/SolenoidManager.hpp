@@ -33,7 +33,7 @@ public:
     // bool publishAllCmds();
     RelayState updateAndGetRelayState(RelayIds p_relayId);
 
-    void updateRelayStates(bool verbose = false);
+    bool updateRelayStates(bool verbose = false);
 
     void getRelayState(RelayIds id, RelayExeInfo& relayState)
     {
@@ -50,6 +50,8 @@ public:
     {
         return m_relayGroups;
     }
+
+    void resetPriorities();
 
 protected:
     // TODOsz remove this since it's inside the commands

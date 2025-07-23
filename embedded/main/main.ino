@@ -140,8 +140,9 @@ void loop()
     }
 
     // TODOsz move to separate function as updateRelayStateAndApply
-    solM.updateRelayStates();
-    bool atLeastOneRelayChanged = false;
+
+    bool atLeastOneRelayChanged = solM.updateRelayStates();
+
     RelayExeInfo exeInfo;
     for (RelayIds relayId = RelayIds::Relay1; relayId < RelayIds::NumberOfRelays; relayId = incRelayId(relayId))
     {
@@ -150,10 +151,10 @@ void loop()
         {
             continue;
         }
-        atLeastOneRelayChanged = true;
         // Only apply if change happened
         relayStates.setState(relayId, exeInfo.currentState);
         relayArray.setState(relayId, exeInfo.currentState);
+        Serial.println(">>>>> At least one relay changed");
     }
     // <<<
 
@@ -391,21 +392,21 @@ void callback(char* topic, byte* message, unsigned int length)
     String topicStr(topic);
     // TODOsz topicStr move to variable
     // Subscribed topics
-    if (topicStr == MQTT_SUB_ADD_CMD)
+    if (topicStr == MQTT_SUB_CMD_ADD)
     {
         CommandState cmdState = solM.appendCmd(messageTemp);
         Serial.println(messageTemp + ">> " + ToString(cmdState));
         mqttHd.publish(cmdState);
         mqttHd.publish(solM);
     }
-    else if (topicStr == MQTT_SUB_REMOVE_CMD)
+    else if (topicStr == MQTT_SUB_CMD_REMOVE)
     {
         CommandState cmdState = solM.removeCmd(messageTemp);
         mqttHd.publish(cmdState);
         Serial.println(messageTemp + ">> " + ToString(cmdState));
         mqttHd.publish(solM);
     }
-    else if (topicStr == MQTT_SUB_OVERRIDE_CMD)
+    else if (topicStr == MQTT_SUB_CMD_OVERRIDE)
     {
         CommandState cmdState = solM.overrideCmd(messageTemp);
         mqttHd.publish(cmdState);
@@ -419,7 +420,7 @@ void callback(char* topic, byte* message, unsigned int length)
         Serial.println(messageTemp);
         mqttHd.publish(solM);
     }
-    else if (topicStr == MQTT_SUB_GET_COMMAND_OPTIONS)
+    else if (topicStr == MQTT_SUB_CMD_GET_OPTIONS)
     {
         String json;
         GetCommandBuilderJSON(json);
@@ -437,19 +438,20 @@ void callback(char* topic, byte* message, unsigned int length)
         mqttHd.publish(solM.relayGroups());
         mqttHd.publish(sensorData);
     }
-    else if (topicStr == MQTT_SUB_SAVE_ALL_CMDS)
+    else if (topicStr == MQTT_SUB_CMDS_SAVE_ALL)
     {
         Serial.println("Save all commands");
         storeCmdListToFRAMFlag = true;
     }
-    else if (topicStr == MQTT_SUB_LOAD_ALL_CMDS)
+    else if (topicStr == MQTT_SUB_CMDS_LOAD_ALL)
     {
-        Serial.println("MQTT_SUB_LOAD_ALL_CMDS");
+        Serial.println("MQTT_SUB_CMDS_LOAD_ALL");
         loadCmdListFromFRAMFlag = true;
     }
-    else if (topicStr == MQTT_SUB_RESET_CMDS_TO_DEFAULT)
+    else if (topicStr == MQTT_SUB_CMDS_RESET_TO_DEFAULT)
     {
-        Serial.println("MQTT_SUB_RESET_CMDS_TO_DEFAULT");
+        resetSolenoidCommandsToDefault();
+        mqttHd.publish(solM);
     }
     else if (topicStr == MQTT_RELAY_GROUPS_SET)
     {
@@ -495,6 +497,11 @@ void saveRelayGroupsFormFRAM()
     }
 }
 
+void resetSolenoidCommandsToDefault()
+{
+    solM.loadCmdsFromString("$Manua;P00;RXX;C#"); // Default
+}
+
 void setupFRAM()
 {
     if (framM.begin())
@@ -506,7 +513,6 @@ void setupFRAM()
         Serial.println("Failed to connect to FRAM");
     }
 
-    // TODOsz move to a function
     String cmdList;
     if (framM.loadCommands(cmdList))
     {
@@ -515,7 +521,7 @@ void setupFRAM()
     }
     else
     {
-        solM.appendCmd("$Manua;P00;RXX;C#"); // Default
+        resetSolenoidCommandsToDefault();
     }
     loadRelayGroupsFormFRAM();
 }

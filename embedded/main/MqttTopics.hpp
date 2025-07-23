@@ -11,14 +11,14 @@
 // TODOsz move general terms to the front -> CMD_ADD, CMD_REMOVE,
 // CMD_GET_OPTIONS etc.
 #define MQTT_SUB_GET_ALL_INFO "sjirs/get-all-info" // TODOsz move to the front
-#define MQTT_SUB_ADD_CMD "sjirs/cmd/add"
-#define MQTT_SUB_REMOVE_CMD "sjirs/cmd/remove"
-#define MQTT_SUB_SAVE_ALL_CMDS "sjirs/cmd/save_all"
-#define MQTT_SUB_LOAD_ALL_CMDS "sjirs/cmd/load_all"
-#define MQTT_SUB_RESET_CMDS_TO_DEFAULT "sjirs/cmd/reset_cmd_to_def"
-#define MQTT_SUB_OVERRIDE_CMD "sjirs/cmd/override"
+#define MQTT_SUB_CMD_ADD "sjirs/cmd/add"
+#define MQTT_SUB_CMD_REMOVE "sjirs/cmd/remove"
+#define MQTT_SUB_CMDS_SAVE_ALL "sjirs/cmd/save_all"
+#define MQTT_SUB_CMDS_LOAD_ALL "sjirs/cmd/load_all"
+#define MQTT_SUB_CMDS_RESET_TO_DEFAULT "sjirs/cmd/reset_cmd_to_def"
+#define MQTT_SUB_CMD_OVERRIDE "sjirs/cmd/override"
 #define MQTT_SUB_CMD_IMPORT "sjirs/cmd/import"
-#define MQTT_SUB_GET_COMMAND_OPTIONS "sjirs/cmd/command-options/get"
+#define MQTT_SUB_CMD_GET_OPTIONS "sjirs/cmd/command-options/get"
 #define MQTT_SUB_GET_ALL_INFO "sjirs/get-all-info"
 #define MQTT_RELAY_GROUPS_SET "sjirs/relay-groups/set"
 #define MQTT_RELAY_GROUPS_LOAD "sjirs/relay-groups/load"
