@@ -76,6 +76,15 @@ struct LocalTime : tm
     bool eq(LocalTime& time);
 
     String toString() const;
+
+    static LocalTime Build(uint8_t p_hours, uint8_t p_minutes)
+    {
+        LocalTime time;
+        time.tm_hour = p_hours;
+        time.tm_min  = p_minutes;
+        time.valid   = true;
+        return time;
+    }
 };
 
 struct RelayArrayStates

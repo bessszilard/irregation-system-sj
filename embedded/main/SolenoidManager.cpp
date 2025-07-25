@@ -1,6 +1,5 @@
 #include "SolenoidManager.hpp"
-
-#define DELIMITER "_"
+#include "PredefinedCommands.hpp"
 
 SolenoidManager::SolenoidManager() : m_currentCmdId(0), m_relayGroups()
 {
@@ -151,7 +150,7 @@ String SolenoidManager::getCmdListStr() const
         estimatedSize += m_cmdList[i].toString().length();
     }
 
-    estimatedSize += m_currentCmdId - 1; // for DELIMITER characters
+    estimatedSize += m_currentCmdId - 1; // for CMD_DELIMITER characters
 
     String result;
     result.reserve(estimatedSize); // Preallocate memory
@@ -159,7 +158,7 @@ String SolenoidManager::getCmdListStr() const
     for (uint8_t i = 0; i < m_currentCmdId; i++)
     {
         result += m_cmdList[i].toString();
-        result += DELIMITER;
+        result += CMD_DELIMITER;
     }
     return result;
 }
@@ -170,12 +169,11 @@ bool SolenoidManager::loadCmdsFromString(const String& p_cmds)
     resetPriorities();
 
     int start = 0;
-    int end   = p_cmds.indexOf(DELIMITER);
+    int end   = p_cmds.indexOf(CMD_DELIMITER);
 
     while (end != -1 && m_currentCmdId < MAX_NUMBER_OF_CMDS)
     {
         String line = p_cmds.substring(start, end);
-
         if (CommandState::Added != appendCmd(line))
         {
             Serial.print("Failed to parse line: ");
@@ -183,7 +181,7 @@ bool SolenoidManager::loadCmdsFromString(const String& p_cmds)
             return false;
         }
         start = end + 1;
-        end   = p_cmds.indexOf(DELIMITER, start);
+        end   = p_cmds.indexOf(CMD_DELIMITER, start);
     }
 
     // Handle last line (if not ending with newline)

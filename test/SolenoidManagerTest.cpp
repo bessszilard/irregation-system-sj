@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
 #include "../embedded/main/SolenoidManager.hpp"
 #include "../embedded/main/Enums.hpp"
+#include "../embedded/main/PredefinedCommands.hpp"
 
 #include <vector>
 #include <algorithm>
 
 #define EXPECT_EQS(A, B) EXPECT_STREQ(ToString(A).c_str(), ToString(B).c_str())
 
-const std::string ValidManualAllClosedStr = "$Manua;P00;RXX;C#";
-const std::string ValidManualAllOpenStr   = "$Manua;P01;RXX;O#";
-const std::string ValidAutomaticStr       = "$ATime;P05;RXX;O15:00->20:00#";
+const String CmdsRaw =
+    String(CMD_MANUAL_CLOSE_ALL_RELAYS) + "_" + CMD_MANUAL_OPEN_ALL_RELAYS + "_" + CMD_ATIME_SINGLE + "_";
 
 void execInfoTest(const RelayExeInfo& p_execInfo, CmdPriority p_cmdPriority, uint8_t p_cmdId, RelayState p_relayState)
 {
@@ -23,22 +23,22 @@ TEST(SampleTest, AddAndRemove)
     SolenoidManager sm;
     ASSERT_TRUE(true);
 
-    EXPECT_EQ(CommandState::Added, sm.appendCmd(ValidManualAllClosedStr));
-    EXPECT_EQ(CommandState::Added, sm.appendCmd(ValidAutomaticStr));
+    EXPECT_EQ(CommandState::Added, sm.appendCmd(CMD_MANUAL_CLOSE_ALL_RELAYS));
+    EXPECT_EQ(CommandState::Added, sm.appendCmd(CMD_ATIME_SINGLE));
 
     EXPECT_EQ(2, sm.getCmdNumber());
-    EXPECT_EQ(ValidManualAllClosedStr, sm.getCmdString(0));
+    EXPECT_EQ(CMD_MANUAL_CLOSE_ALL_RELAYS, sm.getCmdString(0));
 
     ASSERT_EQ(CommandState::CantRemove, sm.removeCmd(3));
     ASSERT_EQ(CommandState::Removed, sm.removeCmd(0));
     EXPECT_EQ(1, sm.getCmdNumber());
-    EXPECT_EQ(ValidAutomaticStr, sm.getCmdString(0));
+    EXPECT_EQ(CMD_ATIME_SINGLE, sm.getCmdString(0));
 }
 
 TEST(SampleTest, ManualControlCloseAll)
 {
     SolenoidManager sm;
-    EXPECT_EQ(CommandState::Added, sm.appendCmd(ValidManualAllClosedStr));
+    EXPECT_EQ(CommandState::Added, sm.appendCmd(CMD_MANUAL_CLOSE_ALL_RELAYS));
 
     sm.updateRelayStates();
 
@@ -53,7 +53,7 @@ TEST(SampleTest, ManualControlCloseAll)
 TEST(SampleTest, ManualControlOpenAll)
 {
     SolenoidManager sm;
-    EXPECT_EQ(CommandState::Added, sm.appendCmd(ValidManualAllOpenStr));
+    EXPECT_EQ(CommandState::Added, sm.appendCmd(CMD_MANUAL_OPEN_ALL_RELAYS));
 
     sm.updateRelayStates();
 
@@ -68,9 +68,9 @@ TEST(SampleTest, ManualControlOpenAll)
 TEST(SampleTest, ManualControlCloseAllOpenTheFirst)
 {
     SolenoidManager sm;
-    const std::string OpenFirstCmdStr = "$Manua;P01;R01;O#";
+    const std::string OpenFirstCmdStr = "$Manual;P01;R01;O#";
 
-    EXPECT_EQS(CommandState::Added, sm.appendCmd(ValidManualAllClosedStr));
+    EXPECT_EQS(CommandState::Added, sm.appendCmd(CMD_MANUAL_CLOSE_ALL_RELAYS));
     EXPECT_EQS(CommandState::Added, sm.appendCmd(OpenFirstCmdStr));
 
     sm.updateRelayStates();
@@ -92,7 +92,7 @@ TEST(SampleTest, CloseAllOpenGroupBRelays)
     SolenoidManager sm;
     ASSERT_TRUE(true);
 
-    sm.appendCmd(ValidManualAllClosedStr);
+    sm.appendCmd(CMD_MANUAL_CLOSE_ALL_RELAYS);
     sm.updateRelayStates();
 }
 
@@ -115,7 +115,7 @@ TEST(SolenoidManager, AddRemoveRelayToGroup) {
 
 TEST(SampleTest, CloseAllRelaysOpenGroupB)
 {
-    const std::string OpenGroupB             = "$Manua;P01;RGB;O#";
+    const std::string OpenGroupB             = "$Manual;P01;RGB;O#";
     const std::vector<RelayIds> targetRelays = {RelayIds::Relay1, RelayIds::Relay5, RelayIds::Relay6};
     const RelayGroups targetGroup            = RelayGroups::B;
 
@@ -125,7 +125,7 @@ TEST(SampleTest, CloseAllRelaysOpenGroupB)
         sm.relayGroups().addRelay(targetGroup, relayId);
     }
 
-    sm.appendCmd(ValidManualAllClosedStr);
+    sm.appendCmd(CMD_MANUAL_CLOSE_ALL_RELAYS);
     sm.appendCmd(OpenGroupB);
     sm.updateRelayStates();
 
@@ -147,7 +147,7 @@ TEST(SampleTest, CloseAllRelaysOpenGroupB)
 
 TEST(SampleTest, OpenAllRelaysCloseGroupF)
 {
-    const std::string CloseGroupF            = "$Manua;P09;RGF;C#";
+    const std::string CloseGroupF            = "$Manual;P09;RGF;C#";
     const std::vector<RelayIds> targetRelays = {RelayIds::Relay3, RelayIds::Relay7, RelayIds::Relay14};
     const RelayGroups targetGroup            = RelayGroups::F;
 
@@ -157,7 +157,7 @@ TEST(SampleTest, OpenAllRelaysCloseGroupF)
         sm.relayGroups().addRelay(targetGroup, relayId);
     }
 
-    sm.appendCmd(ValidManualAllOpenStr);
+    sm.appendCmd(CMD_MANUAL_OPEN_ALL_RELAYS);
     sm.appendCmd(CloseGroupF);
     sm.updateRelayStates();
 
@@ -178,27 +178,23 @@ TEST(SampleTest, OpenAllRelaysCloseGroupF)
 
 TEST(SolenoidManager, LoadCmdsFromString)
 {
-    String cmdsRaw = ValidManualAllClosedStr + "_" + ValidManualAllOpenStr + "_" + ValidAutomaticStr + "_";
-
     SolenoidManager sm;
-    EXPECT_TRUE(sm.loadCmdsFromString(cmdsRaw));
-    EXPECT_EQ(sm.getCmdNumber(), 3);
-    EXPECT_EQ(sm.getCmdListStr(), cmdsRaw);
+    EXPECT_TRUE(sm.loadCmdsFromString(AllCommandExamples));
+    EXPECT_EQ(sm.getCmdNumber(), AllCommandExamplesCnt);
+    EXPECT_EQ(sm.getCmdListStr(), AllCommandExamples);
 }
 
 TEST(SolenoidManager, ResetCommands)
 {
-    String cmdsRaw = ValidManualAllClosedStr + "_" + ValidManualAllOpenStr + "_" + ValidAutomaticStr + "_";
-
     SolenoidManager sm;
-    EXPECT_TRUE(sm.loadCmdsFromString(cmdsRaw));
-    EXPECT_EQ(sm.getCmdNumber(), 3);
-    EXPECT_EQ(sm.getCmdListStr(), cmdsRaw);
+    EXPECT_TRUE(sm.loadCmdsFromString(AllCommandExamples));
+    EXPECT_EQ(sm.getCmdNumber(), AllCommandExamplesCnt);
+    EXPECT_EQ(sm.getCmdListStr(), AllCommandExamples);
 
-    EXPECT_TRUE(sm.loadCmdsFromString(ValidManualAllClosedStr));
+    EXPECT_TRUE(sm.loadCmdsFromString(CMD_MANUAL_CLOSE_ALL_RELAYS));
     EXPECT_EQ(sm.getCmdNumber(), 1);
 
-    sm.updateRelayStates(true);
+    sm.updateRelayStates();
 
-    // EXPECT_EQ(sm.getCmdListStr(), ValidManualAllClosedStr);
+    // EXPECT_EQ(sm.getCmdListStr(), CMD_MANUAL_CLOSE_ALL_RELAYS);
 }

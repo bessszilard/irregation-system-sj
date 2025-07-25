@@ -499,7 +499,7 @@ void saveRelayGroupsFormFRAM()
 
 void resetSolenoidCommandsToDefault()
 {
-    solM.loadCmdsFromString("$Manua;P00;RXX;C#"); // Default
+    solM.loadCmdsFromString(CMD_MANUAL_CLOSE_ALL_RELAYS); // Default
 }
 
 void setupFRAM()

@@ -26,7 +26,7 @@ void YFG1FlowMeter::resetValues()
     m_data       = Data(0.0, 0);
 }
 
-void YFG1FlowMeter::updateFlowData()
+void YFG1FlowMeter::updateFlowData(bool verbose)
 {
     if ((millis() - m_oldTime_ms) > 1000) // Only process counters once per second
     {
@@ -40,18 +40,21 @@ void YFG1FlowMeter::updateFlowData()
         m_data.totalFlow_litres += m_data.flowRate_LitMin;
 
         // Print the flow rate for this second in litres / minute
-        Serial.print("Flow rate [lit/sec]: ");
-        Serial.print(flowRate_mLitPerSec); // Print the integer part of the variable
-        Serial.print("\t");                // Print the decimal point
-        // Determine the fractional part. The 10 multiplier gives us 1 decimal place.
+        if (verbose)
+        {
+            Serial.print("Flow rate [lit/sec]: ");
+            Serial.print(flowRate_mLitPerSec); // Print the integer part of the variable
+            Serial.print("\t");                // Print the decimal point
+            // Determine the fractional part. The 10 multiplier gives us 1 decimal place.
 
-        Serial.print("[L/min]:");
-        Serial.print(m_data.flowRate_LitMin); // Print the fractional part of the variable
-        // Print the number of litres flowed in this second
+            Serial.print("[L/min]:");
+            Serial.print(m_data.flowRate_LitMin); // Print the fractional part of the variable
+            // Print the number of litres flowed in this second
 
-        // Print the cumulative total of litres flowed since starting
-        Serial.print("  Output Liquid Quantity: "); // Output separator
-        Serial.print(m_data.totalFlow_litres);
-        Serial.println("L");
+            // Print the cumulative total of litres flowed since starting
+            Serial.print("  Output Liquid Quantity: "); // Output separator
+            Serial.print(m_data.totalFlow_litres);
+            Serial.println("L");
+        }
     }
 }

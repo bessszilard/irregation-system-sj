@@ -15,7 +15,7 @@ public:
         uint32_t totalFlow_litres;
     };
 
-    void updateFlowData();
+    void updateFlowData(bool verbose = false);
 
     inline const Data& getData() const
     {

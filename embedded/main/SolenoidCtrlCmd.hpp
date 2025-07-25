@@ -27,5 +27,8 @@ struct SolenoidCtrlCmd
 
     uint8_t getChecksum(const String& p_cmd, bool checksumIncluded = true) const;
 
-    RelayState evaluate(const SensorData& sensors, const LocalTime& loctime) const;
+    RelayState evaluate(const SensorData& p_sensors, const LocalTime& p_now) const;
+
+    // range in in "hh:mm->hh:mm" format
+    static bool IsWithinTimeRange(const char* range, const LocalTime& now);
 };

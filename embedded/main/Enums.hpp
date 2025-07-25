@@ -108,15 +108,13 @@ enum class CmdPriority
     Unknown
 };
 
-// TODOsz 3 cases: MA, AT, AS
 enum class CommandType
 {
-    ManCtrl,
-    AutoTemperatureCtrl,
-    AutoHumidityCtrl,
-    AutoTimeCtrl,
-    AutoFlowCtrl,
-    AutoMoistureCtrl,
+    Manual,
+    TimeSingleShot,
+    TimeRepeat,
+    Sensor,
+    SensorTimeRepeat,
     Unknown
 };
 
@@ -125,7 +123,8 @@ enum class SensorTypes
     Temperature,
     Humidity,
     SoilMoisture,
-    BarometricPressure
+    BarometricPressure,
+    Unknown
 };
 
 enum class CommandState
@@ -175,6 +174,7 @@ String ToShortString(RelayState p_state);
 String ToString(CommandState p_state);
 
 RelayState ToRelayStateFromShortString(const String& p_str);
+RelayState ToRelayStateFromShortString(char p_char);
 
 WifiSignalStrength ToWifiSignalStrength(int8_t p_rssi);
 

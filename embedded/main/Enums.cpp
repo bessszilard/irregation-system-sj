@@ -4,12 +4,12 @@
 CommandType CommandTypeFromString(const String& p_rawMsg, int p_startId /*=0*/, int p_endId /*=-1*/)
 {
     String subStr = Utils::GetSubStr(p_rawMsg, p_startId, p_endId);
-    if (subStr == "")      return CommandType::Unknown;
-    if (subStr == "Manua") return CommandType::ManCtrl;
-    if (subStr == "ATemp") return CommandType::AutoTemperatureCtrl;
-    if (subStr == "AFlow") return CommandType::AutoFlowCtrl;
-    if (subStr == "AHumi") return CommandType::AutoHumidityCtrl;
-    if (subStr == "ATime") return CommandType::AutoTimeCtrl;
+    if (subStr == "")       return CommandType::Unknown;
+    if (subStr == "Manual") return CommandType::Manual;
+    if (subStr == "TimSin") return CommandType::TimeSingleShot;
+    if (subStr == "TimRep") return CommandType::TimeRepeat;
+    if (subStr == "Sensor") return CommandType::Sensor;
+    if (subStr == "SeTiRe") return CommandType::SensorTimeRepeat;
     return CommandType::Unknown;
 }
 
@@ -173,12 +173,11 @@ String ToString(CommandType p_type)
 {
     switch(p_type) 
     {
-        case CommandType::ManCtrl:              return "Manua";
-        case CommandType::AutoTemperatureCtrl:  return "ATemp";
-        case CommandType::AutoFlowCtrl:         return "AFlow";
-        case CommandType::AutoHumidityCtrl:     return "AHumi";
-        case CommandType::AutoTimeCtrl:         return "ATime";
-        case CommandType::AutoMoistureCtrl:     return "AMost";
+        case CommandType::Manual:           return "Manual";
+        case CommandType::TimeSingleShot:   return "TimSin";
+        case CommandType::TimeRepeat:       return "TimRep";
+        case CommandType::Sensor:           return "Sensor";
+        case CommandType::SensorTimeRepeat: return "SeTiRe";
     }
     return "Unknown";
 }
@@ -249,6 +248,14 @@ RelayState ToRelayStateFromShortString(const String& p_str)
 {
     if (p_str == "O") return RelayState::Opened;
     if (p_str == "C") return RelayState::Closed;
+    return RelayState::Unknown;
+}
+
+
+RelayState ToRelayStateFromShortString(char p_char)
+{
+    if (p_char == 'O') return RelayState::Opened;
+    if (p_char == 'C') return RelayState::Closed;
     return RelayState::Unknown;
 }
 
@@ -339,7 +346,7 @@ void GetCommandBuilderJSON(String& json)
 {
     json       = " {\"startChar\": \"$\", \"endChar\": \"#\",  \"CommandType\": [";
     bool first = true;
-    for (CommandType i = CommandType::ManCtrl; i < CommandType::Unknown; ++i)
+    for (CommandType i = CommandType::Manual; i < CommandType::Unknown; ++i)
     {
         if (!first)
         {

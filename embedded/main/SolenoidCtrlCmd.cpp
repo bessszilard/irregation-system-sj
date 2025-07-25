@@ -1,12 +1,8 @@
 #include "SolenoidCtrlCmd.hpp"
+#include "PredefinedCommands.hpp"
 
 #define START_CHAR "$"
 #define TERMINATOR_CHAR "#"
-
-static const uint8_t CmdTypeStrLen    = 5;
-static const uint8_t RelayIdStrLen    = 3;
-static const uint8_t RelayStateStrLen = 6;
-static const uint8_t PriorityStateLen = 3;
 
 SolenoidCtrlCmd::SolenoidCtrlCmd(const String& p_cmd) : valid(false)
 {
@@ -71,14 +67,43 @@ uint8_t SolenoidCtrlCmd::getChecksum(const String& p_cmd, bool checksumIncluded)
 }
 // TODOsz add evaluate command -> we need time and sensor data
 
-RelayState SolenoidCtrlCmd::evaluate(const SensorData& sensors, const LocalTime& loctime) const
+bool SolenoidCtrlCmd::IsWithinTimeRange(const char* range, const LocalTime& now)
+{
+    if (!now.valid)
+        return false;
+
+    int startHour, startMin, endHour, endMin;
+    // Parse string in format "hh:mm->hh:mm"
+    if (sscanf(range, "%d:%d->%d:%d", &startHour, &startMin, &endHour, &endMin) != 4)
+        return false;
+
+    int startMinutes   = startHour * 60 + startMin;
+    int endMinutes     = endHour * 60 + endMin;
+    int currentMinutes = now.tm_hour * 60 + now.tm_min;
+
+    return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+}
+
+RelayState SolenoidCtrlCmd::evaluate(const SensorData& p_sensors, const LocalTime& p_now) const
 {
     switch (cmdType)
     {
-        case CommandType::ManCtrl:
+        case CommandType::Manual:
             return ToRelayStateFromShortString(action);
-        case CommandType::AutoTimeCtrl:
+        case CommandType::TimeSingleShot:
+            if (action.length() == TimeSingleActionLength)
+            {
+                if (false == IsWithinTimeRange(action.c_str() + 2, p_now))
+                    return RelayState::Unknown;
+                else
+                    return ToRelayStateFromShortString(action[0]);
+            }
+            else if (action.length() == TimeRepeatActionLength)
+            {
+                return RelayState::Unknown;
+            }
             return RelayState::Unknown;
+
             // case CommandType::AutoTemperatureCtrl:
             //     return p_cmd.relayState;
             // case CommandType::AutoHumidityCtrl:
