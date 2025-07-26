@@ -270,6 +270,7 @@ RelayState ToRelayStateFromShortString(const String& p_str)
 {
     if (p_str == "O") return RelayState::Opened;
     if (p_str == "C") return RelayState::Closed;
+    Serial.printf("Failed to parse %s", p_str);
     return RelayState::Unknown;
 }
 
@@ -278,6 +279,7 @@ RelayState ToRelayStateFromShortString(char p_char)
 {
     if (p_char == 'O') return RelayState::Opened;
     if (p_char == 'C') return RelayState::Closed;
+    Serial.printf("Failed to parse %c", p_char);
     return RelayState::Unknown;
 }
 

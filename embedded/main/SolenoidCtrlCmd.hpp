@@ -30,7 +30,10 @@ struct SolenoidCtrlCmd
     RelayState evaluate(const SensorData& p_sensors, const LocalTime& p_now) const;
 
     // range in in "hh:mm->hh:mm" format
-    static bool IsWithinTimeRange(const char* range, const LocalTime& now);
+    static bool IsWithinTimeRange(const char* p_range, const LocalTime& p_now);
 
+    static RelayState RelayTimeSingleShotCtr(const String& p_action, const LocalTime& p_now);
+    static RelayState RelayTimeRepeatCtrl(const String& p_action, const LocalTime& p_now);
+    static RelayState RelayRangeCtrl(const String& p_range, float p_value);
     static RelayState RelayThresholdCtrl(const String& p_range, float p_value);
 };

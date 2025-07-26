@@ -58,6 +58,21 @@ TEST(SolenoidCtrlCmdTest, IsBetweenRangeTime)
     EXPECT_TRUE(SolenoidCtrlCmd::IsWithinTimeRange("23:10->23:12", time2));
 }
 
+TEST(SolenoidCtrlCmdTest, RelayTimeSingleShotCtr)
+{
+    // RelayTimeSingleShotCtr
+    LocalTime time1    = LocalTime::Build(1, 2);
+    LocalTime time2    = LocalTime::Build(4, 12);
+    String exampleCmd1 = "S_C00:00->04:00";
+    String exampleCmd2 = "S_O04:00->23:00";
+
+    EXPECT_EQ(SolenoidCtrlCmd::RelayTimeSingleShotCtr(exampleCmd1, time1), RelayState::Closed);
+    EXPECT_EQ(SolenoidCtrlCmd::RelayTimeSingleShotCtr(exampleCmd1, time2), RelayState::Unknown);
+
+    EXPECT_EQ(SolenoidCtrlCmd::RelayTimeSingleShotCtr(exampleCmd2, time1), RelayState::Unknown);
+    EXPECT_EQ(SolenoidCtrlCmd::RelayTimeSingleShotCtr(exampleCmd2, time2), RelayState::Opened);
+}
+
 TEST(SolenoidCtrlCmdTest, RelayThresholdCtrlFloatClosed)
 {
     String exampleCmd = "C>010.0";
@@ -70,4 +85,12 @@ TEST(SolenoidCtrlCmdTest, RelayThresholdCtrlFloatOpen)
     String exampleCmd = "O<050.0";
     EXPECT_EQ(SolenoidCtrlCmd::RelayThresholdCtrl(exampleCmd, 11), RelayState::Opened);
     EXPECT_EQ(SolenoidCtrlCmd::RelayThresholdCtrl(exampleCmd, 51), RelayState::Unknown);
+}
+
+TEST(SolenoidCtrlCmdTest, RelayRangeCtrl)
+{
+    String exampleCmd = "O<050.0_C>090.0";
+    EXPECT_EQ(SolenoidCtrlCmd::RelayRangeCtrl(exampleCmd, 11), RelayState::Opened);
+    EXPECT_EQ(SolenoidCtrlCmd::RelayRangeCtrl(exampleCmd, 51), RelayState::Unknown);
+    EXPECT_EQ(SolenoidCtrlCmd::RelayRangeCtrl(exampleCmd, 91), RelayState::Closed);
 }

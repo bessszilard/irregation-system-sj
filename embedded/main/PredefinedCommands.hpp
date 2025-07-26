@@ -36,3 +36,4 @@ constexpr uint8_t PriorityStateLen = 3;
 constexpr uint8_t TimeSingleActionLength = 15; // Length of "S_C07:00->20:00"
 constexpr uint8_t TimeRepeatActionLength = 25; // Length of "R_X06:00->20:00_O01h_C20m"
 
+constexpr uint8_t SensorFloatThresholdLength = 7;

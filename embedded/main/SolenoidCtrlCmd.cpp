@@ -84,8 +84,70 @@ bool SolenoidCtrlCmd::IsWithinTimeRange(const char* p_range, const LocalTime& p_
     return startMinutes <= currentMinutes && currentMinutes <= endMinutes;
 }
 
+RelayState SolenoidCtrlCmd::RelayTimeSingleShotCtr(const String& p_action, const LocalTime& p_now)
+{
+    if (!p_now.valid)
+    {
+        Serial.println("Invalid time");
+        return RelayState::Unknown;
+    }
+
+    char type, relayStateStr;
+    uint8_t startHour, startMin, endHour, endMin;
+    if (sscanf(p_action.c_str(),
+               "%c_%c%d:%d->%d:%d",
+               &type,
+               &relayStateStr,
+               &startHour,
+               &startMin,
+               &endHour,
+               &endMin) != 6)
+    {
+        Serial.printf("Failed to parse %s", p_action);
+        return RelayState::Unknown;
+    }
+
+    RelayState state = ToRelayStateFromShortString(relayStateStr);
+    if (type != 'S' || state == RelayState::Unknown)
+    {
+        Serial.printf("Failed to parse %s", p_action.c_str());
+        return RelayState::Unknown;
+    }
+    uint16_t startMinutes   = startHour * 60 + startMin;
+    uint16_t endMinutes     = endHour * 60 + endMin;
+    uint16_t currentMinutes = p_now.tm_hour * 60 + p_now.tm_min;
+
+    // within range
+    if (startMinutes <= currentMinutes && currentMinutes <= endMinutes)
+        return state;
+
+    return RelayState::Unknown;
+}
+
+RelayState SolenoidCtrlCmd::RelayTimeRepeatCtrl(const String& p_action, const LocalTime& p_now)
+{
+
+    return RelayState::Unknown;
+}
+
+RelayState SolenoidCtrlCmd::RelayRangeCtrl(const String& p_range, float p_value)
+{
+    RelayState state = RelayThresholdCtrl(Utils::GetSubStr(p_range, 0, SensorFloatThresholdLength), p_value);
+    if (state != RelayState::Unknown)
+        return state;
+    state = RelayThresholdCtrl(Utils::GetSubStr(p_range, SensorFloatThresholdLength + 1, -1), p_value);
+    if (state != RelayState::Unknown)
+        return state;
+    return RelayState::Unknown;
+}
+
 RelayState SolenoidCtrlCmd::RelayThresholdCtrl(const String& p_range, float p_value)
 {
+    if (p_range.length() != SensorFloatThresholdLength)
+    {
+        Serial.printf("Invalid threshold string: %s\n", p_range.c_str());
+    }
+
     char openOrClosed, operation;
     float threshold;
     if (sscanf(p_range.c_str(), "%c%c%f", &openOrClosed, &operation, &threshold) != 3)
