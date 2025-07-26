@@ -113,17 +113,23 @@ enum class CommandType
     Manual,
     TimeSingleShot,
     TimeRepeat,
-    Sensor,
-    SensorTimeRepeat,
+    SensorRange,
+    SensorThreshold,
+    SensorThresholdTimeRepeat,
     Unknown
 };
 
-enum class SensorTypes
+enum class SensorType
 {
-    Temperature,
+    TempOnSun,
+    TempInShadow,
     Humidity,
+    Pressure,
+    FlowRateSum,
+    FlowRateLitPerMin,
+    Rain,
+    Light,
     SoilMoisture,
-    BarometricPressure,
     Unknown
 };
 
@@ -170,7 +176,7 @@ String ToString(CommandType p_type);
 String ToShortString(wl_status_t p_status);
 String ToShortString(WifiSignalStrength p_strength);
 String ToShortString(RelayState p_state);
-// String ToString(SensorTypes type);
+String ToString(SensorType type);
 String ToString(CommandState p_state);
 
 RelayState ToRelayStateFromShortString(const String& p_str);

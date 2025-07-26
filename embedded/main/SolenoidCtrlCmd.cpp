@@ -67,21 +67,41 @@ uint8_t SolenoidCtrlCmd::getChecksum(const String& p_cmd, bool checksumIncluded)
 }
 // TODOsz add evaluate command -> we need time and sensor data
 
-bool SolenoidCtrlCmd::IsWithinTimeRange(const char* range, const LocalTime& now)
+bool SolenoidCtrlCmd::IsWithinTimeRange(const char* p_range, const LocalTime& p_now)
 {
-    if (!now.valid)
+    if (!p_now.valid)
         return false;
 
     int startHour, startMin, endHour, endMin;
     // Parse string in format "hh:mm->hh:mm"
-    if (sscanf(range, "%d:%d->%d:%d", &startHour, &startMin, &endHour, &endMin) != 4)
+    if (sscanf(p_range, "%d:%d->%d:%d", &startHour, &startMin, &endHour, &endMin) != 4)
         return false;
 
     int startMinutes   = startHour * 60 + startMin;
     int endMinutes     = endHour * 60 + endMin;
-    int currentMinutes = now.tm_hour * 60 + now.tm_min;
+    int currentMinutes = p_now.tm_hour * 60 + p_now.tm_min;
 
-    return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+    return startMinutes <= currentMinutes && currentMinutes <= endMinutes;
+}
+
+RelayState SolenoidCtrlCmd::RelayThresholdCtrl(const String& p_range, float p_value)
+{
+    char openOrClosed, operation;
+    float threshold;
+    if (sscanf(p_range.c_str(), "%c%c%f", &openOrClosed, &operation, &threshold) != 3)
+    {
+        Serial.printf("Failed to parse %s\n", p_range.c_str());
+        return RelayState::Unknown;
+    }
+
+    RelayState targetState = ToRelayStateFromShortString(openOrClosed);
+
+    if (operation == '>' && p_value > threshold)
+        return targetState;
+    if (operation == '<' && p_value < threshold)
+        return targetState;
+
+    return RelayState::Unknown;
 }
 
 RelayState SolenoidCtrlCmd::evaluate(const SensorData& p_sensors, const LocalTime& p_now) const

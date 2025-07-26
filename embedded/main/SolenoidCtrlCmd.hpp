@@ -31,4 +31,6 @@ struct SolenoidCtrlCmd
 
     // range in in "hh:mm->hh:mm" format
     static bool IsWithinTimeRange(const char* range, const LocalTime& now);
+
+    static RelayState RelayThresholdCtrl(const String& p_range, float p_value);
 };

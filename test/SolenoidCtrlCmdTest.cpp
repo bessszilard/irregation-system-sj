@@ -57,3 +57,17 @@ TEST(SolenoidCtrlCmdTest, IsBetweenRangeTime)
     EXPECT_FALSE(SolenoidCtrlCmd::IsWithinTimeRange("07:00->12:00", time2));
     EXPECT_TRUE(SolenoidCtrlCmd::IsWithinTimeRange("23:10->23:12", time2));
 }
+
+TEST(SolenoidCtrlCmdTest, RelayThresholdCtrlFloatClosed)
+{
+    String exampleCmd = "C>010.0";
+    EXPECT_EQ(SolenoidCtrlCmd::RelayThresholdCtrl(exampleCmd, 11), RelayState::Closed);
+    EXPECT_EQ(SolenoidCtrlCmd::RelayThresholdCtrl(exampleCmd, 9), RelayState::Unknown);
+}
+
+TEST(SolenoidCtrlCmdTest, RelayThresholdCtrlFloatOpen)
+{
+    String exampleCmd = "O<050.0";
+    EXPECT_EQ(SolenoidCtrlCmd::RelayThresholdCtrl(exampleCmd, 11), RelayState::Opened);
+    EXPECT_EQ(SolenoidCtrlCmd::RelayThresholdCtrl(exampleCmd, 51), RelayState::Unknown);
+}

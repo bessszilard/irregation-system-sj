@@ -8,8 +8,10 @@ CommandType CommandTypeFromString(const String& p_rawMsg, int p_startId /*=0*/, 
     if (subStr == "Manual") return CommandType::Manual;
     if (subStr == "TimSin") return CommandType::TimeSingleShot;
     if (subStr == "TimRep") return CommandType::TimeRepeat;
-    if (subStr == "Sensor") return CommandType::Sensor;
-    if (subStr == "SeTiRe") return CommandType::SensorTimeRepeat;
+    if (subStr == "SenRan") return CommandType::SensorRange;
+    if (subStr == "SenThr") return CommandType::SensorThreshold;
+    if (subStr == "SeTTRe") return CommandType::SensorThresholdTimeRepeat;
+    Serial.printf(">> %s is unknown\n", subStr.c_str());
     return CommandType::Unknown;
 }
 
@@ -173,11 +175,12 @@ String ToString(CommandType p_type)
 {
     switch(p_type) 
     {
-        case CommandType::Manual:           return "Manual";
-        case CommandType::TimeSingleShot:   return "TimSin";
-        case CommandType::TimeRepeat:       return "TimRep";
-        case CommandType::Sensor:           return "Sensor";
-        case CommandType::SensorTimeRepeat: return "SeTiRe";
+        case CommandType::Manual:                    return "Manual";
+        case CommandType::TimeSingleShot:            return "TimSin";
+        case CommandType::TimeRepeat:                return "TimRep";
+        case CommandType::SensorRange:               return "SenRan";
+        case CommandType::SensorThreshold:           return "SenThr";
+        case CommandType::SensorThresholdTimeRepeat: return "SeTTRe";
     }
     return "Unknown";
 }
@@ -195,6 +198,25 @@ String ToString(CommandState p_state)
         case CommandState::Unknown:          return "Unknown";
     }
     return "Unknown";
+}
+
+String ToString(SensorType p_type)
+{
+    switch(p_type)
+    {
+        case SensorType::TempOnSun:         return "TESU";
+        case SensorType::TempInShadow:      return "TESH";
+        case SensorType::Humidity:          return "HUMI";
+        case SensorType::Pressure:          return "PRES";
+        case SensorType::FlowRateSum:       return "FRSU";
+        case SensorType::FlowRateLitPerMin: return "FRLM";
+        case SensorType::Rain:              return "RAIN";
+        case SensorType::Light:             return "LIGH";
+        case SensorType::SoilMoisture:      return "SM"; // SMXX <- index
+        case SensorType::Unknown:
+        default:
+            return "Unknown";
+    }
 }
 
 String ToShortString(wl_status_t p_status)
@@ -363,7 +385,7 @@ void GetCommandBuilderJSON(String& json)
     {
         if (!first)
         {
-            json += ", ";
+                 json += ", ";
         }
         first = false;
         json += "\"" + ToString(i) + "\"";
@@ -376,12 +398,12 @@ void GetCommandBuilderJSON(String& json)
     {
         if (i == RelayIds::NumberOfRelays)
         {
-            continue;
+                 continue;
         }
 
         if (!first)
         {
-            json += ", ";
+                 json += ", ";
         }
         first = false;
         json += "\"" + ToString(i) + "\"";
@@ -390,7 +412,7 @@ void GetCommandBuilderJSON(String& json)
     {
         if (!first)
         {
-            json += ", ";
+                 json += ", ";
         }
         first = false;
         json += "\"" + ToString(i) + "\"";
