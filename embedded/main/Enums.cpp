@@ -309,6 +309,25 @@ RelayIds ToRelayId(uint8_t p_id)
     return RelayIds::Unknown;
 }
 
+TimeUnit ToTimeUnit(char p_char)
+{
+    if (p_char == 'h' || p_char == 'H') return TimeUnit::Hour;
+    if (p_char == 'm' || p_char == 'M') return TimeUnit::Minute;
+    if (p_char == 's' || p_char == 'S') return TimeUnit::Seconds;
+    return TimeUnit::Unknown;
+}
+
+uint16_t TimeUnitToSeconds(TimeUnit p_unit)
+{
+    switch(p_unit)
+    {
+        case TimeUnit::Hour:    return 3600;
+        case TimeUnit::Minute:  return 60;
+        case TimeUnit::Seconds: return 1;
+    }
+    return 0;
+}
+
 WifiSignalStrength ToWifiSignalStrength(int8_t p_rssi)
 {
     if (p_rssi ==  0) return WifiSignalStrength::Unknown;

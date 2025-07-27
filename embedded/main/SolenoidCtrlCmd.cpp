@@ -93,7 +93,7 @@ RelayState SolenoidCtrlCmd::RelayTimeSingleShotCtr(const String& p_action, const
     }
 
     char type, relayStateStr;
-    uint8_t startHour, startMin, endHour, endMin;
+    int startHour, startMin, endHour, endMin;
     if (sscanf(p_action.c_str(),
                "%c_%c%d:%d->%d:%d",
                &type,
@@ -126,8 +126,67 @@ RelayState SolenoidCtrlCmd::RelayTimeSingleShotCtr(const String& p_action, const
 
 RelayState SolenoidCtrlCmd::RelayTimeRepeatCtrl(const String& p_action, const LocalTime& p_now)
 {
+    if (!p_now.valid)
+    {
+        Serial.println("Invalid time");
+        return RelayState::Unknown;
+    }
+    char type, phase1StateChar, timeUnitChar1, phase2StateChar, timeUnitChar2;
+    int startHour, startMin, endHour, endMin, phase1dur, phase2dur;
+    int count = sscanf(p_action.c_str(),
+                       "%c_X%d:%d->%d:%d_%c%d%c_%c%d%c",
+                       &type,
+                       &startHour,
+                       &startMin,
+                       &endHour,
+                       &endMin,
+                       &phase1StateChar,
+                       &phase1dur,
+                       &timeUnitChar1,
+                       &phase2StateChar,
+                       &phase2dur,
+                       &timeUnitChar2);
+    if (count != 11)
+    {
+        Serial.printf("Failed to parse %s", p_action);
+        return RelayState::Unknown;
+    }
+    std::cout << __LINE__ << "@" << __FUNCTION__ << "@" __FILE__ << std::endl;
+    RelayState phase1state = ToRelayStateFromShortString(phase1StateChar);
+    RelayState phase2state = ToRelayStateFromShortString(phase2StateChar);
+    TimeUnit timeUnit1     = ToTimeUnit(timeUnitChar1);
+    TimeUnit timeUnit2     = ToTimeUnit(timeUnitChar2);
 
-    return RelayState::Unknown;
+    if (type != 'R' || phase1state == RelayState::Unknown || phase2state == RelayState::Unknown ||
+        timeUnit1 == TimeUnit::Unknown || timeUnit2 == TimeUnit::Unknown)
+    {
+        Serial.printf("Failed to parse %s", p_action.c_str());
+        return RelayState::Unknown;
+    }
+
+    uint16_t startMinutes   = startHour * 60 + startMin;
+    uint16_t endMinutes     = endHour * 60 + endMin;
+    uint16_t currentMinutes = p_now.tm_hour * 60 + p_now.tm_min;
+
+    // within range
+    if (currentMinutes < startMinutes || endMinutes < currentMinutes)
+        return RelayState::Unknown;
+
+    uint16_t phase1_sec = phase1dur * TimeUnitToSeconds(timeUnit1);
+    uint16_t phase2_sec = phase2dur * TimeUnitToSeconds(timeUnit2);
+
+    uint16_t period_sec                = phase1_sec + phase2_sec;
+    uint32_t currentPhaseTime_sec      = (currentMinutes - startMinutes) * 60 + p_now.tm_sec;
+    uint16_t currentPeriodFragment_sec = currentPhaseTime_sec % period_sec;
+
+    if (currentPeriodFragment_sec < phase1_sec)
+    {
+        return phase1state;
+    }
+    else
+    {
+        return phase2state;
+    }
 }
 
 RelayState SolenoidCtrlCmd::RelayRangeCtrl(const String& p_range, float p_value)

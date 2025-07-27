@@ -159,6 +159,14 @@ enum class WifiSignalStrength
     Unknown
 };
 
+enum class TimeUnit
+{
+    Hour,
+    Minute,
+    Seconds,
+    Unknown
+};
+
 CommandType CommandTypeFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 RelayIds RelayIdTypeFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 RelayGroups RelayGroupsFromString(const String& p_rawMsg, int p_startId = 0, int p_endId = -1);
@@ -189,6 +197,9 @@ inline uint8_t RelayIdToUInt(RelayIds p_id)
 {
     return static_cast<uint8_t>(p_id);
 }
+
+TimeUnit ToTimeUnit(char p_chr);
+uint16_t TimeUnitToSeconds(TimeUnit p_unit);
 
 void GetCommandBuilderJSON(String& json);
 

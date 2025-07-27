@@ -82,6 +82,7 @@ struct LocalTime : tm
         LocalTime time;
         time.tm_hour = p_hours;
         time.tm_min  = p_minutes;
+        time.tm_sec  = 0;
         time.valid   = true;
         return time;
     }
