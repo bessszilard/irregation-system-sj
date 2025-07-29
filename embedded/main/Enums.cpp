@@ -82,6 +82,21 @@ CmdPriority CmdPriorityFromString(const String& p_rawMsg, int p_startId /*=0*/, 
     return CmdPriority::Unknown;    
 }
 
+SensorType ToSensorTypeFromString(const String& p_rawMsg, int p_startId /*=0*/, int p_endId /*=-1*/)
+{
+    String subStr = Utils::GetSubStr(p_rawMsg, p_startId, p_endId);
+    if (subStr == "TESU") return SensorType::TempOnSun;
+    if (subStr == "TESH") return SensorType::TempInShadow;
+    if (subStr == "HUMI") return SensorType::Humidity;
+    if (subStr == "FRDS") return SensorType::FlowRateDailySum;
+    if (subStr == "FRLM") return SensorType::FlowRateLitPerMin;
+    if (subStr == "RAIN") return SensorType::Rain;
+    if (subStr == "LIGH") return SensorType::Light;
+    if (subStr == "WAPR") return SensorType::WaterPressure;
+    if (subStr[0] == 'S' && subStr[1] == 'M') 
+        return SensorType::SoilMoisture; // SMXX <- index
+    return SensorType::Unknown;
+}
 
 String ToString(RelayTargetType p_type)
 {
@@ -207,11 +222,11 @@ String ToString(SensorType p_type)
         case SensorType::TempOnSun:         return "TESU";
         case SensorType::TempInShadow:      return "TESH";
         case SensorType::Humidity:          return "HUMI";
-        case SensorType::Pressure:          return "PRES";
-        case SensorType::FlowRateSum:       return "FRSU";
+        case SensorType::FlowRateDailySum:  return "FRDS";
         case SensorType::FlowRateLitPerMin: return "FRLM";
         case SensorType::Rain:              return "RAIN";
         case SensorType::Light:             return "LIGH";
+        case SensorType::WaterPressure:     return "WAPR";
         case SensorType::SoilMoisture:      return "SM"; // SMXX <- index
         case SensorType::Unknown:
         default:
@@ -282,7 +297,6 @@ RelayState ToRelayStateFromShortString(char p_char)
     Serial.printf("Failed to parse %c", p_char);
     return RelayState::Unknown;
 }
-
 
 RelayIds ToRelayId(uint8_t p_id)
 {
@@ -406,7 +420,7 @@ void GetCommandBuilderJSON(String& json)
     {
         if (!first)
         {
-                 json += ", ";
+            json += ", ";
         }
         first = false;
         json += "\"" + ToString(i) + "\"";
@@ -419,12 +433,12 @@ void GetCommandBuilderJSON(String& json)
     {
         if (i == RelayIds::NumberOfRelays)
         {
-                 continue;
+            continue;
         }
 
         if (!first)
         {
-                 json += ", ";
+            json += ", ";
         }
         first = false;
         json += "\"" + ToString(i) + "\"";
@@ -433,7 +447,7 @@ void GetCommandBuilderJSON(String& json)
     {
         if (!first)
         {
-                 json += ", ";
+            json += ", ";
         }
         first = false;
         json += "\"" + ToString(i) + "\"";

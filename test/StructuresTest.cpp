@@ -24,3 +24,28 @@ TEST(RelayTargetTest, AllRelays)
     EXPECT_EQ(ToString(rt.relayId), ToString(RelayIds::AllRelays));
     EXPECT_EQ(ToString(rt.groupId), ToString(RelayGroups::Unknown));
 }
+
+TEST(SensorData, getSensorByType)
+{
+    SensorData sd;
+    int i                = 0;
+    sd.tempOnSun_C       = i++;
+    sd.tempInShadow_C    = i++;
+    sd.humidity_RH       = i++;
+    sd.flowDaySum_Lit    = i++;
+    sd.flowRate_LitMin   = i++;
+    sd.rainSensor        = i++;
+    sd.lightSensor       = i++;
+    sd.waterPressure_bar = i++;
+    sd.soilMoisture1     = i++;
+
+    i = 0;
+    EXPECT_EQ(sd.get("TESU"), i++);
+    EXPECT_EQ(sd.get("TESH"), i++);
+    EXPECT_EQ(sd.get("HUMI"), i++);
+    EXPECT_EQ(sd.get("FRDS"), i++);
+    EXPECT_EQ(sd.get("FRLM"), i++);
+    EXPECT_EQ(sd.get("RAIN"), i++);
+    EXPECT_EQ(sd.get("LIGH"), i++);
+    EXPECT_EQ(sd.get("WAPR"), i++);
+}

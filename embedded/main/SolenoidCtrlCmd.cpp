@@ -4,6 +4,7 @@
 #define START_CHAR "$"
 #define TERMINATOR_CHAR "#"
 
+// TODOsz add decoration
 SolenoidCtrlCmd::SolenoidCtrlCmd(const String& p_cmd) : valid(false)
 {
     int idx = 1; // first char is $
@@ -189,18 +190,44 @@ RelayState SolenoidCtrlCmd::RelayTimeRepeatCtrl(const String& p_action, const Lo
     }
 }
 
-RelayState SolenoidCtrlCmd::RelayRangeCtrl(const String& p_range, float p_value)
+RelayState SolenoidCtrlCmd::RelaySensorThresholdCtrl(const String& p_action, const SensorData& p_data)
 {
-    RelayState state = RelayThresholdCtrl(Utils::GetSubStr(p_range, 0, SensorFloatThresholdLength), p_value);
+    // TESU_O>025.0_C<010.5
+    SensorType sensorType = ToSensorTypeFromString(Utils::GetSubStr(p_action, 0, 4));
+    if (sensorType == SensorType::Unknown)
+    {
+        Serial.printf("Failed to get sensor type from %s\n", p_action.c_str());
+        return RelayState::Unknown;
+    }
+    String thresholdStr = Utils::GetSubStr(p_action, 5, -1);
+    return ApplyThresholdCtrl(thresholdStr, p_data.get(sensorType));
+}
+
+RelayState SolenoidCtrlCmd::RelaySensorRangeCtrl(const String& p_action, const SensorData& p_data)
+{
+    // TESU_O>025.0_C<010.5
+    SensorType sensorType = ToSensorTypeFromString(Utils::GetSubStr(p_action, 0, 4));
+    if (sensorType == SensorType::Unknown)
+    {
+        Serial.printf("Failed to get sensor type from %s\n", p_action.c_str());
+        return RelayState::Unknown;
+    }
+    String rangeStr = Utils::GetSubStr(p_action, 5, -1);
+    return ApplyRangeCtrl(rangeStr, p_data.get(sensorType));
+}
+
+RelayState SolenoidCtrlCmd::ApplyRangeCtrl(const String& p_range, float p_value)
+{
+    RelayState state = ApplyThresholdCtrl(Utils::GetSubStr(p_range, 0, SensorFloatThresholdLength), p_value);
     if (state != RelayState::Unknown)
         return state;
-    state = RelayThresholdCtrl(Utils::GetSubStr(p_range, SensorFloatThresholdLength + 1, -1), p_value);
+    state = ApplyThresholdCtrl(Utils::GetSubStr(p_range, SensorFloatThresholdLength + 1, -1), p_value);
     if (state != RelayState::Unknown)
         return state;
     return RelayState::Unknown;
 }
 
-RelayState SolenoidCtrlCmd::RelayThresholdCtrl(const String& p_range, float p_value)
+RelayState SolenoidCtrlCmd::ApplyThresholdCtrl(const String& p_range, float p_value)
 {
     if (p_range.length() != SensorFloatThresholdLength)
     {

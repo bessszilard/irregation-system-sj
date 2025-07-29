@@ -124,11 +124,11 @@ enum class SensorType
     TempOnSun,
     TempInShadow,
     Humidity,
-    Pressure,
-    FlowRateSum,
+    FlowRateDailySum,
     FlowRateLitPerMin,
     Rain,
     Light,
+    WaterPressure,
     SoilMoisture,
     Unknown
 };
@@ -172,6 +172,7 @@ RelayIds RelayIdTypeFromString(const String& p_typeStr, int p_startId = 0, int p
 RelayGroups RelayGroupsFromString(const String& p_rawMsg, int p_startId = 0, int p_endId = -1);
 RelayState RelayStateFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 CmdPriority CmdPriorityFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
+SensorType ToSensorTypeFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 
 String ToString(RelayTargetType p_type);
 String ToString(RelayIds p_id);

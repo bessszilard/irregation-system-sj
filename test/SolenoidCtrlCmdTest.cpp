@@ -99,24 +99,51 @@ TEST(SolenoidCtrlCmdTest, RelayTimeRepeatCtr)
     EXPECT_EQ(SCC::RelayTimeRepeatCtrl(exampleCmd, LC::Build(20, 01)), RelayState::Unknown);
 }
 
-TEST(SolenoidCtrlCmdTest, RelayThresholdCtrlFloatClosed)
+TEST(SolenoidCtrlCmdTest, ApplyThresholdCtrlFloatClosed)
 {
     String exampleCmd = "C>010.0";
-    EXPECT_EQ(SCC::RelayThresholdCtrl(exampleCmd, 11), RelayState::Closed);
-    EXPECT_EQ(SCC::RelayThresholdCtrl(exampleCmd, 9), RelayState::Unknown);
+    EXPECT_EQ(SCC::ApplyThresholdCtrl(exampleCmd, 11), RelayState::Closed);
+    EXPECT_EQ(SCC::ApplyThresholdCtrl(exampleCmd, 9), RelayState::Unknown);
 }
 
-TEST(SolenoidCtrlCmdTest, RelayThresholdCtrlFloatOpen)
+TEST(SolenoidCtrlCmdTest, ApplyThresholdCtrlFloatOpen)
 {
     String exampleCmd = "O<050.0";
-    EXPECT_EQ(SCC::RelayThresholdCtrl(exampleCmd, 11), RelayState::Opened);
-    EXPECT_EQ(SCC::RelayThresholdCtrl(exampleCmd, 51), RelayState::Unknown);
+    EXPECT_EQ(SCC::ApplyThresholdCtrl(exampleCmd, 11), RelayState::Opened);
+    EXPECT_EQ(SCC::ApplyThresholdCtrl(exampleCmd, 51), RelayState::Unknown);
 }
 
-TEST(SolenoidCtrlCmdTest, RelayRangeCtrl)
+TEST(SolenoidCtrlCmdTest, ApplyRangeCtrl)
 {
     String exampleCmd = "O<050.0_C>090.0";
-    EXPECT_EQ(SCC::RelayRangeCtrl(exampleCmd, 11), RelayState::Opened);
-    EXPECT_EQ(SCC::RelayRangeCtrl(exampleCmd, 51), RelayState::Unknown);
-    EXPECT_EQ(SCC::RelayRangeCtrl(exampleCmd, 91), RelayState::Closed);
+    EXPECT_EQ(SCC::ApplyRangeCtrl(exampleCmd, 11), RelayState::Opened);
+    EXPECT_EQ(SCC::ApplyRangeCtrl(exampleCmd, 51), RelayState::Unknown);
+    EXPECT_EQ(SCC::ApplyRangeCtrl(exampleCmd, 91), RelayState::Closed);
+}
+
+TEST(SolenoidCtrlCmdTest, RelaySensorThresholdCtrl)
+{
+    String exampleCmd = "RAIN_C>040.0";
+    SensorData sd;
+    sd.rainSensor = 0;
+    EXPECT_EQ(SCC::RelaySensorThresholdCtrl(exampleCmd, sd), RelayState::Unknown);
+    sd.rainSensor = 41;
+    EXPECT_EQ(SCC::RelaySensorThresholdCtrl(exampleCmd, sd), RelayState::Closed);
+}
+
+TEST(SolenoidCtrlCmdTest, RelaySensorRangeCtrl)
+{
+    String exampleCmd = "TESU_O>025.0_C<010.5";
+    SensorData sd;
+    sd.tempOnSun_C = 24;
+    EXPECT_EQ(SCC::RelaySensorRangeCtrl(exampleCmd, sd), RelayState::Unknown);
+
+    sd.tempOnSun_C = 26;
+    EXPECT_EQ(SCC::RelaySensorRangeCtrl(exampleCmd, sd), RelayState::Opened);
+
+    sd.tempOnSun_C = 11;
+    EXPECT_EQ(SCC::RelaySensorRangeCtrl(exampleCmd, sd), RelayState::Unknown);
+
+    sd.tempOnSun_C = 9;
+    EXPECT_EQ(SCC::RelaySensorRangeCtrl(exampleCmd, sd), RelayState::Closed);
 }

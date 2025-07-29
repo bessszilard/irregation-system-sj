@@ -105,19 +105,24 @@ struct RelayArrayStates
 
 struct SensorData
 {
-    float externalTemp_C  = NAN;
-    float humidity_RH     = NAN;
-    float pressure_Pa     = NAN;
-    float flowRate_LitMin = NAN;
-    int16_t rainSensor    = 0;
-    int16_t lightSensor   = 0;
-    int16_t soilMoisture1 = 0;
-    int16_t soilMoisture2 = 0;
+    float tempOnSun_C       = NAN;
+    float tempInShadow_C    = NAN;
+    float humidity_RH       = NAN;
+    float flowDaySum_Lit    = NAN;
+    float flowRate_LitMin   = NAN;
+    int16_t rainSensor      = 0; // TODOsz create NAN also for these
+    int16_t lightSensor     = 0;
+    float waterPressure_bar = NAN;
+    int16_t soilMoisture1   = 0;
+
     SoilMoisture soilMoisture[MAX_SOIL_MOISTURE_NODE];
 
     bool valid = false;
 
     String toJSON() const;
+
+    float get(SensorType p_type) const;
+    float get(const String& p_str) const;
 };
 
 struct RelayExeInfo

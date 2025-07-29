@@ -126,19 +126,21 @@ String RelayArrayStates::toString() const
     return str;
 }
 
+// clang-format off
 //---------------------------------------------------------------
 String SensorData::toJSON() const
 //---------------------------------------------------------------
 {
     String json = "{";
-    json += "\"externalTemp_C\": " + String(isnan(externalTemp_C) ? "null" : String(externalTemp_C, 2)) + ",";
-    json += "\"humidity_%RH\": " + String(isnan(humidity_RH) ? "null" : String(humidity_RH, 2)) + ",";
-    json += "\"flowRate_LitMin\": " + String(isnan(flowRate_LitMin) ? "null" : String(flowRate_LitMin, 2)) + ",";
-    json += "\"pressure_Pa\": " + String(isnan(pressure_Pa) ? "null" : String(pressure_Pa, 2)) + ",";
-    json += "\"rainSensor_0-99\": " + String(rainSensor) + ",";
-    json += "\"light_0-99\": " + String(lightSensor) + ",";
-    json += "\"soilMoisture1_0-99\": " + String(soilMoisture1) + ",";
-    json += "\"soilMoisture2_0-99\": " + String(soilMoisture2) + ",";
+    json += "\"tempOnSun_C\": "        + String(isnan(tempOnSun_C)      ? "null" : String(tempOnSun_C,      2)) + ",";
+    json += "\"tempInShadow_C\": "     + String(isnan(tempInShadow_C)   ? "null" : String(tempInShadow_C,   2)) + ",";
+    json += "\"humidity_%RH\": "       + String(isnan(humidity_RH)      ? "null" : String(humidity_RH,      2)) + ",";
+    json += "\"flowRate_LitMin\": "    + String(isnan(flowDaySum_Lit)   ? "null" : String(flowDaySum_Lit,   2)) + ",";
+    json += "\"flowDaySum_Min\": "     + String(isnan(flowRate_LitMin)  ? "null" : String(flowRate_LitMin ,  2)) + ",";
+    json += "\"rainSensor_0-99\": "    + String(rainSensor) + ",";
+    json += "\"light_0-99\": "         + String(lightSensor) + ",";
+    json += "\"waterPressure_bar\": "  + String(isnan(waterPressure_bar) ? "null" : String(waterPressure_bar,  2)) + ",";
+    json += "\"soilMoisture2_0-99\": " + String(soilMoisture1) + ",";
     json += "\"soilMoisture\": [";
     for (int i = 0; i < MAX_SOIL_MOISTURE_NODE; ++i)
     {
@@ -150,4 +152,33 @@ String SensorData::toJSON() const
     json += "\"valid\": " + String(valid ? "true" : "false");
     json += "}";
     return json;
+}
+
+//---------------------------------------------------------------
+float SensorData::get(SensorType p_type) const
+//---------------------------------------------------------------
+{
+    switch(p_type)
+    {
+        case SensorType::TempOnSun:            return tempOnSun_C;
+        case SensorType::TempInShadow:         return tempInShadow_C;
+        case SensorType::Humidity:             return humidity_RH;
+        case SensorType::FlowRateDailySum:     return flowDaySum_Lit;
+        case SensorType::FlowRateLitPerMin:    return flowRate_LitMin;
+        case SensorType::Rain:                 return rainSensor;
+        case SensorType::Light:                return lightSensor;
+        case SensorType::WaterPressure:        return waterPressure_bar;
+        case SensorType::SoilMoisture:         
+        case SensorType::Unknown:              
+    default:
+        return NAN;
+    }
+}
+// clang-format on
+
+//---------------------------------------------------------------
+float SensorData::get(const String& p_str) const
+//---------------------------------------------------------------
+{
+    return get(ToSensorTypeFromString(p_str));
 }
