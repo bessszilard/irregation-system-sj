@@ -85,7 +85,16 @@ bool SolenoidCtrlCmd::IsWithinTimeRange(const char* p_range, const LocalTime& p_
     return startMinutes <= currentMinutes && currentMinutes <= endMinutes;
 }
 
-RelayState SolenoidCtrlCmd::RelayTimeSingleShotCtr(const String& p_action, const LocalTime& p_now)
+bool SolenoidCtrlCmd::IsWithingRange(char p_operation, float p_value, float p_threshold)
+{
+    if (p_operation == '>' && p_value > p_threshold)
+        return true;
+    if (p_operation == '<' && p_value < p_threshold)
+        return true;
+    return false;
+}
+
+RelayState SolenoidCtrlCmd::RelayTimeSingleShotCtrl(const String& p_action, const LocalTime& p_now)
 {
     if (!p_now.valid)
     {
@@ -152,7 +161,6 @@ RelayState SolenoidCtrlCmd::RelayTimeRepeatCtrl(const String& p_action, const Lo
         Serial.printf("Failed to parse %s", p_action);
         return RelayState::Unknown;
     }
-    std::cout << __LINE__ << "@" << __FUNCTION__ << "@" __FILE__ << std::endl;
     RelayState phase1state = ToRelayStateFromShortString(phase1StateChar);
     RelayState phase2state = ToRelayStateFromShortString(phase2StateChar);
     TimeUnit timeUnit1     = ToTimeUnit(timeUnitChar1);
@@ -244,12 +252,35 @@ RelayState SolenoidCtrlCmd::ApplyThresholdCtrl(const String& p_range, float p_va
 
     RelayState targetState = ToRelayStateFromShortString(openOrClosed);
 
-    if (operation == '>' && p_value > threshold)
-        return targetState;
-    if (operation == '<' && p_value < threshold)
-        return targetState;
+    if (false == IsWithingRange(operation, p_value, threshold))
+        return RelayState::Unknown;
+    return targetState;
+}
 
-    return RelayState::Unknown;
+RelayState SolenoidCtrlCmd::RelaySenThTimeRangeRepCtrl(const String& p_action,
+                                                       const SensorData& p_data,
+                                                       const LocalTime& p_now)
+{
+    SensorType sensorType = ToSensorTypeFromString(Utils::GetSubStr(p_action, 0, 4));
+    if (sensorType == SensorType::Unknown)
+    {
+        Serial.printf("Failed to get sensor type from %s\n", p_action.c_str());
+        return RelayState::Unknown;
+    }
+    String thresholdStr = Utils::GetSubStr(p_action, 5, -1);
+    char operation;
+    float threshold;
+    if (sscanf(thresholdStr.c_str(), "X%c%f", &operation, &threshold) != 2)
+    {
+        Serial.printf("Failed to parse %s\n", p_action.c_str());
+        return RelayState::Unknown;
+    }
+
+    if (false == IsWithingRange(operation, p_data.get(sensorType), threshold))
+        return RelayState::Unknown;
+
+    String timeAction = Utils::GetSubStr(p_action, 13, -1);
+    return RelayTimeRepeatCtrl(timeAction, p_now);
 }
 
 RelayState SolenoidCtrlCmd::evaluate(const SensorData& p_sensors, const LocalTime& p_now) const
@@ -259,27 +290,15 @@ RelayState SolenoidCtrlCmd::evaluate(const SensorData& p_sensors, const LocalTim
         case CommandType::Manual:
             return ToRelayStateFromShortString(action);
         case CommandType::TimeSingleShot:
-            if (action.length() == TimeSingleActionLength)
-            {
-                if (false == IsWithinTimeRange(action.c_str() + 2, p_now))
-                    return RelayState::Unknown;
-                else
-                    return ToRelayStateFromShortString(action[0]);
-            }
-            else if (action.length() == TimeRepeatActionLength)
-            {
-                return RelayState::Unknown;
-            }
-            return RelayState::Unknown;
-
-            // case CommandType::AutoTemperatureCtrl:
-            //     return p_cmd.relayState;
-            // case CommandType::AutoHumidityCtrl:
-            //     return p_cmd.relayState;
-            // case CommandType::AutoTimeCtrl:
-            //     return p_cmd.relayState;
-            // case CommandType::AutoFlowCtrl:
-            //     return p_cmd.relayState;
+            return RelayTimeSingleShotCtrl(action, p_now);
+        case CommandType::TimeRepeat:
+            return RelayTimeRepeatCtrl(action, p_now);
+        case CommandType::SensorRange:
+            return RelaySensorRangeCtrl(action, p_sensors);
+        case CommandType::SensorThreshold:
+            return RelaySensorThresholdCtrl(action, p_sensors);
+        case CommandType::SensorThresholdTimeRepeat:
+            return RelaySenThTimeRangeRepCtrl(action, p_sensors, p_now);
     }
     return RelayState::Unknown;
 }

@@ -2,7 +2,22 @@
 #include "../embedded/main/SolenoidCtrlCmd.hpp"
 #include "../embedded/main/PredefinedCommands.hpp"
 
-using SCC = SolenoidCtrlCmd;
+class SolenoidCtrlCmdTest : public SolenoidCtrlCmd
+{
+public:
+    using SolenoidCtrlCmd::ApplyRangeCtrl;
+    using SolenoidCtrlCmd::ApplyThresholdCtrl;
+    using SolenoidCtrlCmd::IsWithingRange;
+    using SolenoidCtrlCmd::IsWithinTimeRange;
+    using SolenoidCtrlCmd::RelaySensorRangeCtrl;
+    using SolenoidCtrlCmd::RelaySensorThresholdCtrl;
+    using SolenoidCtrlCmd::RelaySenThTimeRangeRepCtrl;
+    using SolenoidCtrlCmd::RelayTimeRepeatCtrl;
+    using SolenoidCtrlCmd::RelayTimeSingleShotCtrl;
+    using SolenoidCtrlCmd::SolenoidCtrlCmd;
+};
+
+using SCC = SolenoidCtrlCmdTest;
 using LC  = LocalTime;
 
 TEST(SolenoidCtrlCmdTest, ManualValidStr)
@@ -61,6 +76,15 @@ TEST(SolenoidCtrlCmdTest, IsBetweenTimeRange)
     EXPECT_TRUE(SCC::IsWithinTimeRange("23:10->23:12", time2));
 }
 
+TEST(SolenoidCtrlCmdTest, IsWithingRange)
+{
+    EXPECT_TRUE(SCC::IsWithingRange('>', 25.0, 24.0));
+    EXPECT_FALSE(SCC::IsWithingRange('<', 25.0, 24.0));
+
+    EXPECT_TRUE(SCC::IsWithingRange('<', 25.0, 26.0));
+    EXPECT_FALSE(SCC::IsWithingRange('>', 25.0, 26.0));
+}
+
 TEST(SolenoidCtrlCmdTest, RelayTimeRepeatCtrl)
 {
     LC time1 = LC::Build(8, 0);
@@ -71,19 +95,19 @@ TEST(SolenoidCtrlCmdTest, RelayTimeRepeatCtrl)
     EXPECT_TRUE(SCC::IsWithinTimeRange("23:10->23:12", time2));
 }
 
-TEST(SolenoidCtrlCmdTest, RelayTimeSingleShotCtr)
+TEST(SolenoidCtrlCmdTest, RelayTimeSingleShotCtrl)
 {
-    // RelayTimeSingleShotCtr
+    // RelayTimeSingleShotCtrl
     LC time1           = LC::Build(1, 2);
     LC time2           = LC::Build(4, 12);
     String exampleCmd1 = "S_C00:00->04:00";
     String exampleCmd2 = "S_O04:00->23:00";
 
-    EXPECT_EQ(SCC::RelayTimeSingleShotCtr(exampleCmd1, time1), RelayState::Closed);
-    EXPECT_EQ(SCC::RelayTimeSingleShotCtr(exampleCmd1, time2), RelayState::Unknown);
+    EXPECT_EQ(SCC::RelayTimeSingleShotCtrl(exampleCmd1, time1), RelayState::Closed);
+    EXPECT_EQ(SCC::RelayTimeSingleShotCtrl(exampleCmd1, time2), RelayState::Unknown);
 
-    EXPECT_EQ(SCC::RelayTimeSingleShotCtr(exampleCmd2, time1), RelayState::Unknown);
-    EXPECT_EQ(SCC::RelayTimeSingleShotCtr(exampleCmd2, time2), RelayState::Opened);
+    EXPECT_EQ(SCC::RelayTimeSingleShotCtrl(exampleCmd2, time1), RelayState::Unknown);
+    EXPECT_EQ(SCC::RelayTimeSingleShotCtrl(exampleCmd2, time2), RelayState::Opened);
 }
 
 TEST(SolenoidCtrlCmdTest, RelayTimeRepeatCtr)
@@ -146,4 +170,24 @@ TEST(SolenoidCtrlCmdTest, RelaySensorRangeCtrl)
 
     sd.tempOnSun_C = 9;
     EXPECT_EQ(SCC::RelaySensorRangeCtrl(exampleCmd, sd), RelayState::Closed);
+}
+
+TEST(SolenoidCtrlCmdTest, RelaySenThTimeRangeRepCtrl)
+{
+    String exampleCmd = "TESH_X>030.0_R_X06:00->20:00_O01h_C20m";
+
+    SensorData sd;
+    sd.tempInShadow_C = 31;
+
+    EXPECT_EQ(SCC::RelaySenThTimeRangeRepCtrl(exampleCmd, sd, LC::Build(1, 2)), RelayState::Unknown);
+    EXPECT_EQ(SCC::RelaySenThTimeRangeRepCtrl(exampleCmd, sd, LC::Build(6, 1)), RelayState::Opened);
+    EXPECT_EQ(SCC::RelaySenThTimeRangeRepCtrl(exampleCmd, sd, LC::Build(7, 0)), RelayState::Closed);
+    EXPECT_EQ(SCC::RelaySenThTimeRangeRepCtrl(exampleCmd, sd, LC::Build(7, 20)), RelayState::Opened);
+    EXPECT_EQ(SCC::RelaySenThTimeRangeRepCtrl(exampleCmd, sd, LC::Build(8, 21)), RelayState::Closed);
+    EXPECT_EQ(SCC::RelaySenThTimeRangeRepCtrl(exampleCmd, sd, LC::Build(9, 21)), RelayState::Opened);
+    EXPECT_EQ(SCC::RelaySenThTimeRangeRepCtrl(exampleCmd, sd, LC::Build(20, 01)), RelayState::Unknown);
+
+    sd.tempInShadow_C = 29;
+    EXPECT_EQ(SCC::RelaySenThTimeRangeRepCtrl(exampleCmd, sd, LC::Build(6, 1)), RelayState::Unknown);
+    EXPECT_EQ(SCC::RelaySenThTimeRangeRepCtrl(exampleCmd, sd, LC::Build(7, 0)), RelayState::Unknown);
 }

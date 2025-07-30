@@ -11,7 +11,8 @@
 #define CMD_ATIME_REPEAT    "$TimRep;P05;R01;R_X06:00->20:00_O01h_C20m#" // 6 to 20 h, open for 1h, close for 20min
 #define CMD_SENS_RANGE      "$SenRan;P05;R01;TESU_O>025.0_C<010.5#"      // Temp Sun open if x > 25*C close if x < 10*C
 #define CMD_SENS_THRESHOLD  "$SenThr;P05;R01;RAIN_C>040.0#"              // Rain -> close if x > 40
-#define CMD_SENS_THR_REPEAT "$SenThr;P05;R01;TESH_X>030.0_O01h_C50s#"    // If Temp Shadow > 30*C open for 1 hour, close for 50 sec
+// If Temp Shadow > 30*C && time is  6 to 20 h open for 1 hour, close for 50 sec
+#define CMD_SENS_THR_REPEAT "$SenThr;P05;R01;TESH_X>030.0_R_X06:00->20:00_O01h_C50s#"   
 
 
 #define CMD_DELIMITER "|"
