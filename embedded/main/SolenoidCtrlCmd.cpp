@@ -101,36 +101,48 @@ RelayState SolenoidCtrlCmd::RelayTimeSingleShotCtrl(const String& p_action, cons
         Serial.println("Invalid time");
         return RelayState::Unknown;
     }
-
-    char type, relayStateStr;
-    int startHour, startMin, endHour, endMin;
-    if (sscanf(p_action.c_str(),
-               "%c_%c%d:%d->%d:%d",
-               &type,
-               &relayStateStr,
-               &startHour,
-               &startMin,
-               &endHour,
-               &endMin) != 6)
+    if (p_action.length() < TimeSingleActionLength)
     {
-        Serial.printf("Failed to parse %s", p_action);
+        Serial.printf("Invalid TimeSingleShot command length %d", p_action.length());
+        return RelayState::Unknown;
+    }
+    if (p_action[0] != 'S')
+    {
+        Serial.printf("Invalid type, not S %c", p_action[0]);
         return RelayState::Unknown;
     }
 
-    RelayState state = ToRelayStateFromShortString(relayStateStr);
-    if (type != 'S' || state == RelayState::Unknown)
+    uint start = 2;
+    while (start < p_action.length())
     {
-        Serial.printf("Failed to parse %s", p_action.c_str());
-        return RelayState::Unknown;
+        int end = p_action.indexOf(CMD_ADD_NEW_SUB_CMD, start);
+        if (end == -1)
+            end = p_action.length(); // last part
+
+        String subCmd = p_action.substring(start, end);
+
+        char relayStateStr;
+        int startHour, startMin, endHour, endMin;
+        if (sscanf(subCmd.c_str(), "%c%d:%d->%d:%d", &relayStateStr, &startHour, &startMin, &endHour, &endMin) == 5)
+        {
+            RelayState state = ToRelayStateFromShortString(relayStateStr);
+            if (state != RelayState::Unknown)
+            {
+                uint16_t startMinutes   = startHour * 60 + startMin;
+                uint16_t endMinutes     = endHour * 60 + endMin;
+                uint16_t currentMinutes = p_now.tm_hour * 60 + p_now.tm_min;
+
+                if (startMinutes <= currentMinutes && currentMinutes <= endMinutes)
+                    return state;
+            }
+        }
+        else
+        {
+            Serial.printf("Failed to parse: %s\n", subCmd.c_str());
+        }
+
+        start = end + 1; // move past '+'
     }
-    uint16_t startMinutes   = startHour * 60 + startMin;
-    uint16_t endMinutes     = endHour * 60 + endMin;
-    uint16_t currentMinutes = p_now.tm_hour * 60 + p_now.tm_min;
-
-    // within range
-    if (startMinutes <= currentMinutes && currentMinutes <= endMinutes)
-        return state;
-
     return RelayState::Unknown;
 }
 

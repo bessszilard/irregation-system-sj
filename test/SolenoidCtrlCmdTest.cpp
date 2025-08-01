@@ -279,3 +279,19 @@ TEST(SolenoidCtrlCmdTest, EvaluateRelaySenThTimeRangeRepCtrl)
     EXPECT_EQ(sct.evaluate(sd, LC::Build(8, 20)), RelayState::Unknown);
     EXPECT_EQ(sct.evaluate(sd, LC::Build(20, 1)), RelayState::Unknown);
 }
+
+TEST(SolenoidCtrlCmdTest, EvaluateRelayTimeMultipleSingleShotCtrl)
+{
+    SensorData sd;
+    SolenoidCtrlCmdTest sct(CMD_ATIME_SH_TRIPLE);
+
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(0, 0)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(3, 0)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(3, 1)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(6, 0)), RelayState::Opened);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(12, 0)), RelayState::Opened);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(12, 1)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(23, 0)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(23, 59)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(23, 59, 59)), RelayState::Closed);
+}

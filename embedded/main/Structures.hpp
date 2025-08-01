@@ -77,12 +77,12 @@ struct LocalTime : tm
 
     String toString() const;
 
-    static LocalTime Build(uint8_t p_hours, uint8_t p_minutes)
+    static LocalTime Build(uint8_t p_hours, uint8_t p_minutes, uint8_t p_seconds = 0)
     {
         LocalTime time;
         time.tm_hour = p_hours;
         time.tm_min  = p_minutes;
-        time.tm_sec  = 0;
+        time.tm_sec  = p_seconds;
         time.valid   = true;
         return time;
     }

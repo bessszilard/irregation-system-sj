@@ -20,7 +20,7 @@
 #include "LcdLayouts.hpp"
 #include "MqttHandler.hpp"
 #include "FramManager.hpp"
-
+#include "PredefinedCommands.hpp"
 #include "SolenoidManager.hpp"
 
 #define SEALEVELPRESSURE_HPA (1013.25)
@@ -358,14 +358,15 @@ bool sensorDataUpdate(SensorData& p_data)
     p_data.flowRate_LitMin = fm.getData().flowRate_LitMin;
 
     tempSensor.requestTemperatures();
-    p_data.externalTemp_C = tempSensor.getTempCByIndex(0);
+    p_data.tempOnSun_C    = tempSensor.getTempCByIndex(0);
     p_data.humidity_RH    = sht20.humidity();
+    p_data.tempInShadow_C = sht20.temperature();
 
     ADS.setGain(0);
     p_data.rainSensor    = Utils::scaleTo99(ADS.readADC(0));
     p_data.lightSensor   = Utils::scaleTo99(ADS.readADC(1));
-    p_data.soilMoisture1 = Utils::scaleTo99(ADS.readADC(2));
-    p_data.soilMoisture2 = Utils::scaleTo99(ADS.readADC(3));
+    p_data.waterPressure_bar = Utils::scaleTo99(ADS.readADC(2));
+    p_data.soilMoistureLocal = Utils::scaleTo99(ADS.readADC(3));
 
     p_data.valid = true;
     return true;

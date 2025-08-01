@@ -15,8 +15,12 @@
 // If Temp Shadow > 30*C && time is  6 to 20 h open for 1 hour, close for 50 sec
 #define CMD_SENS_THR_REPEAT "$SeTTRe;P05;R01;TESH_X>030.0_R_X06:00->20:00_O01h_C20m#"   
 
+#define CMD_ATIME_SH_TRIPLE  "$TimSin;P05;R01;S_C00:00->03:00+O06:00->12:00+C23:00->23:59#"   // Close between 7 to 20 hour
+
 
 #define CMD_DELIMITER "|"
+#define CMD_ADD_NEW_SUB_CMD "+"
+
 const String AllCommandExamples = String(CMD_MANUAL_CLOSE_ALL_RELAYS)            \
                                   + CMD_DELIMITER + CMD_MANUAL_CLOSE_RELAY1      \
                                   + CMD_DELIMITER + CMD_MANUAL_OPEN_ALL_RELAYS   \
