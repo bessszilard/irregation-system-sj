@@ -131,20 +131,22 @@ String RelayArrayStates::toString() const
 String SensorData::toJSON() const
 //---------------------------------------------------------------
 {
+    // TODOsz make a function for this
+    // TODOsz getUnit from type
     String json = "{";
     json += "\"tempOnSun_C\": "        + String(isnan(tempOnSun_C)      ? "null" : String(tempOnSun_C,      2)) + ",";
     json += "\"tempInShadow_C\": "     + String(isnan(tempInShadow_C)   ? "null" : String(tempInShadow_C,   2)) + ",";
     json += "\"humidity_%RH\": "       + String(isnan(humidity_RH)      ? "null" : String(humidity_RH,      2)) + ",";
     json += "\"flowRate_LitMin\": "    + String(isnan(flowDaySum_Lit)   ? "null" : String(flowDaySum_Lit,   2)) + ",";
     json += "\"flowDaySum_Min\": "     + String(isnan(flowRate_LitMin)  ? "null" : String(flowRate_LitMin ,  2)) + ",";
-    json += "\"rainSensor_0-99\": "    + String(rainSensor) + ",";
-    json += "\"light_0-99\": "         + String(lightSensor) + ",";
+    json += "\"rainSensor_0-99\": "    + String(isnan(rainSensor)        ? "null" : String(waterPressure_bar,  2)) + ",";
+    json += "\"light_0-99\": "         + String(isnan(lightSensor)       ? "null" : String(waterPressure_bar,  2)) + ",";
     json += "\"waterPressure_bar\": "  + String(isnan(waterPressure_bar) ? "null" : String(waterPressure_bar,  2)) + ",";
-    json += "\"soilMoisture2_0-99\": " + String(soilMoisture1) + ",";
+    json += "\"soilMoistureLocal_0-99\": " + String(isnan(soilMoistureLocal)     ? "null" : String(soilMoistureLocal,  2)) + ",";
     json += "\"soilMoisture\": [";
     for (int i = 0; i < MAX_SOIL_MOISTURE_NODE; ++i)
     {
-        json += isnan(soilMoisture[i].measurement) ? "null" : String(soilMoisture[i].measurement, 2);
+        json += isnan(soilMoistureWl[i].measurement) ? "null" : String(soilMoistureWl[i].measurement, 2);
         if (i < MAX_SOIL_MOISTURE_NODE - 1)
             json += ",";
     }
@@ -152,6 +154,45 @@ String SensorData::toJSON() const
     json += "\"valid\": " + String(valid ? "true" : "false");
     json += "}";
     return json;
+}
+
+//---------------------------------------------------------------
+void SensorData::set(SensorType p_type, float p_value)
+//---------------------------------------------------------------
+{
+    switch(p_type)
+    {
+        case SensorType::TempOnSun:           tempOnSun_C         = p_value; break;
+        case SensorType::TempInShadow:        tempInShadow_C      = p_value; break;
+        case SensorType::Humidity:            humidity_RH         = p_value; break;
+        case SensorType::FlowRateDailySum:    flowDaySum_Lit      = p_value; break;
+        case SensorType::FlowRateLitPerMin:   flowRate_LitMin     = p_value; break;
+        case SensorType::Rain:                rainSensor          = p_value; break;
+        case SensorType::Light:               lightSensor         = p_value; break;
+        case SensorType::WaterPressure:       waterPressure_bar   = p_value; break;
+        case SensorType::SoilMoistureLocal:   soilMoistureLocal   = p_value; break;
+        case SensorType::SoilMoistureWireless:         
+        case SensorType::Unknown:              
+            break;
+    }
+}
+
+//---------------------------------------------------------------
+void SensorData::set(SensorType p_type, uint16_t p_value)
+//---------------------------------------------------------------
+{
+    switch(p_type)
+    {
+        // TODOsz implement scaling
+        case SensorType::Rain:           rainSensor          = p_value; break;
+        case SensorType::Light:          lightSensor         = p_value; break;
+        case SensorType::WaterPressure:  waterPressure_bar   = p_value; break;
+        case SensorType::SoilMoistureLocal:         
+        case SensorType::SoilMoistureWireless:         
+        case SensorType::Unknown:              
+    default:
+        Serial.printf("uint for %s not supported", ToString(p_type).c_str());
+    }
 }
 
 //---------------------------------------------------------------
@@ -168,7 +209,7 @@ float SensorData::get(SensorType p_type) const
         case SensorType::Rain:                 return rainSensor;
         case SensorType::Light:                return lightSensor;
         case SensorType::WaterPressure:        return waterPressure_bar;
-        case SensorType::SoilMoisture:         
+        case SensorType::SoilMoistureLocal:    return soilMoistureLocal;         
         case SensorType::Unknown:              
     default:
         return NAN;

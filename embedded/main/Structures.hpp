@@ -110,12 +110,17 @@ struct SensorData
     float humidity_RH       = NAN;
     float flowDaySum_Lit    = NAN;
     float flowRate_LitMin   = NAN;
-    int16_t rainSensor      = 0; // TODOsz create NAN also for these
-    int16_t lightSensor     = 0;
+    float rainSensor        = NAN;
+    float lightSensor       = NAN;
     float waterPressure_bar = NAN;
-    int16_t soilMoisture1   = 0;
+    float soilMoistureLocal = NAN;
 
-    SoilMoisture soilMoisture[MAX_SOIL_MOISTURE_NODE];
+    uint16_t rawRainSensor        = 0; // TODOsz create NAN also for these
+    uint16_t rawLightSensor       = 0;
+    uint16_t rawwaterPressure_bar = 0;
+    uint16_t rawSoilMoisture1     = 0;
+
+    SoilMoisture soilMoistureWl[MAX_SOIL_MOISTURE_NODE];
 
     bool valid = false;
 
@@ -123,6 +128,9 @@ struct SensorData
 
     float get(SensorType p_type) const;
     float get(const String& p_str) const;
+
+    void set(SensorType p_type, float p_value);
+    void set(SensorType p_type, uint16_t p_value);
 };
 
 struct RelayExeInfo

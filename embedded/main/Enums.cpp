@@ -93,8 +93,9 @@ SensorType ToSensorTypeFromString(const String& p_rawMsg, int p_startId /*=0*/, 
     if (subStr == "RAIN") return SensorType::Rain;
     if (subStr == "LIGH") return SensorType::Light;
     if (subStr == "WAPR") return SensorType::WaterPressure;
+    if (subStr == "SMLC") return SensorType::SoilMoistureLocal;
     if (subStr[0] == 'S' && subStr[1] == 'M') 
-        return SensorType::SoilMoisture; // SMXX <- index
+        return SensorType::SoilMoistureWireless; // SMXX <- index
     return SensorType::Unknown;
 }
 
@@ -219,15 +220,16 @@ String ToString(SensorType p_type)
 {
     switch(p_type)
     {
-        case SensorType::TempOnSun:         return "TESU";
-        case SensorType::TempInShadow:      return "TESH";
-        case SensorType::Humidity:          return "HUMI";
-        case SensorType::FlowRateDailySum:  return "FRDS";
-        case SensorType::FlowRateLitPerMin: return "FRLM";
-        case SensorType::Rain:              return "RAIN";
-        case SensorType::Light:             return "LIGH";
-        case SensorType::WaterPressure:     return "WAPR";
-        case SensorType::SoilMoisture:      return "SM"; // SMXX <- index
+        case SensorType::TempOnSun:             return "TESU";
+        case SensorType::TempInShadow:          return "TESH";
+        case SensorType::Humidity:              return "HUMI";
+        case SensorType::FlowRateDailySum:      return "FRDS";
+        case SensorType::FlowRateLitPerMin:     return "FRLM";
+        case SensorType::Rain:                  return "RAIN";
+        case SensorType::Light:                 return "LIGH";
+        case SensorType::WaterPressure:         return "WAPR";
+        case SensorType::SoilMoistureLocal:     return "SMLC"; // SMXX <- index
+        case SensorType::SoilMoistureWireless:  return "SM"; // SMXX <- index
         case SensorType::Unknown:
         default:
             return "Unknown";

@@ -37,7 +37,7 @@ TEST(SensorData, getSensorByType)
     sd.rainSensor        = i++;
     sd.lightSensor       = i++;
     sd.waterPressure_bar = i++;
-    sd.soilMoisture1     = i++;
+    sd.soilMoistureLocal = i++;
 
     i = 0;
     EXPECT_EQ(sd.get("TESU"), i++);
@@ -48,4 +48,30 @@ TEST(SensorData, getSensorByType)
     EXPECT_EQ(sd.get("RAIN"), i++);
     EXPECT_EQ(sd.get("LIGH"), i++);
     EXPECT_EQ(sd.get("WAPR"), i++);
+}
+
+TEST(SensorData, setSensorByType)
+{
+    SensorData sd;
+    float i = 0.0;
+    sd.set(SensorType::TempOnSun, i++);
+    sd.set(SensorType::TempInShadow, i++);
+    sd.set(SensorType::Humidity, i++);
+    sd.set(SensorType::FlowRateDailySum, i++);
+    sd.set(SensorType::FlowRateLitPerMin, i++);
+    sd.set(SensorType::Rain, i++);
+    sd.set(SensorType::Light, i++);
+    sd.set(SensorType::WaterPressure, i++);
+    sd.set(SensorType::SoilMoistureLocal, i++);
+
+    i = 0;
+    EXPECT_EQ(sd.get(SensorType::TempOnSun), i++);
+    EXPECT_EQ(sd.get(SensorType::TempInShadow), i++);
+    EXPECT_EQ(sd.get(SensorType::Humidity), i++);
+    EXPECT_EQ(sd.get(SensorType::FlowRateDailySum), i++);
+    EXPECT_EQ(sd.get(SensorType::FlowRateLitPerMin), i++);
+    EXPECT_EQ(sd.get(SensorType::Rain), i++);
+    EXPECT_EQ(sd.get(SensorType::Light), i++);
+    EXPECT_EQ(sd.get(SensorType::WaterPressure), i++);
+    EXPECT_EQ(sd.get(SensorType::SoilMoistureLocal), i++);
 }

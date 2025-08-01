@@ -129,7 +129,8 @@ enum class SensorType
     Rain,
     Light,
     WaterPressure,
-    SoilMoisture,
+    SoilMoistureLocal,
+    SoilMoistureWireless,
     Unknown
 };
 
