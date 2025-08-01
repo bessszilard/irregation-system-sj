@@ -6,6 +6,7 @@ set (SRC
     SolenoidCtrlCmdTest.cpp
     SolenoidManagerTest.cpp
     RelayGroupManagerTest.cpp
+    UtilsTest.cpp
     ../embedded/main/SolenoidManager.cpp
     ../embedded/main/SolenoidCtrlCmd.cpp
     ../embedded/main/Enums.cpp
