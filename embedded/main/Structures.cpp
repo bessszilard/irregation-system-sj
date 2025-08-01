@@ -184,10 +184,15 @@ void SensorData::set(SensorType p_type, uint16_t p_value)
     switch(p_type)
     {
         // TODOsz implement scaling
-        case SensorType::Rain:           rainSensor          = p_value; break;
-        case SensorType::Light:          lightSensor         = p_value; break;
-        case SensorType::WaterPressure:  waterPressure_bar   = p_value; break;
-        case SensorType::SoilMoistureLocal:         
+        case SensorType::TempOnSun:           tempOnSun_C         = p_value; break;
+        case SensorType::TempInShadow:        tempInShadow_C      = p_value; break;
+        case SensorType::Humidity:            humidity_RH         = p_value; break;
+        case SensorType::FlowRateDailySum:    flowDaySum_Lit      = p_value; break;
+        case SensorType::FlowRateLitPerMin:   flowRate_LitMin     = p_value; break;
+        case SensorType::Rain:                rainSensor          = p_value; break;
+        case SensorType::Light:               lightSensor         = p_value; break;
+        case SensorType::WaterPressure:       waterPressure_bar   = p_value; break;
+        case SensorType::SoilMoistureLocal:   soilMoistureLocal   = p_value; break;
         case SensorType::SoilMoistureWireless:         
         case SensorType::Unknown:              
     default:

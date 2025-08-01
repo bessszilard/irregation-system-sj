@@ -191,3 +191,91 @@ TEST(SolenoidCtrlCmdTest, RelaySenThTimeRangeRepCtrl)
     EXPECT_EQ(SCC::RelaySenThTimeRangeRepCtrl(exampleCmd, sd, LC::Build(6, 1)), RelayState::Unknown);
     EXPECT_EQ(SCC::RelaySenThTimeRangeRepCtrl(exampleCmd, sd, LC::Build(7, 0)), RelayState::Unknown);
 }
+
+// Evaluate >>
+TEST(SolenoidCtrlCmdTest, EvaluateRelayTimeSingleShotCtrl)
+{
+    SensorData sd;
+    SolenoidCtrlCmdTest sct(CMD_ATIME_SINGLE);
+
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(6, 59)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(7, 0)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(20, 0)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(20, 1)), RelayState::Unknown);
+}
+
+TEST(SolenoidCtrlCmdTest, EvaluateRelayTimeRepeatCtrl)
+{
+    SensorData sd;
+    SolenoidCtrlCmdTest sct(CMD_ATIME_REPEAT);
+
+    // opened for 1h closed for 20m
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(5, 59)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(6, 0)), RelayState::Opened);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(6, 59)), RelayState::Opened);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(7, 0)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(7, 19)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(7, 20)), RelayState::Opened);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(8, 20)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(20, 1)), RelayState::Unknown);
+}
+
+TEST(SolenoidCtrlCmdTest, EvaluateRelaySensorThresholdCtrl)
+{
+    SensorData sd;
+    LocalTime lc;
+    SolenoidCtrlCmdTest sct(CMD_SENS_THRESHOLD);
+
+    sd.rainSensor = 0;
+    EXPECT_EQ(sct.evaluate(sd, lc), RelayState::Unknown);
+
+    sd.rainSensor = 41;
+    EXPECT_EQ(sct.evaluate(sd, lc), RelayState::Closed);
+}
+
+TEST(SolenoidCtrlCmdTest, EvaluateRelaySensorRangeCtrl)
+{
+    SensorData sd;
+    LocalTime lc;
+    SolenoidCtrlCmdTest sct(CMD_SENS_RANGE);
+
+    sd.tempOnSun_C = 24;
+    EXPECT_EQ(sct.evaluate(sd, lc), RelayState::Unknown);
+
+    sd.tempOnSun_C = 26;
+    EXPECT_EQ(sct.evaluate(sd, lc), RelayState::Opened);
+
+    sd.tempOnSun_C = 11;
+    EXPECT_EQ(sct.evaluate(sd, lc), RelayState::Unknown);
+
+    sd.tempOnSun_C = 9;
+    EXPECT_EQ(sct.evaluate(sd, lc), RelayState::Closed);
+}
+
+TEST(SolenoidCtrlCmdTest, EvaluateRelaySenThTimeRangeRepCtrl)
+{
+    SensorData sd;
+    SolenoidCtrlCmdTest sct(CMD_SENS_THR_REPEAT);
+
+    sd.tempInShadow_C = 31;
+    // opened for 1h closed for 20m
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(5, 59)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(6, 0)), RelayState::Opened);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(6, 59)), RelayState::Opened);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(7, 0)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(7, 19)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(7, 20)), RelayState::Opened);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(8, 20)), RelayState::Closed);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(20, 1)), RelayState::Unknown);
+
+    sd.tempInShadow_C = 29;
+    // opened for 1h closed for 20m
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(5, 59)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(6, 0)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(6, 59)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(7, 0)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(7, 19)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(7, 20)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(8, 20)), RelayState::Unknown);
+    EXPECT_EQ(sct.evaluate(sd, LC::Build(20, 1)), RelayState::Unknown);
+}
