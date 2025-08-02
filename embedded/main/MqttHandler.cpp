@@ -74,24 +74,24 @@ void MqttHandler::publish(const RelayGroupManager& p_relayGroups)
 }
 
 //---------------------------------------------------------------
-void MqttHandler::publish(const LocalTime& time)
+void MqttHandler::publish(const LocalTime& p_time, uint32_t p_uptime)
 //---------------------------------------------------------------
 {
-    publish(MQTT_LOCAL_TIME, "{ \"LocalTime\": \"" + time.toString() + "\" }");
+    publish(MQTT_LOCAL_TIME, "{ \"LocalTime\": \"" + p_time.toString() + "\", \"UpTime\": " + String(p_uptime) + " }");
 }
 
 //---------------------------------------------------------------
-void MqttHandler::publish(const SolenoidManager& solm)
+void MqttHandler::publish(const SolenoidManager& p_solm)
 //---------------------------------------------------------------
 {
-    publish(MQTT_CMD_LIST, solm.getCmdListInJson());
+    publish(MQTT_CMD_LIST, p_solm.getCmdListInJson());
 }
 
 //---------------------------------------------------------------
-void MqttHandler::publish(CommandState cmdState)
+void MqttHandler::publish(CommandState p_cmdState)
 //---------------------------------------------------------------
 {
-    publish(MQTT_CMD_RESPONSE, "{ \"Result\": \"" + ToString(cmdState) + "\" }");
+    publish(MQTT_CMD_RESPONSE, "{ \"Result\": \"" + ToString(p_cmdState) + "\" }");
 }
 
 //---------------------------------------------------------------

@@ -15,11 +15,11 @@ public:
     void publish(const RelayArrayStates& sensors);
     void publishRelayInfo(const String& relayInfo);
     void publish(const RelayGroupManager& p_relayGroups);
-    void publish(const LocalTime& time);
-    void publish(const SolenoidManager& solm);
-    void publish(CommandState cmdState);
+    void publish(const LocalTime& p_time, uint32_t p_uptime);
+    void publish(const SolenoidManager& p_solm);
+    void publish(CommandState p_cmdState);
 
-    void publishCmdOptions(const String& cmdOptions);
+    void publishCmdOptions(const String& p_cmdOptions);
 
     bool loop();
     bool connected();

@@ -59,6 +59,7 @@ MqttHandler mqttHd(&mqttClient);
 
 SolenoidManager solM;
 WifiSignalStrength filteredRssi = WifiSignalStrength::Unknown;
+uint32_t uptime;
 
 void localTimeSetup();
 void sensorSetup();
@@ -195,7 +196,8 @@ void loop()
             Serial.println("Invalid local time");
             return;
         }
-        mqttHd.publish(locTime);
+        uptime++;
+        mqttHd.publish(locTime, uptime);
 
         // Update sensors
         if (false == sensorDataUpdate(sensorData))
