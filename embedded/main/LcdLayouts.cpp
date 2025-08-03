@@ -61,13 +61,14 @@ void LcdLayouts::connectingToSSID(const String& p_ssid, bool p_connected, int p_
 void LcdLayouts::updateDef(wl_status_t p_wifiState,
                            int8_t p_rssi_dBm,
                            bool p_mqttState,
-                           const RelayArrayStates& p_relayArrayState)
+                           const RelayArrayStates& p_relayArrayState,
+                           const String& p_deviceId)
 {
     // TODOsz only update if needed
     // static wl_status_t lastWifiState = WL_DISCONNECTED;
 
-    String firstLine = "W:" + ToShortString(p_wifiState) + " " + ToShortString(ToWifiSignalStrength(p_rssi_dBm)) + " ";
-    firstLine += "M:" + String(p_mqttState);
+    String firstLine = "W:" + ToShortString(p_wifiState) + " " + ToShortString(ToWifiSignalStrength(p_rssi_dBm)) +
+                       " M:" + String(p_mqttState) + " " + p_deviceId;
 
     String secondLine = p_relayArrayState.toString();
     update(firstLine, secondLine);

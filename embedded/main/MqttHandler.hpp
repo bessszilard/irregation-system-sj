@@ -27,8 +27,14 @@ public:
 
     void reconnectMqtt();
 
+    const MqttTopics& topics()
+    {
+        return m_topics;
+    }
+
 private:
     PubSubClient* m_client;
 
     void publish(const char* topic, const String& message);
+    MqttTopics m_topics;
 };

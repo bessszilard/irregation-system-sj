@@ -23,7 +23,8 @@ public:
     void updateDef(wl_status_t p_wifiState,
                    int8_t p_rssi_dBm,
                    bool p_mqttState,
-                   const RelayArrayStates& p_relayArrayState);
+                   const RelayArrayStates& p_relayArrayState,
+                   const String& p_deviceId);
 
 private:
     void update(const String& firstLine, const String& secondLine);

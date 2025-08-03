@@ -231,7 +231,7 @@ void loop()
     {
         oldWifiStatus = WiFi.status();
         oldRssi       = filteredRssi;
-        lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), mqttHd.connected(), relayStates);
+        lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), mqttHd.connected(), relayStates, getShortDeviceId());
     }
 }
 
@@ -263,7 +263,7 @@ bool setupWifiAndMqtt()
     Serial.println(WiFi.localIP());
 
     Serial.println("Setting up MQTT connection");
-    if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT, callback))
+    if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT, MQTT_USER, MQTT_PASSWORD, callback))
     {
         Serial.println("Failed to set up the Mqtt server");
         return false;
@@ -395,41 +395,41 @@ void callback(char* topic, byte* message, unsigned int length)
     String topicStr(topic);
     // TODOsz topicStr move to variable
     // Subscribed topics
-    if (topicStr == MQTT_SUB_CMD_ADD)
+    if (topicStr == mqttHd.topics().sub().CMD_ADD)
     {
         CommandState cmdState = solM.appendCmd(messageTemp);
         Serial.println(messageTemp + ">> " + ToString(cmdState));
         mqttHd.publish(cmdState);
         mqttHd.publish(solM);
     }
-    else if (topicStr == MQTT_SUB_CMD_REMOVE)
+    else if (topicStr == mqttHd.topics().sub().CMD_REMOVE)
     {
         CommandState cmdState = solM.removeCmd(messageTemp);
         mqttHd.publish(cmdState);
         Serial.println(messageTemp + ">> " + ToString(cmdState));
         mqttHd.publish(solM);
     }
-    else if (topicStr == MQTT_SUB_CMD_OVERRIDE)
+    else if (topicStr == mqttHd.topics().sub().CMD_OVERRIDE)
     {
         CommandState cmdState = solM.overrideCmd(messageTemp);
         mqttHd.publish(cmdState);
         Serial.println(messageTemp + ">> " + ToString(cmdState));
         mqttHd.publish(solM);
     }
-    else if (topicStr == MQTT_SUB_CMD_IMPORT)
+    else if (topicStr == mqttHd.topics().sub().CMD_IMPORT)
     {
         bool results = solM.loadCmdsFromString(messageTemp);
         mqttHd.publish(results ? CommandState::Added : CommandState::Unknown);
         Serial.println(messageTemp);
         mqttHd.publish(solM);
     }
-    else if (topicStr == MQTT_SUB_CMD_GET_OPTIONS)
+    else if (topicStr == mqttHd.topics().sub().CMD_GET_OPTIONS)
     {
         String json;
         GetCommandBuilderJSON(json);
         mqttHd.publishCmdOptions(json);
     }
-    else if (topicStr == MQTT_SUB_GET_ALL_INFO)
+    else if (topicStr == mqttHd.topics().sub().GET_ALL_INFO)
     {
         String json;
         GetCommandBuilderJSON(json);
@@ -441,22 +441,22 @@ void callback(char* topic, byte* message, unsigned int length)
         mqttHd.publish(solM.relayGroups());
         mqttHd.publish(sensorData);
     }
-    else if (topicStr == MQTT_SUB_CMDS_SAVE_ALL)
+    else if (topicStr == mqttHd.topics().sub().CMDS_SAVE_ALL)
     {
         Serial.println("Save all commands");
         storeCmdListToFRAMFlag = true;
     }
-    else if (topicStr == MQTT_SUB_CMDS_LOAD_ALL)
+    else if (topicStr == mqttHd.topics().sub().CMDS_LOAD_ALL)
     {
-        Serial.println("MQTT_SUB_CMDS_LOAD_ALL");
+        Serial.println("mqttHd.topics().sub().CMDS_LOAD_ALL");
         loadCmdListFromFRAMFlag = true;
     }
-    else if (topicStr == MQTT_SUB_CMDS_RESET_TO_DEFAULT)
+    else if (topicStr == mqttHd.topics().sub().CMDS_RESET_TO_DEFAULT)
     {
         resetSolenoidCommandsToDefault();
         mqttHd.publish(solM);
     }
-    else if (topicStr == MQTT_RELAY_GROUPS_SET)
+    else if (topicStr == mqttHd.topics().sub().RELAY_GROUPS_SET)
     {
         // TODOsz remove this topic print later
         solM.relayGroups().loadFromStr(messageTemp);
@@ -464,9 +464,9 @@ void callback(char* topic, byte* message, unsigned int length)
         saveRelayGroupsFormFRAM();
         mqttHd.publish(solM.relayGroups());
     }
-    else if (topicStr == MQTT_RELAY_GROUPS_LOAD)
+    else if (topicStr == mqttHd.topics().sub().RELAY_GROUPS_LOAD)
     {
-        Serial.println(MQTT_RELAY_GROUPS_LOAD);
+        Serial.println(mqttHd.topics().sub().RELAY_GROUPS_LOAD);
         loadRelayGroupsFormFRAM();
         mqttHd.publish(solM.relayGroups());
     }
