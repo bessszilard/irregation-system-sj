@@ -75,3 +75,16 @@ TEST(SensorData, setSensorByType)
     EXPECT_EQ(sd.get(SensorType::WaterPressure), i++);
     EXPECT_EQ(sd.get(SensorType::SoilMoistureLocal), i++);
 }
+
+TEST(SensorData, GetLightFromADC)
+{
+    EXPECT_EQ(SensorData::GetLightFromADC(1), 0);
+    EXPECT_EQ(SensorData::GetLightFromADC(1), 0);
+    EXPECT_EQ(SensorData::GetLightFromADC(26000), 99);
+}
+
+TEST(SensorData, GetSoilMoistureFromADC)
+{
+    EXPECT_EQ(SensorData::GetSoilMoistureFromADC(5000), 99);
+    EXPECT_EQ(SensorData::GetSoilMoistureFromADC(14000), 0);
+}

@@ -24,7 +24,7 @@
 #include "SolenoidManager.hpp"
 
 #define SEALEVELPRESSURE_HPA (1013.25)
-#define MQTT_SERVER "broker.emqx.io"
+#define MQTT_SERVER "test.mosquitto.org"
 #define MQTT_PORT 1883
 
 // TwoWire I2C_2 = TwoWire(0);
@@ -40,7 +40,7 @@ const int daylightOffset_sec = 3600 * 0;
 
 RelayArray relayArray(RELAY_ARRAY_DATA, RELAY_ARRAY_CLOCK, RELAY_ARRAY_LATCH);
 OneWire oneWireForTemp(TEMPERATURE_DATA_PIN);
-DallasTemperature tempSensor(&oneWireForTemp);
+DallasTemperature tempSensorOnSun(&oneWireForTemp);
 uFire_SHT20 sht20;
 DHT humSensor(HUMIDITY_DATA_PIN, 11);
 LcdLayouts lcdLayout;
@@ -214,7 +214,7 @@ void loop()
         // String json;
         // solM.getRelayStatesWithCmdIdsJson(json);
         // mqttHd.publishRelayInfo(json);
-        // mqttHd.publish(sensorData);
+        mqttHd.publish(sensorData);
     }
 
     // Slow loop
@@ -231,7 +231,11 @@ void loop()
     {
         oldWifiStatus = WiFi.status();
         oldRssi       = filteredRssi;
-        lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), mqttHd.connected(), relayStates, getShortDeviceId());
+        lcdLayout.updateDef(WiFi.status(),
+                            WiFi.RSSI(),
+                            mqttHd.connected(),
+                            relayStates,
+                            mqttHd.topics().GetShortDeviceId());
     }
 }
 
@@ -263,7 +267,7 @@ bool setupWifiAndMqtt()
     Serial.println(WiFi.localIP());
 
     Serial.println("Setting up MQTT connection");
-    if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT, MQTT_USER, MQTT_PASSWORD, callback))
+    if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT, callback))
     {
         Serial.println("Failed to set up the Mqtt server");
         return false;
@@ -349,6 +353,7 @@ bool localTimeUpdate(LocalTime& p_data)
 void sensorSetup()
 //---------------------------------------------------------------
 {
+    tempSensorOnSun.begin();
 }
 
 //---------------------------------------------------------------
@@ -357,18 +362,21 @@ bool sensorDataUpdate(SensorData& p_data)
 {
     p_data.valid = false;
     fm.updateFlowData();
-    p_data.flowRate_LitMin = fm.getData().flowRate_LitMin;
+    p_data.set(SensorType::FlowRateLitPerMin, fm.getData().flowRate_LitMin);
 
-    tempSensor.requestTemperatures();
-    p_data.tempOnSun_C    = tempSensor.getTempCByIndex(0);
-    p_data.humidity_RH    = sht20.humidity();
-    p_data.tempInShadow_C = sht20.temperature();
+    tempSensorOnSun.requestTemperatures();
+    p_data.set(SensorType::TempOnSun, tempSensorOnSun.getTempCByIndex(0));
+
+    p_data.set(SensorType::TempInShadow, sht20.temperature());
+    p_data.set(SensorType::Humidity, sht20.humidity());
 
     ADS.setGain(0);
-    p_data.rainSensor    = Utils::scaleTo99(ADS.readADC(0));
-    p_data.lightSensor   = Utils::scaleTo99(ADS.readADC(1));
-    p_data.waterPressure_bar = Utils::scaleTo99(ADS.readADC(2));
-    p_data.soilMoistureLocal = Utils::scaleTo99(ADS.readADC(3));
+    p_data.setFromADC(SensorType::Rain, ADS.readADC(0));
+    p_data.setFromADC(SensorType::Light, ADS.readADC(1));
+    p_data.setFromADC(SensorType::WaterPressure, ADS.readADC(2));
+    p_data.setFromADC(SensorType::SoilMoistureLocal, ADS.readADC(3));
+
+    printf("\n>>> adc %d %d %d %d\n", ADS.readADC(0), ADS.readADC(1), ADS.readADC(2), ADS.readADC(3));
 
     p_data.valid = true;
     return true;

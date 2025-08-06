@@ -103,6 +103,7 @@ struct RelayArrayStates
     String toString() const;
 };
 
+// TODOsz move to another file
 struct SensorData
 {
     float tempOnSun_C       = NAN;
@@ -130,7 +131,10 @@ struct SensorData
     float get(const String& p_str) const;
 
     void set(SensorType p_type, float p_value);
-    void set(SensorType p_type, uint16_t p_value);
+    void setFromADC(SensorType p_type, int16_t p_value);
+
+    static float GetLightFromADC(int16_t p_adcValue);
+    static float GetSoilMoistureFromADC(int16_t p_adcValue);
 };
 
 struct RelayExeInfo

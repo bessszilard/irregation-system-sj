@@ -36,9 +36,3 @@ int32_t Utils::GetSmoothedRSSI(int32_t newRSSI)
     }
     return sum / NUM_SAMPLES;
 }
-
-// TODOsz add proper boundaries
-uint16_t Utils::scaleTo99(uint16_t value)
-{
-    return (uint32_t)value; // * 99 / 65535;
-}

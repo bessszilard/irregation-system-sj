@@ -1,5 +1,13 @@
 #include "Structures.hpp"
 
+#define LIGHT_MIN_ADC (0)
+#define LIGHT_MAX_ADC (26000)
+#define LIGHT_BIAS (1)
+
+#define SOIL_MOISTURE_MIN_ADC (0)
+#define SOIL_MOISTURE_MAX_ADC (14000)
+#define SOIL_MOISTURE_BIAS (-5000)
+
 //---------------------------------------------------------------
 String RelayTarget::toString() const
 //---------------------------------------------------------------
@@ -134,15 +142,15 @@ String SensorData::toJSON() const
     // TODOsz make a function for this
     // TODOsz getUnit from type
     String json = "{";
-    json += "\"tempOnSun_C\": "        + String(isnan(tempOnSun_C)      ? "null" : String(tempOnSun_C,      2)) + ",";
-    json += "\"tempInShadow_C\": "     + String(isnan(tempInShadow_C)   ? "null" : String(tempInShadow_C,   2)) + ",";
-    json += "\"humidity_%RH\": "       + String(isnan(humidity_RH)      ? "null" : String(humidity_RH,      2)) + ",";
-    json += "\"flowRate_LitMin\": "    + String(isnan(flowDaySum_Lit)   ? "null" : String(flowDaySum_Lit,   2)) + ",";
-    json += "\"flowDaySum_Min\": "     + String(isnan(flowRate_LitMin)  ? "null" : String(flowRate_LitMin ,  2)) + ",";
-    json += "\"rainSensor_0-99\": "    + String(isnan(rainSensor)        ? "null" : String(waterPressure_bar,  2)) + ",";
-    json += "\"light_0-99\": "         + String(isnan(lightSensor)       ? "null" : String(waterPressure_bar,  2)) + ",";
-    json += "\"waterPressure_bar\": "  + String(isnan(waterPressure_bar) ? "null" : String(waterPressure_bar,  2)) + ",";
-    json += "\"soilMoistureLocal_0-99\": " + String(isnan(soilMoistureLocal)     ? "null" : String(soilMoistureLocal,  2)) + ",";
+    json += "\"tempOnSun_C\": "            + String(isnan(tempOnSun_C)       ? "null" : String(tempOnSun_C,       2)) + ",";
+    json += "\"tempInShadow_C\": "         + String(isnan(tempInShadow_C)    ? "null" : String(tempInShadow_C,    2)) + ",";
+    json += "\"humidity_%RH\": "           + String(isnan(humidity_RH)       ? "null" : String(humidity_RH,       2)) + ",";
+    json += "\"flowRate_LitMin\": "        + String(isnan(flowDaySum_Lit)    ? "null" : String(flowDaySum_Lit,    2)) + ",";
+    json += "\"flowDaySum_Min\": "         + String(isnan(flowRate_LitMin)   ? "null" : String(flowRate_LitMin ,  2)) + ",";
+    json += "\"rainSensor_0-99\": "        + String(isnan(rainSensor)        ? "null" : String(rainSensor,        2)) + ",";
+    json += "\"light_0-99\": "             + String(isnan(lightSensor)       ? "null" : String(lightSensor,       2)) + ",";
+    json += "\"waterPressure_bar\": "      + String(isnan(waterPressure_bar) ? "null" : String(waterPressure_bar, 2)) + ",";
+    json += "\"soilMoistureLocal_0-99\": " + String(isnan(soilMoistureLocal) ? "null" : String(soilMoistureLocal, 2)) + ",";
     json += "\"soilMoisture\": [";
     for (int i = 0; i < MAX_SOIL_MOISTURE_NODE; ++i)
     {
@@ -178,7 +186,7 @@ void SensorData::set(SensorType p_type, float p_value)
 }
 
 //---------------------------------------------------------------
-void SensorData::set(SensorType p_type, uint16_t p_value)
+void SensorData::setFromADC(SensorType p_type, int16_t p_value)
 //---------------------------------------------------------------
 {
     switch(p_type)
@@ -189,10 +197,10 @@ void SensorData::set(SensorType p_type, uint16_t p_value)
         case SensorType::Humidity:            humidity_RH         = p_value; break;
         case SensorType::FlowRateDailySum:    flowDaySum_Lit      = p_value; break;
         case SensorType::FlowRateLitPerMin:   flowRate_LitMin     = p_value; break;
-        case SensorType::Rain:                rainSensor          = p_value; break;
-        case SensorType::Light:               lightSensor         = p_value; break;
-        case SensorType::WaterPressure:       waterPressure_bar   = p_value; break;
-        case SensorType::SoilMoistureLocal:   soilMoistureLocal   = p_value; break;
+        case SensorType::Rain:                rainSensor          = GetSoilMoistureFromADC(p_value); break;
+        case SensorType::Light:               lightSensor         = GetLightFromADC(p_value); break;
+        case SensorType::WaterPressure:       waterPressure_bar   = GetSoilMoistureFromADC(p_value); break;
+        case SensorType::SoilMoistureLocal:   soilMoistureLocal   = GetSoilMoistureFromADC(p_value); break;
         case SensorType::SoilMoistureWireless:         
         case SensorType::Unknown:              
     default:
@@ -220,7 +228,6 @@ float SensorData::get(SensorType p_type) const
         return NAN;
     }
 }
-// clang-format on
 
 //---------------------------------------------------------------
 float SensorData::get(const String& p_str) const
@@ -228,3 +235,37 @@ float SensorData::get(const String& p_str) const
 {
     return get(ToSensorTypeFromString(p_str));
 }
+
+//---------------------------------------------------------------
+float SensorData::GetLightFromADC(int16_t p_adcValue)
+//---------------------------------------------------------------
+{
+    if (p_adcValue == 0xFFFF)
+    {
+      return 0.0f;
+    }
+
+    if (p_adcValue < LIGHT_MIN_ADC || LIGHT_MAX_ADC < p_adcValue)
+    {
+       return NAN;
+    }
+
+    // scale + bias
+    return (uint32_t)(p_adcValue + LIGHT_BIAS) * 99 / (LIGHT_MAX_ADC - LIGHT_MIN_ADC);
+}
+
+//---------------------------------------------------------------
+float SensorData::GetSoilMoistureFromADC(int16_t p_adcValue)
+//---------------------------------------------------------------
+{
+    if (p_adcValue < SOIL_MOISTURE_MIN_ADC || SOIL_MOISTURE_MAX_ADC < p_adcValue)
+    {
+       return NAN;
+    }
+
+    // scale + bias
+    return 99 - (uint32_t)(p_adcValue + SOIL_MOISTURE_BIAS) * 99 /
+                    (SOIL_MOISTURE_MAX_ADC - SOIL_MOISTURE_MIN_ADC + SOIL_MOISTURE_BIAS);
+}
+
+// clang-format on
