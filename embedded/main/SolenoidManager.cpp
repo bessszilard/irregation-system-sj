@@ -270,6 +270,8 @@ bool SolenoidManager::updateRelayStates(bool verbose /*=false*/)
     {
         // reset priority before applying the command
         m_relayCmdIndexes[relayIdu8].priority = CmdPriority::PriorityLowest;
+
+        RelayState oldState = m_relayCmdIndexes[relayIdu8].currentState;
         for (uint8_t cmdId = 0; cmdId < m_currentCmdId; cmdId++)
         {
             RelayIds relayId = ToRelayId(relayIdu8);
@@ -328,12 +330,18 @@ bool SolenoidManager::updateRelayStates(bool verbose /*=false*/)
             {
                 continue;
             }
-            RelayState oldState = m_relayCmdIndexes[relayIdu8].currentState;
             m_relayCmdIndexes[relayIdu8].set(cmdId, m_cmdList[cmdId].priority, state);
-            if (m_relayCmdIndexes[relayIdu8].currentState != oldState)
-            {
-                atLeastOneChanged = true;
-            }
+        }
+        // checked after all commands run
+        if (m_relayCmdIndexes[relayIdu8].currentState != oldState)
+        {
+            if (verbose)
+                Serial.printf("%s changed because %s Old state %s, new state %s\n",
+                              ToString(ToRelayId(relayIdu8)).c_str(),
+                              m_cmdList[m_relayCmdIndexes[relayIdu8].cmdIdx].toString().c_str(),
+                              ToString(oldState).c_str(),
+                              ToString(m_relayCmdIndexes[relayIdu8].currentState).c_str());
+            atLeastOneChanged = true;
         }
     }
     return atLeastOneChanged;

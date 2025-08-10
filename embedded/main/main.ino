@@ -65,8 +65,8 @@ void localTimeSetup();
 void sensorSetup();
 bool setupWifiAndMqtt();
 
-bool localTimeUpdate(LocalTime& p_data);
-bool sensorDataUpdate(SensorData& p_data);
+bool localTimeUpdate(LocalTime& p_data, bool p_verbose = false);
+bool sensorDataUpdate(SensorData& p_data, bool p_verbose = false);
 void reconnectMqtt();
 void callback(char* topic, byte* message, unsigned int length);
 void setupFRAM();
@@ -265,7 +265,7 @@ void localTimeSetup()
 }
 
 //---------------------------------------------------------------
-bool localTimeUpdate(LocalTime& p_data)
+bool localTimeUpdate(LocalTime& p_data, bool p_verbose)
 //---------------------------------------------------------------
 {
     if (WiFi.status() != WL_CONNECTED)
@@ -275,7 +275,8 @@ bool localTimeUpdate(LocalTime& p_data)
         // rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
         p_data = rtcTime;
         p_data.valid = true;
-        Serial.println("Rtc time: " + rtcTime.toString());
+        if (p_verbose)
+            Serial.println("Rtc time: " + rtcTime.toString());
         return true;
     }
 
@@ -283,7 +284,8 @@ bool localTimeUpdate(LocalTime& p_data)
     if (getLocalTime(&ntpTime))
     {
         p_data = ntpTime;
-        Serial.println("ntp time: " + ntpTime.toString());
+        if (p_verbose)
+            Serial.println("ntp time: " + ntpTime.toString());
 
         // RTC
         int year, month;
@@ -311,17 +313,22 @@ bool localTimeUpdate(LocalTime& p_data)
         // rtcTime.tm_mon  = month - 1;
         // rtcTime.tm_year = year - 1900;
         rtcTime = LocalTime(rtc.GetDateTime());
-        Serial.printf("ntp = rtc time %s vs %s\n", ntpTime.toString().c_str(), rtcTime.toString().c_str());
-        Serial.println("Update RTC");
-        Serial.println("Rtc time: " + rtcTime.toString());
+        if (p_verbose)
+        {
+            Serial.printf("ntp = rtc time %s vs %s\n", ntpTime.toString().c_str(), rtcTime.toString().c_str());
+            Serial.println("Update RTC");
+            Serial.println("Rtc time: " + rtcTime.toString());
+        }
     }
     else
     {
-        Serial.println("Failed to obtain time from NTP");
         LocalTime rtcTime(rtc.GetDateTime());
-        Serial.println("Update RTC");
-        Serial.println("Rtc time: " + rtcTime.toString());
-
+        if (p_verbose)
+        {
+            Serial.println("Failed to obtain time from NTP");
+            Serial.println("Update RTC");
+            Serial.println("Rtc time: " + rtcTime.toString());
+        }
         p_data = rtcTime;
     }
     p_data.valid = true;
@@ -336,7 +343,7 @@ void sensorSetup()
 }
 
 //---------------------------------------------------------------
-bool sensorDataUpdate(SensorData& p_data)
+bool sensorDataUpdate(SensorData& p_data, bool p_verbose)
 //---------------------------------------------------------------
 {
     p_data.valid = false;
@@ -355,7 +362,8 @@ bool sensorDataUpdate(SensorData& p_data)
     p_data.setFromADC(SensorType::WaterPressure, ADS.readADC(2));
     p_data.setFromADC(SensorType::SoilMoistureLocal, ADS.readADC(3));
 
-    printf("\n>>> adc %d %d %d %d\n", ADS.readADC(0), ADS.readADC(1), ADS.readADC(2), ADS.readADC(3));
+    if (p_verbose)
+        printf("\n>>> adc %d %d %d %d\n", ADS.readADC(0), ADS.readADC(1), ADS.readADC(2), ADS.readADC(3));
 
     p_data.valid = true;
     return true;
@@ -536,7 +544,7 @@ bool updateRelayStateAndApply()
 
     if (atLeastOneRelayChanged)
     {
-        Serial.println("<____<____< at least one relay changed????") String json;
+        String json;
         solM.getRelayStatesWithCmdIdsJson(json);
         mqttHd.publish(solM.localTime(), uptime);
         mqttHd.publish(solM.sensors());
