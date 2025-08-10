@@ -65,5 +65,15 @@
         "thread": "cpp",
         "variant": "cpp"
     },
+  "files.exclude": {
+    "**/build": true
+  },
+  "search.exclude": {
+    "**/build": true
+  },
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/**",
+    "!${workspaceFolder}/build/**"
+   ],
     "C_Cpp.default.compilerPath": "/home/szilard_b/.arduino15/packages/esp32/tools/esp-x32/2302/bin/xtensa-esp32-elf-g++"
 }

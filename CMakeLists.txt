@@ -20,3 +20,4 @@ enable_testing()
 
 # Add the test directory
 add_subdirectory(test)
+add_subdirectory(simulation)

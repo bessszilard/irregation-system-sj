@@ -1,0 +1,10 @@
+{
+    "cmdList": [
+        "$Manual;P00;RXX;C#",
+        "$SenThr;P05;R01;SMLC_O<040.0#",
+        "$SenThr;P05;R02;TESH_O>025.1#",
+        "$SenThr;P02;R03;LIGH_O>050.1#",
+        "$TimRep;P02;R04;R_X06:00->20:00_O20s_C10s#",
+        "$SeTTRe;P05;R05;RAIN_X>030.0_R_X06:00->20:00_O05s_C02s#"
+    ]
+}
