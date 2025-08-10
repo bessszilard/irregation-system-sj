@@ -70,6 +70,7 @@ bool sensorDataUpdate(SensorData& p_data);
 void reconnectMqtt();
 void callback(char* topic, byte* message, unsigned int length);
 void setupFRAM();
+bool updateRelayStateAndApply();
 
 void setup()
 {
@@ -104,8 +105,6 @@ void setup()
     // Serial2.begin(9600, SERIAL_8N1, HC12_RXD, HC12_TXD); // Hardware Serial of ESP32
 }
 
-LocalTime locTime;
-SensorData sensorData;
 RelayArrayStates relayStates(RelayState::Unknown);
 wl_status_t oldWifiStatus              = WL_NO_SHIELD;
 WifiSignalStrength oldRssi             = WifiSignalStrength::Unknown;
@@ -115,8 +114,8 @@ char myData[50];
 
 uint32_t slowLoopCalled_ms         = 0;     // Store the last time the code ran
 uint32_t fastLoopCalled_ms         = 0;     // Store the last time the code ran
-const uint32_t slowLoopInterval_ms = 20000; // 20 seconds in milliseconds
-const uint32_t fastLoopInterval_ms = 1000;  // 1 seconds in milliseconds
+const uint32_t slowLoopInterval_ms = 5000;  // 5   seconds in milliseconds
+const uint32_t fastLoopInterval_ms = 500;   // 0.5 seconds in milliseconds
 bool storeCmdListToFRAMFlag        = false;
 bool loadCmdListFromFRAMFlag       = false;
 
@@ -140,32 +139,6 @@ void loop()
         mqttHd.loop();
     }
 
-    // TODOsz move to separate function as updateRelayStateAndApply
-
-    bool atLeastOneRelayChanged = solM.updateRelayStates();
-
-    RelayExeInfo exeInfo;
-    for (RelayIds relayId = RelayIds::Relay1; relayId < RelayIds::NumberOfRelays; relayId = incRelayId(relayId))
-    {
-        solM.getRelayState(relayId, exeInfo);
-        if (relayStates.getState(relayId) == exeInfo.currentState)
-        {
-            continue;
-        }
-        // Only apply if change happened
-        relayStates.setState(relayId, exeInfo.currentState);
-        relayArray.setState(relayId, exeInfo.currentState);
-        Serial.println(">>>>> At least one relay changed");
-    }
-    // <<<
-
-    if (atLeastOneRelayChanged)
-    {
-        String json;
-        solM.getRelayStatesWithCmdIdsJson(json);
-        mqttHd.publishRelayInfo(json);
-    }
-
     if (storeCmdListToFRAMFlag)
     {
         storeCmdListToFRAMFlag = false;
@@ -186,21 +159,21 @@ void loop()
             Serial.println("Failed to load commands from FRAM");
     }
 
+    bool atLeastOneRelayChanged = false;
     // Fast loop - each seconds ----------------------------------------------------
     // TODOsz move to function as fastLoopEach_1sec
     if (currentTime_ms - fastLoopCalled_ms >= fastLoopInterval_ms)
     {
         fastLoopCalled_ms = currentTime_ms;
-        if (false == localTimeUpdate(locTime))
+        if (false == localTimeUpdate(solM.localTime()))
         {
             Serial.println("Invalid local time");
             return;
         }
         uptime++;
-        mqttHd.publish(locTime, uptime);
 
         // Update sensors
-        if (false == sensorDataUpdate(sensorData))
+        if (false == sensorDataUpdate(solM.sensors()))
         {
             Serial.println("Failed to updateSensor data");
             return;
@@ -214,15 +187,18 @@ void loop()
         // String json;
         // solM.getRelayStatesWithCmdIdsJson(json);
         // mqttHd.publishRelayInfo(json);
-        mqttHd.publish(sensorData);
+        // mqttHd.publish(solM.sensors());
+
+        atLeastOneRelayChanged = updateRelayStateAndApply();
     }
 
     // Slow loop
     // TODOsz move to function as slowLoopEach_10sec
     if (currentTime_ms - slowLoopCalled_ms >= slowLoopInterval_ms)
     {
+        mqttHd.publish(solM.localTime(), uptime);
         slowLoopCalled_ms = currentTime_ms;
-        mqttHd.publish(sensorData);
+        mqttHd.publish(solM.sensors());
     }
 
     // Update LCD if needed
@@ -298,6 +274,7 @@ bool localTimeUpdate(LocalTime& p_data)
         // int year, month;
         // rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
         p_data = rtcTime;
+        p_data.valid = true;
         Serial.println("Rtc time: " + rtcTime.toString());
         return true;
     }
@@ -317,6 +294,7 @@ bool localTimeUpdate(LocalTime& p_data)
 
         if (ntpTime.eq(rtcTime))
         {
+            p_data.valid = true;
             return true;
         }
         // not eq
@@ -346,6 +324,7 @@ bool localTimeUpdate(LocalTime& p_data)
 
         p_data = rtcTime;
     }
+    p_data.valid = true;
     return true;
 }
 
@@ -447,7 +426,7 @@ void callback(char* topic, byte* message, unsigned int length)
         solM.getRelayStatesWithCmdIdsJson(json);
         mqttHd.publishRelayInfo(json);
         mqttHd.publish(solM.relayGroups());
-        mqttHd.publish(sensorData);
+        mqttHd.publish(solM.sensors());
     }
     else if (topicStr == mqttHd.topics().sub().CMDS_SAVE_ALL)
     {
@@ -535,4 +514,34 @@ void setupFRAM()
         resetSolenoidCommandsToDefault();
     }
     loadRelayGroupsFormFRAM();
+}
+
+bool updateRelayStateAndApply()
+{
+    bool atLeastOneRelayChanged = solM.updateRelayStates();
+
+    RelayExeInfo exeInfo;
+    for (RelayIds relayId = RelayIds::Relay1; relayId < RelayIds::NumberOfRelays; relayId = incRelayId(relayId))
+    {
+        solM.getRelayState(relayId, exeInfo);
+        if (relayStates.getState(relayId) == exeInfo.currentState)
+        {
+            continue;
+        }
+        // Only apply if change happened
+        relayStates.setState(relayId, exeInfo.currentState);
+        relayArray.setState(relayId, exeInfo.currentState);
+        Serial.println(">>>>> At least one relay changed");
+    }
+
+    if (atLeastOneRelayChanged)
+    {
+        Serial.println("<____<____< at least one relay changed????") String json;
+        solM.getRelayStatesWithCmdIdsJson(json);
+        mqttHd.publish(solM.localTime(), uptime);
+        mqttHd.publish(solM.sensors());
+        mqttHd.publishRelayInfo(json);
+    }
+
+    return atLeastOneRelayChanged;
 }

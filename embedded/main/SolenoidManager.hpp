@@ -41,6 +41,11 @@ public:
         relayState = m_relayCmdIndexes[RelayIdToUInt(id)];
     }
 
+    RelayState getRelayState(RelayIds id)
+    {
+        return m_relayCmdIndexes[RelayIdToUInt(id)].currentState;
+    }
+
     RelayGroupManager& relayGroups()
     {
         return m_relayGroups;
@@ -52,6 +57,26 @@ public:
     }
 
     void resetPriorities();
+
+    inline SensorData& sensors()
+    {
+        return m_sensorData;
+    }
+
+    inline const SensorData& sensors() const
+    {
+        return m_sensorData;
+    }
+
+    inline LocalTime& localTime()
+    {
+        return m_localTime;
+    }
+
+    inline const LocalTime& localTime() const
+    {
+        return m_localTime;
+    }
 
 protected:
     // TODOsz remove this since it's inside the commands

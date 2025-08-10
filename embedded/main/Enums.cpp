@@ -228,7 +228,7 @@ String ToString(SensorType p_type)
         case SensorType::Rain:                  return "RAIN";
         case SensorType::Light:                 return "LIGH";
         case SensorType::WaterPressure:         return "WAPR";
-        case SensorType::SoilMoistureLocal:     return "SMLC"; // SMXX <- index
+        case SensorType::SoilMoistureLocal:     return "SMLC";
         case SensorType::SoilMoistureWireless:  return "SM"; // SMXX <- index
         case SensorType::Unknown:
         default:

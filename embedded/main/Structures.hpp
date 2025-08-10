@@ -130,6 +130,7 @@ struct SensorData
     float get(SensorType p_type) const;
     float get(const String& p_str) const;
 
+    void set(const String& p_typeStr, float p_value);
     void set(SensorType p_type, float p_value);
     void setFromADC(SensorType p_type, int16_t p_value);
 
@@ -139,7 +140,7 @@ struct SensorData
 
 struct RelayExeInfo
 {
-    CmdPriority priority    = CmdPriority::Unknown;
+    CmdPriority priority    = CmdPriority::PriorityLowest;
     uint8_t cmdIdx          = 0;
     RelayState currentState = RelayState::Unknown;
 

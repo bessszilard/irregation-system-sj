@@ -165,6 +165,13 @@ String SensorData::toJSON() const
 }
 
 //---------------------------------------------------------------
+void SensorData::set(const String& p_typeStr, float p_value)
+//---------------------------------------------------------------
+{
+    set(ToSensorTypeFromString(p_typeStr), p_value);
+}
+
+//---------------------------------------------------------------
 void SensorData::set(SensorType p_type, float p_value)
 //---------------------------------------------------------------
 {

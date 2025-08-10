@@ -268,6 +268,8 @@ bool SolenoidManager::updateRelayStates(bool verbose /*=false*/)
     bool atLeastOneChanged = false;
     for (uint8_t relayIdu8 = 0; relayIdu8 < NUMBER_OF_RELAYS; relayIdu8++)
     {
+        // reset priority before applying the command
+        m_relayCmdIndexes[relayIdu8].priority = CmdPriority::PriorityLowest;
         for (uint8_t cmdId = 0; cmdId < m_currentCmdId; cmdId++)
         {
             RelayIds relayId = ToRelayId(relayIdu8);
@@ -313,10 +315,15 @@ bool SolenoidManager::updateRelayStates(bool verbose /*=false*/)
 
             if (verbose)
             {
-                Serial.println("Applied");
+                Serial.printf("Applied -> ");
             }
 
             RelayState state = m_cmdList[cmdId].evaluate(m_sensorData, m_localTime);
+            if (verbose)
+            {
+                Serial.printf("state %s\n", ToString(state).c_str());
+            }
+
             if (state == RelayState::Unknown)
             {
                 continue;
