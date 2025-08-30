@@ -90,7 +90,11 @@ void setup()
     Serial.println("Setup started");
 
     sensorSetup();
-    sht20.begin(); // TODOsz move to sensorSetup
+    if (false == sht20.begin())
+    {
+        Serial.println("Failed to initialize SHT20");
+    }
+
     setupFRAM();
 
     ADS.begin(); // TODOsz move to sensorSetup
@@ -102,7 +106,7 @@ void setup()
     }
     localTimeSetup();
 
-    // Serial2.begin(9600, SERIAL_8N1, HC12_RXD, HC12_TXD); // Hardware Serial of ESP32
+    Serial2.begin(9600, SERIAL_8N1, HC12_RXD, HC12_TXD); // Hardware Serial of ESP32
 }
 
 RelayArrayStates relayStates(RelayState::Unknown);
@@ -121,13 +125,14 @@ bool loadCmdListFromFRAMFlag       = false;
 
 void loop()
 {
-    // if (Serial2.available() > 0)
-    // {
-    //     byte m    = Serial2.readBytesUntil('\n', myData, 50);
-    //     myData[m] = '\0';
-    //     Serial.println(myData);
-    //     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-    // }
+    if (Serial2.available() > 0)
+    {
+        byte m    = Serial2.readBytesUntil('\n', myData, 50);
+        myData[m] = '\0';
+        Serial.println(myData);
+        digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+        solM.sensors().setFromRemoteNode(SoilMoisture(myData));
+    }
 
     uint32_t currentTime_ms = millis();
 
@@ -136,6 +141,13 @@ void loop()
     // we only check mqtt if Wifi is connected.
     if (WL_CONNECTED == WiFi.status())
     {
+        if (false == mqttHd.connected())
+        {
+            if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT, callback))
+            {
+                Serial.println("Failed to set up the Mqtt server");
+            }
+        }
         mqttHd.loop();
     }
 
@@ -188,7 +200,6 @@ void loop()
         // solM.getRelayStatesWithCmdIdsJson(json);
         // mqttHd.publishRelayInfo(json);
         // mqttHd.publish(solM.sensors());
-
         atLeastOneRelayChanged = updateRelayStateAndApply();
     }
 
@@ -353,17 +364,23 @@ bool sensorDataUpdate(SensorData& p_data, bool p_verbose)
     tempSensorOnSun.requestTemperatures();
     p_data.set(SensorType::TempOnSun, tempSensorOnSun.getTempCByIndex(0));
 
-    p_data.set(SensorType::TempInShadow, sht20.temperature());
-    p_data.set(SensorType::Humidity, sht20.humidity());
+    if (sht20.connected())
+    {
+        p_data.set(SensorType::TempInShadow, sht20.temperature());
+        p_data.set(SensorType::Humidity, sht20.humidity());
+    }
 
-    ADS.setGain(0);
-    p_data.setFromADC(SensorType::Rain, ADS.readADC(0));
-    p_data.setFromADC(SensorType::Light, ADS.readADC(1));
-    p_data.setFromADC(SensorType::WaterPressure, ADS.readADC(2));
-    p_data.setFromADC(SensorType::SoilMoistureLocal, ADS.readADC(3));
+    if (ADS.isConnected())
+    {
+        ADS.setGain(0);
+        p_data.setFromADC(SensorType::Rain, ADS.readADC(0));
+        p_data.setFromADC(SensorType::Light, ADS.readADC(1));
+        p_data.setFromADC(SensorType::WaterPressure, ADS.readADC(2));
+        p_data.setFromADC(SensorType::SoilMoistureLocal, ADS.readADC(3));
 
-    if (p_verbose)
-        printf("\n>>> adc %d %d %d %d\n", ADS.readADC(0), ADS.readADC(1), ADS.readADC(2), ADS.readADC(3));
+        if (p_verbose)
+            printf("\n>>> adc %d %d %d %d\n", ADS.readADC(0), ADS.readADC(1), ADS.readADC(2), ADS.readADC(3));
+    }
 
     p_data.valid = true;
     return true;

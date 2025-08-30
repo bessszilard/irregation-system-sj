@@ -134,6 +134,24 @@ String RelayArrayStates::toString() const
     return str;
 }
 
+//---------------------------------------------------------------
+String SensorData::jsonField(const char* key, float value, int decimals) const
+//---------------------------------------------------------------
+{
+    String field = "\"";
+    field += key;
+    field += "\": ";
+    if (isnan(value))
+    {
+        field += "null";
+    }
+    else
+    {
+        field += String(value, decimals);
+    }
+    return field;
+}
+
 // clang-format off
 //---------------------------------------------------------------
 String SensorData::toJSON() const
@@ -142,24 +160,34 @@ String SensorData::toJSON() const
     // TODOsz make a function for this
     // TODOsz getUnit from type
     String json = "{";
-    json += "\"tempOnSun_C\": "            + String(isnan(tempOnSun_C)       ? "null" : String(tempOnSun_C,       2)) + ",";
-    json += "\"tempInShadow_C\": "         + String(isnan(tempInShadow_C)    ? "null" : String(tempInShadow_C,    2)) + ",";
-    json += "\"humidity_%RH\": "           + String(isnan(humidity_RH)       ? "null" : String(humidity_RH,       2)) + ",";
-    json += "\"flowRate_LitMin\": "        + String(isnan(flowDaySum_Lit)    ? "null" : String(flowDaySum_Lit,    2)) + ",";
-    json += "\"flowDaySum_Min\": "         + String(isnan(flowRate_LitMin)   ? "null" : String(flowRate_LitMin ,  2)) + ",";
-    json += "\"rainSensor_0-99\": "        + String(isnan(rainSensor)        ? "null" : String(rainSensor,        2)) + ",";
-    json += "\"light_0-99\": "             + String(isnan(lightSensor)       ? "null" : String(lightSensor,       2)) + ",";
-    json += "\"waterPressure_bar\": "      + String(isnan(waterPressure_bar) ? "null" : String(waterPressure_bar, 2)) + ",";
-    json += "\"soilMoistureLocal_0-99\": " + String(isnan(soilMoistureLocal) ? "null" : String(soilMoistureLocal, 2)) + ",";
-    json += "\"soilMoisture\": [";
+    json += jsonField("tempOnSun_C",        tempOnSun_C);
+    json += "," + jsonField("tempInShadow_C", tempInShadow_C);
+    json += "," + jsonField("humidity_%RH",  humidity_RH);
+    json += "," + jsonField("flowRate_LitMin", flowDaySum_Lit);
+    json += "," + jsonField("flowDaySum_Min", flowRate_LitMin);
+    json += "," + jsonField("rainSensor_0-99", rainSensor);
+    json += "," + jsonField("light_0-99",   lightSensor);
+    json += "," + jsonField("waterPressure_bar", waterPressure_bar);
+    json += "," + jsonField("soilMoistureLocal_0-99", soilMoistureLocal);
+    // json += "}";
     for (int i = 0; i < MAX_SOIL_MOISTURE_NODE; ++i)
     {
-        json += isnan(soilMoistureWl[i].measurement) ? "null" : String(soilMoistureWl[i].measurement, 2);
-        if (i < MAX_SOIL_MOISTURE_NODE - 1)
-            json += ",";
+        String soilMoistureFiled = "soilMoistureRemote" + String(i, 10) + "_0-99";
+        json += "," + jsonField("soilMoistureRemoteId", soilMoistureWl[i].id);
+        json += "," + jsonField(soilMoistureFiled.c_str(), soilMoistureWl[i].measurement);
     }
-    json += "],";
-    json += "\"valid\": " + String(valid ? "true" : "false");
+    // {
+    //     if (isnan(soilMoistureWl[i].measurement))
+    //         json += "null";
+    //     else{
+    //         json += String((float)soilMoistureWl[i].id, 2);  // Cast to float just in case
+    //         Serial.printf("Write value to soil moisture %f %s\n", soilMoistureWl[i].id, String((float)soilMoistureWl[i].id, 2).c_str());
+    //     }
+    //     if (i < MAX_SOIL_MOISTURE_NODE - 1)
+    //         json += ",";
+    // }
+    // json += "],";
+    json += + ", \"valid\": " + String(valid ? "true" : "false");
     json += "}";
     return json;
 }
@@ -216,6 +244,14 @@ void SensorData::setFromADC(SensorType p_type, int16_t p_value)
 }
 
 //---------------------------------------------------------------
+void SensorData::setFromRemoteNode(SoilMoisture p_remoteNode)
+//---------------------------------------------------------------
+{
+    soilMoistureWl[0].measurement = p_remoteNode.measurement;
+    soilMoistureWl[0].id = p_remoteNode.id;
+}
+
+//---------------------------------------------------------------
 float SensorData::get(SensorType p_type) const
 //---------------------------------------------------------------
 {
@@ -230,6 +266,7 @@ float SensorData::get(SensorType p_type) const
         case SensorType::Light:                return lightSensor;
         case SensorType::WaterPressure:        return waterPressure_bar;
         case SensorType::SoilMoistureLocal:    return soilMoistureLocal;         
+        case SensorType::SoilMoistureWireless: return soilMoistureWl[0].measurement;         
         case SensorType::Unknown:              
     default:
         return NAN;

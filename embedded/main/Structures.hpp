@@ -24,11 +24,21 @@ struct RelayTarget
 
 struct SoilMoisture
 {
-    uint8_t id               = 0;
-    uint8_t measurement      = 0;
+    uint16_t id              = 0;
+    uint16_t measurement     = 0;
     uint64_t lastMeasurement = 0; // time stamp vs hour, minute, sec
-
     bool valid = false;
+
+    SoilMoisture(){};
+
+    SoilMoisture(const String& p_message)
+    {
+        valid = false;
+        if (sscanf(p_message.c_str(), "%d;%d;%d#", &id, &measurement, &lastMeasurement) != 3)
+            return;
+        Serial.printf("Soil moisture -> %d %d %d\n", id, measurement, lastMeasurement);
+        valid = true;
+    }
 };
 
 struct LocalTime : tm
@@ -125,6 +135,8 @@ struct SensorData
 
     bool valid = false;
 
+    String jsonField(const char* key, float value, int decimals = 2) const;
+
     String toJSON() const;
 
     float get(SensorType p_type) const;
@@ -133,6 +145,7 @@ struct SensorData
     void set(const String& p_typeStr, float p_value);
     void set(SensorType p_type, float p_value);
     void setFromADC(SensorType p_type, int16_t p_value);
+    void setFromRemoteNode(SoilMoisture p_remoteNode);
 
     static float GetLightFromADC(int16_t p_adcValue);
     static float GetSoilMoistureFromADC(int16_t p_adcValue);
