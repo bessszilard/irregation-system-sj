@@ -188,6 +188,12 @@ void MqttHandler::publish(const char* topic, const String& message)
         return;
     }
 
+    if (false == m_client->connected())
+    {
+        Serial.printf("Warning, Mqtt client isn't connected. topic %s Message %s\n", topic, message.c_str());
+        return;
+    }
+
     if (m_client->publish(topic, message.c_str()))
     {
         Serial.printf("Published to %s %s\n", topic, message.c_str());

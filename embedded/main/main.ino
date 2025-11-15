@@ -148,7 +148,15 @@ void loop()
                 Serial.println("Failed to set up the Mqtt server");
             }
         }
-        mqttHd.loop();
+        if (mqttHd.connected())
+        {
+            mqttHd.loop();
+        }
+    }
+    else
+    {
+        // Try to reconnect
+        WiFi.begin(ssid, password);
     }
 
     if (storeCmdListToFRAMFlag)

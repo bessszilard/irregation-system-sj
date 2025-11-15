@@ -168,6 +168,15 @@ enum class TimeUnit
     Unknown
 };
 
+enum class SerialCommands
+{
+    Unknown,
+    SetWifiParams,
+    GetWifiParams,
+    SetMqttParams,
+    GetMqttParams
+};
+
 CommandType CommandTypeFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 RelayIds RelayIdTypeFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 RelayGroups RelayGroupsFromString(const String& p_rawMsg, int p_startId = 0, int p_endId = -1);
