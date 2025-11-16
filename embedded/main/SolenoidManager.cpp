@@ -245,8 +245,6 @@ void SolenoidManager::getRelayStatesWithCmdIdsJson(String& jsonResult) const
 
     offset += snprintf(buffer + offset, totalSize - offset + 1, "}");
 
-    Serial.printf(">>>>>>>>>>>> total %d vs %d", totalSize, offset);
-
     // Convert to String, free memory, and return
     jsonResult = String(buffer);
     delete[] buffer;

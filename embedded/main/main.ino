@@ -77,6 +77,7 @@ void setup()
     relayArray.setState(RelayIds::AllRelays, RelayState::Closed);
 
     Serial.begin(115200);
+    Serial.setTimeout(100);
     pinMode(LED_PIN, OUTPUT);
 
     while (!Serial)
@@ -122,30 +123,61 @@ const uint32_t slowLoopInterval_ms = 5000;  // 5   seconds in milliseconds
 const uint32_t fastLoopInterval_ms = 500;   // 0.5 seconds in milliseconds
 bool storeCmdListToFRAMFlag        = false;
 bool loadCmdListFromFRAMFlag       = false;
+uint32_t lastTime_ms                    = 0;
+const uint32_t mqttReconnectInterval_ms = 5000;
+uint32_t lastMqttReconnectAttempt_ms    = 0;
 
 void loop()
 {
+    uint32_t currentTime_ms       = millis();
+    static uint32_t loopStartTime = 0;
+
+    // // Log at start of loop
+    // if (loopStartTime != 0)
+    // {
+    //     Serial.printf(">>> Loop took: %d ms\n", currentTime_ms - loopStartTime);
+    // }
+    // loopStartTime = currentTime_ms;
+    // each each time -------------------------------------------------------------
+
+    if (Serial.available() > 0)
+    {
+        String incoming = Serial.readStringUntil('\n');
+        switch (ToSerialCommands(incoming))
+        {
+        case SerialCommands::GetMqttParams:
+            Serial.println(">>>>>>>>>>>> >>>>>>>>>>>>> SerialCommands::GetMqttParams");
+            break;
+        }
+        incoming.toCharArray(myData, 50);
+
+        Serial.printf(" >>> >>> Serial received %s\n\n", myData);
+    }
+
     if (Serial2.available() > 0)
     {
         byte m    = Serial2.readBytesUntil('\n', myData, 50);
         myData[m] = '\0';
         Serial.println(myData);
-        digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+        // digitalWrite(LED_PIN, !digitalRead(LED_PIN));
         solM.sensors().setFromRemoteNode(SoilMoisture(myData));
     }
 
-    uint32_t currentTime_ms = millis();
-
     // each each time -------------------------------------------------------------
-
     // we only check mqtt if Wifi is connected.
     if (WL_CONNECTED == WiFi.status())
     {
         if (false == mqttHd.connected())
         {
-            if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT, callback))
+            // Only attempt reconnection every 5 seconds
+            if (currentTime_ms - lastMqttReconnectAttempt_ms >= mqttReconnectInterval_ms)
             {
-                Serial.println("Failed to set up the Mqtt server");
+                lastMqttReconnectAttempt_ms = currentTime_ms;
+                Serial.println("Attempting MQTT reconnection...");
+                if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT, callback))
+                {
+                    Serial.println("Failed to set up the Mqtt server");
+                }
             }
         }
         if (mqttHd.connected())
@@ -203,11 +235,6 @@ void loop()
 
         // Update LCD
         digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-        // mqttHd.publish(sensorData);
-        // String json;
-        // solM.getRelayStatesWithCmdIdsJson(json);
-        // mqttHd.publishRelayInfo(json);
-        // mqttHd.publish(solM.sensors());
         atLeastOneRelayChanged = updateRelayStateAndApply();
     }
 
@@ -565,14 +592,15 @@ bool updateRelayStateAndApply()
         relayStates.setState(relayId, exeInfo.currentState);
         relayArray.setState(relayId, exeInfo.currentState);
         Serial.println(">>>>> At least one relay changed");
+        atLeastOneRelayChanged = true;
     }
 
     if (atLeastOneRelayChanged)
     {
         String json;
         solM.getRelayStatesWithCmdIdsJson(json);
-        mqttHd.publish(solM.localTime(), uptime);
-        mqttHd.publish(solM.sensors());
+        // mqttHd.publish(solM.localTime(), uptime);
+        // mqttHd.publish(solM.sensors());
         mqttHd.publishRelayInfo(json);
     }
 

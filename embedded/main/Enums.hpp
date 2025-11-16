@@ -183,6 +183,7 @@ RelayGroups RelayGroupsFromString(const String& p_rawMsg, int p_startId = 0, int
 RelayState RelayStateFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 CmdPriority CmdPriorityFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
 SensorType ToSensorTypeFromString(const String& p_typeStr, int p_startId = 0, int p_endId = -1);
+SerialCommands ToSerialCommands(const String& p_str);
 
 String ToString(RelayTargetType p_type);
 String ToString(RelayIds p_id);

@@ -170,12 +170,12 @@ String SensorData::toJSON() const
     json += "," + jsonField("waterPressure_bar", waterPressure_bar);
     json += "," + jsonField("soilMoistureLocal_0-99", soilMoistureLocal);
     // json += "}";
-    for (int i = 0; i < MAX_SOIL_MOISTURE_NODE; ++i)
-    {
-        String soilMoistureFiled = "soilMoistureRemote" + String(i, 10) + "_0-99";
-        json += "," + jsonField("soilMoistureRemoteId", soilMoistureWl[i].id);
-        json += "," + jsonField(soilMoistureFiled.c_str(), soilMoistureWl[i].measurement);
-    }
+    // for (int i = 0; i < MAX_SOIL_MOISTURE_NODE; ++i)
+    // {
+    //     String soilMoistureFiled = "soilMoistureRemote" + String(i, 10) + "_0-99";
+    //     json += "," + jsonField("soilMoistureRemoteId", soilMoistureWl[i].id);
+    //     json += "," + jsonField(soilMoistureFiled.c_str(), soilMoistureWl[i].measurement);
+    // }
     // {
     //     if (isnan(soilMoistureWl[i].measurement))
     //         json += "null";
