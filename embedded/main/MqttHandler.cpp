@@ -39,6 +39,7 @@ bool MqttHandler::init(const char* p_domain, uint16_t p_port, MQTT_CALLBACK_SIGN
 
     // comes through the macro
     m_client->setCallback(callback);
+    m_client->setSocketTimeout(0);
 
     return true;
 }

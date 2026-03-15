@@ -31,8 +31,8 @@
 FramManager framM;
 
 // Replace with your network credentials
-const char* ssid     = "Bbox-F6C5B3B2";
-const char* password = "eNv3xEW4SXu9AEMnsC";
+const char* ssid     = "VM28AE28";
+const char* password = "cL3wcfwbjqMz";
 
 const char* ntpServer        = "pool.ntp.org";
 const long gmtOffset_sec     = 3600 * 2;

@@ -66,6 +66,10 @@ bool RelayArray::setState(RelayIds p_relayId, RelayState p_state)
         case RelayIds::Relay10:
         case RelayIds::Relay11:
         case RelayIds::Relay12:
+        case RelayIds::Relay13:
+        case RelayIds::Relay14:
+        case RelayIds::Relay15:
+        case RelayIds::Relay16:
         {
             int id = static_cast<int>(p_relayId);
             return handleRelay(id, p_state);
@@ -82,6 +86,7 @@ bool RelayArray::setState(RelayIds p_relayId, RelayState p_state)
             // TODOsz error
             return false;
     }
+    return false;
 }
 
 void RelayArray::knTestIncr()
