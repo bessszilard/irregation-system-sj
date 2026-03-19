@@ -1,11 +1,25 @@
 #include "MqttHandler.hpp"
 
+static const unsigned long RECONNECT_INTERVAL_MS = 5000;
+
 //---------------------------------------------------------------
 MqttHandler::MqttHandler(PubSubClient* p_client)
+    : m_client(p_client)
+    , m_btHandler(nullptr)
+    , m_lastReconnectAttempt_ms(0)
 //---------------------------------------------------------------
 {
-    m_client = p_client;
-    m_client->setBufferSize(4096);
+    if (m_client != nullptr)
+    {
+        m_client->setBufferSize(4096);
+    }
+}
+
+//---------------------------------------------------------------
+void MqttHandler::setBtHandler(BtHandler* p_btHandler)
+//---------------------------------------------------------------
+{
+    m_btHandler = p_btHandler;
 }
 
 //---------------------------------------------------------------
@@ -155,27 +169,27 @@ bool MqttHandler::subscribeTopics()
 void MqttHandler::reconnectMqtt()
 //---------------------------------------------------------------
 {
-    // Loop until we're reconnected
-    while (!m_client->connected())
+    unsigned long now = millis();
+    if (now - m_lastReconnectAttempt_ms < RECONNECT_INTERVAL_MS)
     {
-        Serial.print("Attempting MQTT connection...");
-        // Attempt to connect
-        if (m_client->connect("espClient"))
+        return;
+    }
+    m_lastReconnectAttempt_ms = now;
+
+    Serial.print("Attempting MQTT connection...");
+    if (m_client->connect("espClient"))
+    {
+        Serial.println("connected");
+        if (false == subscribeTopics())
         {
-            Serial.println("connected");
-            if (false == subscribeTopics())
-            {
-                Serial.println("Failed to subscribe topics");
-            }
+            Serial.println("Failed to subscribe topics");
         }
-        else
-        {
-            Serial.print("failed, rc=");
-            Serial.print(m_client->state());
-            Serial.println(" try again in 5 seconds");
-            // Wait 5 seconds before retrying
-            delay(5000);
-        }
+    }
+    else
+    {
+        Serial.print("failed, rc=");
+        Serial.print(m_client->state());
+        Serial.println(" will retry in 5 seconds");
     }
 }
 
@@ -202,5 +216,10 @@ void MqttHandler::publish(const char* topic, const String& message)
     else
     {
         Serial.printf("Publishing failed to %s", topic);
+    }
+
+    if (m_btHandler != nullptr)
+    {
+        m_btHandler->publish(topic, message);
     }
 }

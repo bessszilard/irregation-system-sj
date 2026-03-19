@@ -3,11 +3,14 @@
 #include "Structures.hpp"
 #include "MqttTopics.hpp"
 #include "SolenoidManager.hpp"
+#include "BtHandler.hpp"
 
 class MqttHandler
 {
 public:
     MqttHandler(PubSubClient* p_client);
+
+    void setBtHandler(BtHandler* p_btHandler);
 
     bool init(const char* p_domain, uint16_t p_port, MQTT_CALLBACK_SIGNATURE);
 
@@ -34,6 +37,8 @@ public:
 
 private:
     PubSubClient* m_client;
+    BtHandler*    m_btHandler;
+    unsigned long m_lastReconnectAttempt_ms;
 
     void publish(const char* topic, const String& message);
     MqttTopics m_topics;

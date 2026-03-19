@@ -4,11 +4,10 @@
 #define MQTT_MAX_TRANSFER_SIZE 512 // or 256
 #include <PubSubClient.h>
 #include <WiFi.h>
+#include <mutex>
+#include <queue>
 #include <DallasTemperature.h>
 #include <OneWire.h>
-#include <DHT.h>
-#include <NTPClient.h> // https://randomnerdtutorials.com/esp32-date-time-ntp-client-server-arduino/
-#include <WiFiUdp.h>
 #include "uFire_SHT20.h"
 #include "time.h"
 #include "ADS1X15.h"
@@ -19,6 +18,7 @@
 #include "YFG1FlowMeter.hpp"
 #include "LcdLayouts.hpp"
 #include "MqttHandler.hpp"
+#include "BtHandler.hpp"
 #include "FramManager.hpp"
 #include "PredefinedCommands.hpp"
 #include "SolenoidManager.hpp"
@@ -42,7 +42,6 @@ RelayArray relayArray(RELAY_ARRAY_DATA, RELAY_ARRAY_CLOCK, RELAY_ARRAY_LATCH);
 OneWire oneWireForTemp(TEMPERATURE_DATA_PIN);
 DallasTemperature tempSensorOnSun(&oneWireForTemp);
 uFire_SHT20 sht20;
-DHT humSensor(HUMIDITY_DATA_PIN, 11);
 LcdLayouts lcdLayout;
 YFG1FlowMeter fm(FLOW_METER_PIN);
 RtcDS3231<TwoWire> rtc(Wire);
@@ -53,6 +52,7 @@ WifiSignalStrength wifiWifiSignalStrength = WifiSignalStrength::Unknown;
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 MqttHandler mqttHd(&mqttClient);
+BtHandler btHd;
 
 // FRAM fram(&Wire);
 // FramManager framM(&Wire);
@@ -69,8 +69,14 @@ bool localTimeUpdate(LocalTime& p_data, bool p_verbose = false);
 bool sensorDataUpdate(SensorData& p_data, bool p_verbose = false);
 void reconnectMqtt();
 void callback(char* topic, byte* message, unsigned int length);
+void processCommand(const String& topicStr, const String& payload);
+void processBtCommands();
 void setupFRAM();
 bool updateRelayStateAndApply();
+
+// BLE RX commands arrive from the BLE task; queue them for processing on the main loop task.
+std::queue<std::pair<String, String>> g_btCmdQueue;
+std::mutex                            g_btCmdMutex;
 
 void setup()
 {
@@ -108,6 +114,15 @@ void setup()
     localTimeSetup();
 
     Serial2.begin(9600, SERIAL_8N1, HC12_RXD, HC12_TXD); // Hardware Serial of ESP32
+
+    btHd.begin("IrrigatorBT");
+    mqttHd.setBtHandler(&btHd);
+
+    // BLE RX: queue incoming commands for safe processing on the main loop task.
+    btHd.setCommandCallback([](const String& shortTopic, const String& payload) {
+        std::lock_guard<std::mutex> lock(g_btCmdMutex);
+        g_btCmdQueue.push({MqttTopics::RootWithId() + shortTopic, payload});
+    });
 }
 
 RelayArrayStates relayStates(RelayState::Unknown);
@@ -139,6 +154,8 @@ void loop()
     // }
     // loopStartTime = currentTime_ms;
     // each each time -------------------------------------------------------------
+
+    processBtCommands();
 
     if (Serial.available() > 0)
     {
@@ -421,53 +438,38 @@ bool sensorDataUpdate(SensorData& p_data, bool p_verbose)
     return true;
 }
 
-// TODOsz rename
 //---------------------------------------------------------------
-void callback(char* topic, byte* message, unsigned int length)
+// Shared command handler — called from both the MQTT callback and the BLE RX queue.
+// topicStr must be the full MQTT topic (with device prefix).
+void processCommand(const String& topicStr, const String& payload)
 //---------------------------------------------------------------
 {
-    Serial.print("Message arrived on topic: ");
-    Serial.print(topic);
-    Serial.print(". Message: ");
-    String messageTemp;
-
-    for (int i = 0; i < length; i++)
-    {
-        Serial.print((char)message[i]);
-        messageTemp += (char)message[i];
-    }
-
-    // Feel free to add more if statements to control more GPIOs with MQTT
-
-    String topicStr(topic);
-    // TODOsz topicStr move to variable
-    // Subscribed topics
     if (topicStr == mqttHd.topics().sub().CMD_ADD)
     {
-        CommandState cmdState = solM.appendCmd(messageTemp);
-        Serial.println(messageTemp + ">> " + ToString(cmdState));
+        CommandState cmdState = solM.appendCmd(payload);
+        Serial.println(payload + ">> " + ToString(cmdState));
         mqttHd.publish(cmdState);
         mqttHd.publish(solM);
     }
     else if (topicStr == mqttHd.topics().sub().CMD_REMOVE)
     {
-        CommandState cmdState = solM.removeCmd(messageTemp);
+        CommandState cmdState = solM.removeCmd(payload);
         mqttHd.publish(cmdState);
-        Serial.println(messageTemp + ">> " + ToString(cmdState));
+        Serial.println(payload + ">> " + ToString(cmdState));
         mqttHd.publish(solM);
     }
     else if (topicStr == mqttHd.topics().sub().CMD_OVERRIDE)
     {
-        CommandState cmdState = solM.overrideCmd(messageTemp);
+        CommandState cmdState = solM.overrideCmd(payload);
         mqttHd.publish(cmdState);
-        Serial.println(messageTemp + ">> " + ToString(cmdState));
+        Serial.println(payload + ">> " + ToString(cmdState));
         mqttHd.publish(solM);
     }
     else if (topicStr == mqttHd.topics().sub().CMD_IMPORT)
     {
-        bool results = solM.loadCmdsFromString(messageTemp);
+        bool results = solM.loadCmdsFromString(payload);
         mqttHd.publish(results ? CommandState::Added : CommandState::Unknown);
-        Serial.println(messageTemp);
+        Serial.println(payload);
         mqttHd.publish(solM);
     }
     else if (topicStr == mqttHd.topics().sub().CMD_GET_OPTIONS)
@@ -505,8 +507,7 @@ void callback(char* topic, byte* message, unsigned int length)
     }
     else if (topicStr == mqttHd.topics().sub().RELAY_GROUPS_SET)
     {
-        // TODOsz remove this topic print later
-        solM.relayGroups().loadFromStr(messageTemp);
+        solM.relayGroups().loadFromStr(payload);
         Serial.printf("RelayGroups: %s\n", solM.relayGroups().toJson().c_str());
         saveRelayGroupsFormFRAM();
         mqttHd.publish(solM.relayGroups());
@@ -517,6 +518,47 @@ void callback(char* topic, byte* message, unsigned int length)
         loadRelayGroupsFormFRAM();
         mqttHd.publish(solM.relayGroups());
     }
+    else
+    {
+        Serial.printf("[CMD] Unknown topic: %s\n", topicStr.c_str());
+    }
+}
+
+//---------------------------------------------------------------
+// Drain BLE commands queued by the BLE task and process them on the main loop task.
+void processBtCommands()
+//---------------------------------------------------------------
+{
+    while (true)
+    {
+        std::pair<String, String> cmd;
+        {
+            std::lock_guard<std::mutex> lock(g_btCmdMutex);
+            if (g_btCmdQueue.empty())
+                break;
+            cmd = std::move(g_btCmdQueue.front());
+            g_btCmdQueue.pop();
+        }
+        Serial.printf("[BT CMD] Processing: %s\n", cmd.first.c_str());
+        processCommand(cmd.first, cmd.second);
+    }
+}
+
+//---------------------------------------------------------------
+void callback(char* topic, byte* message, unsigned int length)
+//---------------------------------------------------------------
+{
+    Serial.print("Message arrived on topic: ");
+    Serial.print(topic);
+    Serial.print(". Message: ");
+    String messageTemp;
+    for (int i = 0; i < length; i++)
+    {
+        Serial.print((char)message[i]);
+        messageTemp += (char)message[i];
+    }
+    Serial.println();
+    processCommand(String(topic), messageTemp);
 }
 
 // FRAM functions
