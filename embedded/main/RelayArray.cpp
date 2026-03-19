@@ -30,12 +30,12 @@ bool RelayArray::handleAllRelays(RelayState p_state)
 
 bool RelayArray::handleRelay(int p_id, RelayState p_state)
 {
-    m_states[p_id] = p_state;
-    if (NUMBER_OF_RELAYS < p_id)
+    if (p_id < 0 || NUMBER_OF_RELAYS <= p_id)
     {
         Serial.println("Invalid relay id " + String(p_id));
         return false;
     }
+    m_states[p_id] = p_state;
     switch (p_state)
     {
         case RelayState::Opened:

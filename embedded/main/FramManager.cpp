@@ -95,7 +95,6 @@ bool FramManager::writeAndVerify16(uint16_t address, uint16_t data)
 
 bool FramManager::writeStringAndVerify(uint16_t address, const String& strData)
 {
-    Serial.println(">>>>>>>>>>>>>>>>> adasdsadasd a");
     Serial.printf("writing str len %d %s\n", strData.length(), strData.c_str());
     // if (false == m_fram.write(address, (uint8_t*)strData.c_str(), strData.length()+1))
     // {
@@ -136,10 +135,7 @@ bool FramManager::writeStringAndVerify(uint16_t address, const String& strData)
             everythingOkay = false;
         }
     }
-    Serial.println(" everything okay? >>>>>>");
-    Serial.println(everythingOkay);
-
-    return true;
+    return everythingOkay;
 }
 
 bool FramManager::read16(uint16_t address, uint16_t& data)
