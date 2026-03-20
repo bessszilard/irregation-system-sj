@@ -101,10 +101,10 @@ SensorType ToSensorTypeFromString(const String& p_rawMsg, int p_startId /*=0*/, 
 
 SerialCommands ToSerialCommands(const String& p_str)
 {
-    if (p_str == "SET_WIFI")  return SerialCommands::SetWifiParams;
-    if (p_str == "GET_WIFI")  return SerialCommands::GetWifiParams;
-    if (p_str == "SET_MQTT")  return SerialCommands::SetMqttParams;
-    if (p_str == "GET_MQTT")  return SerialCommands::GetMqttParams;
+    if (p_str.startsWith("SET_WIFI")) return SerialCommands::SetWifiParams;
+    if (p_str == "GET_WIFI")          return SerialCommands::GetWifiParams;
+    if (p_str.startsWith("SET_MQTT")) return SerialCommands::SetMqttParams;
+    if (p_str == "GET_MQTT")          return SerialCommands::GetMqttParams;
     return SerialCommands::Unknown;
 }
 

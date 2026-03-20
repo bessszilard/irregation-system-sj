@@ -24,15 +24,15 @@
 #include "SolenoidManager.hpp"
 
 #define SEALEVELPRESSURE_HPA (1013.25)
-#define MQTT_SERVER "test.mosquitto.org"
-#define MQTT_PORT 1883
+// Default credentials — overridden at runtime if FRAM config is found
+char g_wifiSsid[32]     = "VM28AE28";
+char g_wifiPassword[60] = "cL3wcfwbjqMz";
+char g_mqttServer[60]   = "test.mosquitto.org";
+uint16_t g_mqttPort     = 1883;
+char g_mqttPassword[60] = "";
 
 // TwoWire I2C_2 = TwoWire(0);
 FramManager framM;
-
-// Replace with your network credentials
-const char* ssid     = "VM28AE28";
-const char* password = "cL3wcfwbjqMz";
 
 const char* ntpServer        = "pool.ntp.org";
 const long gmtOffset_sec     = 3600 * 2;
@@ -93,7 +93,7 @@ void setup()
     Wire.begin();
     lcdLayout.init();
 
-    lcdLayout.connectingToSSID(ssid, false, 0);
+    lcdLayout.connectingToSSID(g_wifiSsid, false, 0);
     Serial.println("Setup started");
 
     sensorSetup();
@@ -109,7 +109,7 @@ void setup()
     // TODOsz move to the loop -> handle case if wifi not available at startup
     if (setupWifiAndMqtt())
     {
-        lcdLayout.connectingToSSID(ssid, true);
+        lcdLayout.connectingToSSID(g_wifiSsid, true);
     }
     localTimeSetup();
 
@@ -160,14 +160,61 @@ void loop()
     if (Serial.available() > 0)
     {
         String incoming = Serial.readStringUntil('\n');
+        incoming.trim();
         switch (ToSerialCommands(incoming))
         {
+        case SerialCommands::SetWifiParams:
+        {
+            // Format: SET_WIFI:ssid;password
+            String params = incoming.substring(9); // skip "SET_WIFI:"
+            int    sep    = params.indexOf(';');
+            if (sep > 0)
+            {
+                params.substring(0, sep).toCharArray(g_wifiSsid, sizeof(g_wifiSsid));
+                params.substring(sep + 1).toCharArray(g_wifiPassword, sizeof(g_wifiPassword));
+                bool ok = framM.saveWifiConfig(String(g_wifiSsid), String(g_wifiPassword));
+                Serial.printf("SET_WIFI %s -> %s\n", g_wifiSsid, ok ? "Saved" : "Failed");
+            }
+            else
+            {
+                Serial.println("SET_WIFI format: SET_WIFI:ssid;password");
+            }
+            break;
+        }
+        case SerialCommands::GetWifiParams:
+            Serial.printf("WiFi SSID: %s\n", g_wifiSsid);
+            break;
+        case SerialCommands::SetMqttParams:
+        {
+            // Format: SET_MQTT:server;port;password
+            String params = incoming.substring(9); // skip "SET_MQTT:"
+            int    sep1   = params.indexOf(';');
+            int    sep2   = (sep1 >= 0) ? params.indexOf(';', sep1 + 1) : -1;
+            if (sep1 > 0)
+            {
+                params.substring(0, sep1).toCharArray(g_mqttServer, sizeof(g_mqttServer));
+                String portStr = (sep2 > 0) ? params.substring(sep1 + 1, sep2) : params.substring(sep1 + 1);
+                g_mqttPort     = (uint16_t)portStr.toInt();
+                if (sep2 > 0)
+                    params.substring(sep2 + 1).toCharArray(g_mqttPassword, sizeof(g_mqttPassword));
+                else
+                    g_mqttPassword[0] = '\0';
+                bool ok = framM.saveMqttConfig(String(g_mqttServer), g_mqttPort, String(g_mqttPassword));
+                Serial.printf("SET_MQTT %s:%d -> %s\n", g_mqttServer, g_mqttPort, ok ? "Saved" : "Failed");
+            }
+            else
+            {
+                Serial.println("SET_MQTT format: SET_MQTT:server;port;password");
+            }
+            break;
+        }
         case SerialCommands::GetMqttParams:
-            Serial.println(">>>>>>>>>>>> >>>>>>>>>>>>> SerialCommands::GetMqttParams");
+            Serial.printf("MQTT server: %s  port: %d\n", g_mqttServer, g_mqttPort);
+            break;
+        default:
             break;
         }
         incoming.toCharArray(myData, 50);
-
         Serial.printf(" >>> >>> Serial received %s\n\n", myData);
     }
 
@@ -191,7 +238,7 @@ void loop()
             {
                 lastMqttReconnectAttempt_ms = currentTime_ms;
                 Serial.println("Attempting MQTT reconnection...");
-                if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT, callback))
+                if (false == mqttHd.init(g_mqttServer, g_mqttPort, callback))
                 {
                     Serial.println("Failed to set up the Mqtt server");
                 }
@@ -205,7 +252,7 @@ void loop()
     else
     {
         // Try to reconnect
-        WiFi.begin(ssid, password);
+        WiFi.begin(g_wifiSsid, g_wifiPassword);
     }
 
     if (storeCmdListToFRAMFlag)
@@ -284,13 +331,13 @@ bool setupWifiAndMqtt()
 
 {
     Serial.print("Connecting to ");
-    Serial.println(ssid);
-    WiFi.begin(ssid, password);
+    Serial.println(g_wifiSsid);
+    WiFi.begin(g_wifiSsid, g_wifiPassword);
     int maxTryToConnect = 5;
     int attempt         = 0;
     while (WiFi.status() != WL_CONNECTED)
     {
-        lcdLayout.connectingToSSID(ssid, attempt);
+        lcdLayout.connectingToSSID(g_wifiSsid, attempt);
         attempt++;
         delay(500);
         Serial.print(".");
@@ -306,7 +353,7 @@ bool setupWifiAndMqtt()
     Serial.println(WiFi.localIP());
 
     Serial.println("Setting up MQTT connection");
-    if (false == mqttHd.init(MQTT_SERVER, MQTT_PORT, callback))
+    if (false == mqttHd.init(g_mqttServer, g_mqttPort, callback))
     {
         Serial.println("Failed to set up the Mqtt server");
         return false;
@@ -518,6 +565,51 @@ void processCommand(const String& topicStr, const String& payload)
         loadRelayGroupsFormFRAM();
         mqttHd.publish(solM.relayGroups());
     }
+    else if (topicStr == mqttHd.topics().sub().CONFIG_WIFI_SET)
+    {
+        // Payload format: ssid;password
+        int sep = payload.indexOf(';');
+        if (sep > 0)
+        {
+            payload.substring(0, sep).toCharArray(g_wifiSsid, sizeof(g_wifiSsid));
+            payload.substring(sep + 1).toCharArray(g_wifiPassword, sizeof(g_wifiPassword));
+            bool ok = framM.saveWifiConfig(String(g_wifiSsid), String(g_wifiPassword));
+            mqttHd.publishConfigInfo(String(g_wifiSsid), String(g_mqttServer), g_mqttPort, ok);
+        }
+        else
+        {
+            Serial.println("config/wifi/set payload format: ssid;password");
+            mqttHd.publishConfigInfo(String(g_wifiSsid), String(g_mqttServer), g_mqttPort, false);
+        }
+    }
+    else if (topicStr == mqttHd.topics().sub().CONFIG_MQTT_SET)
+    {
+        // Payload format: server;port;password
+        int sep1 = payload.indexOf(';');
+        int sep2 = (sep1 >= 0) ? payload.indexOf(';', sep1 + 1) : -1;
+        if (sep1 > 0)
+        {
+            payload.substring(0, sep1).toCharArray(g_mqttServer, sizeof(g_mqttServer));
+            String portStr = (sep2 > 0) ? payload.substring(sep1 + 1, sep2) : payload.substring(sep1 + 1);
+            g_mqttPort     = (uint16_t)portStr.toInt();
+            if (sep2 > 0)
+                payload.substring(sep2 + 1).toCharArray(g_mqttPassword, sizeof(g_mqttPassword));
+            else
+                g_mqttPassword[0] = '\0';
+            bool ok = framM.saveMqttConfig(String(g_mqttServer), g_mqttPort, String(g_mqttPassword));
+            mqttHd.publishConfigInfo(String(g_wifiSsid), String(g_mqttServer), g_mqttPort, ok);
+        }
+        else
+        {
+            Serial.println("config/mqtt/set payload format: server;port;password");
+            mqttHd.publishConfigInfo(String(g_wifiSsid), String(g_mqttServer), g_mqttPort, false);
+        }
+    }
+    else if (topicStr == mqttHd.topics().sub().CONFIG_WIFI_GET ||
+             topicStr == mqttHd.topics().sub().CONFIG_MQTT_GET)
+    {
+        mqttHd.publishConfigInfo(String(g_wifiSsid), String(g_mqttServer), g_mqttPort, true);
+    }
     else
     {
         Serial.printf("[CMD] Unknown topic: %s\n", topicStr.c_str());
@@ -594,6 +686,33 @@ void resetSolenoidCommandsToDefault()
     solM.loadCmdsFromString(CMD_MANUAL_CLOSE_ALL_RELAYS); // Default
 }
 
+void loadConfigFromFRAM()
+{
+    String ssid, pass;
+    if (framM.loadWifiConfig(ssid, pass))
+    {
+        ssid.toCharArray(g_wifiSsid, sizeof(g_wifiSsid));
+        pass.toCharArray(g_wifiPassword, sizeof(g_wifiPassword));
+    }
+    else
+    {
+        Serial.println("No WiFi config in FRAM, using defaults");
+    }
+
+    String server, mqttPass;
+    uint16_t port = 0;
+    if (framM.loadMqttConfig(server, port, mqttPass))
+    {
+        server.toCharArray(g_mqttServer, sizeof(g_mqttServer));
+        g_mqttPort = port;
+        mqttPass.toCharArray(g_mqttPassword, sizeof(g_mqttPassword));
+    }
+    else
+    {
+        Serial.println("No MQTT config in FRAM, using defaults");
+    }
+}
+
 void setupFRAM()
 {
     if (framM.begin())
@@ -604,6 +723,8 @@ void setupFRAM()
     {
         Serial.println("Failed to connect to FRAM");
     }
+
+    loadConfigFromFRAM();
 
     String cmdList;
     if (framM.loadCommands(cmdList))

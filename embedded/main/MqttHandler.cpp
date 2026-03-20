@@ -118,6 +118,18 @@ void MqttHandler::publishCmdOptions(const String& cmdOptions)
 }
 
 //---------------------------------------------------------------
+void MqttHandler::publishConfigInfo(const String& wifiSsid,
+                                    const String& mqttServer,
+                                    uint16_t      mqttPort,
+                                    bool          saved)
+//---------------------------------------------------------------
+{
+    String json = "{ \"WifiSsid\": \"" + wifiSsid + "\", \"MqttServer\": \"" + mqttServer +
+                  "\", \"MqttPort\": " + String(mqttPort) + ", \"Saved\": " + (saved ? "true" : "false") + " }";
+    publish(m_topics.pub().CONFIG_INFO, json);
+}
+
+//---------------------------------------------------------------
 bool MqttHandler::loop()
 //---------------------------------------------------------------
 {
@@ -162,6 +174,10 @@ bool MqttHandler::subscribeTopics()
     success &= m_client->subscribe(m_topics.sub().RELAY_GROUPS_SET);
     success &= m_client->subscribe(m_topics.sub().RELAY_GROUPS_LOAD);
     success &= m_client->subscribe(m_topics.sub().GET_ALL_INFO);
+    success &= m_client->subscribe(m_topics.sub().CONFIG_WIFI_SET);
+    success &= m_client->subscribe(m_topics.sub().CONFIG_WIFI_GET);
+    success &= m_client->subscribe(m_topics.sub().CONFIG_MQTT_SET);
+    success &= m_client->subscribe(m_topics.sub().CONFIG_MQTT_GET);
     return success;
 }
 

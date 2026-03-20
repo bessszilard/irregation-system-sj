@@ -22,6 +22,10 @@ public:
         static const char* CMD_GET_OPTIONS;
         static const char* RELAY_GROUPS_SET;
         static const char* RELAY_GROUPS_LOAD;
+        static const char* CONFIG_WIFI_SET;
+        static const char* CONFIG_WIFI_GET;
+        static const char* CONFIG_MQTT_SET;
+        static const char* CONFIG_MQTT_GET;
     };
 
     struct Publish
@@ -33,6 +37,7 @@ public:
         static const char* CMD_RESPONSE;
         static const char* CMD_OPTIONS;
         static const char* RELAY_GROUPS_INFO;
+        static const char* CONFIG_INFO;
     };
 
     const Subscription& sub() const

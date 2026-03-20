@@ -12,6 +12,12 @@ public:
     // uint32_t clear();
     void printId();
 
+    bool saveWifiConfig(const String& ssid, const String& password);
+    bool loadWifiConfig(String& ssid, String& password);
+
+    bool saveMqttConfig(const String& server, uint16_t port, const String& password);
+    bool loadMqttConfig(String& server, uint16_t& port, String& password);
+
     bool saveRelayGroups(uint16_t* p_data, uint16_t p_length);
     bool loadRelayGroups(uint16_t* p_data, uint16_t p_length);
 

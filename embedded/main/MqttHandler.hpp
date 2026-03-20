@@ -23,6 +23,7 @@ public:
     void publish(CommandState p_cmdState);
 
     void publishCmdOptions(const String& p_cmdOptions);
+    void publishConfigInfo(const String& wifiSsid, const String& mqttServer, uint16_t mqttPort, bool saved);
 
     bool loop();
     bool connected();

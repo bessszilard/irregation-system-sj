@@ -41,6 +41,10 @@ static String _CMD_IMPORT            = rootId + "cmd/import";
 static String _CMD_GET_OPTIONS       = rootId + "cmd/command-options/get";
 static String _RELAY_GROUPS_SET      = rootId + "relay-groups/set";
 static String _RELAY_GROUPS_LOAD     = rootId + "relay-groups/load";
+static String _CONFIG_WIFI_SET       = rootId + "config/wifi/set";
+static String _CONFIG_WIFI_GET       = rootId + "config/wifi/get";
+static String _CONFIG_MQTT_SET       = rootId + "config/mqtt/set";
+static String _CONFIG_MQTT_GET       = rootId + "config/mqtt/get";
 
 const char* MqttTopics::Subscription::GET_ALL_INFO          = _GET_ALL_INFO.c_str();
 const char* MqttTopics::Subscription::CMD_ADD               = _CMD_ADD.c_str();
@@ -53,6 +57,10 @@ const char* MqttTopics::Subscription::CMD_IMPORT            = _CMD_IMPORT.c_str(
 const char* MqttTopics::Subscription::CMD_GET_OPTIONS       = _CMD_GET_OPTIONS.c_str();
 const char* MqttTopics::Subscription::RELAY_GROUPS_SET      = _RELAY_GROUPS_SET.c_str();
 const char* MqttTopics::Subscription::RELAY_GROUPS_LOAD     = _RELAY_GROUPS_LOAD.c_str();
+const char* MqttTopics::Subscription::CONFIG_WIFI_SET       = _CONFIG_WIFI_SET.c_str();
+const char* MqttTopics::Subscription::CONFIG_WIFI_GET       = _CONFIG_WIFI_GET.c_str();
+const char* MqttTopics::Subscription::CONFIG_MQTT_SET       = _CONFIG_MQTT_SET.c_str();
+const char* MqttTopics::Subscription::CONFIG_MQTT_GET       = _CONFIG_MQTT_GET.c_str();
 
 // Repeat same structure for Publish
 static String _SENSORS           = rootId + "sensors";
@@ -62,6 +70,7 @@ static String _CMD_LIST          = rootId + "cmd/list";
 static String _CMD_RESPONSE      = rootId + "cmd/response";
 static String _CMD_OPTIONS       = rootId + "cmd/command-options";
 static String _RELAY_GROUPS_INFO = rootId + "relay-groups/info";
+static String _CONFIG_INFO       = rootId + "config/info";
 
 const char* MqttTopics::Publish::SENSORS           = _SENSORS.c_str();
 const char* MqttTopics::Publish::RELAYS            = _RELAYS.c_str();
@@ -70,3 +79,4 @@ const char* MqttTopics::Publish::CMD_LIST          = _CMD_LIST.c_str();
 const char* MqttTopics::Publish::CMD_RESPONSE      = _CMD_RESPONSE.c_str();
 const char* MqttTopics::Publish::CMD_OPTIONS       = _CMD_OPTIONS.c_str();
 const char* MqttTopics::Publish::RELAY_GROUPS_INFO = _RELAY_GROUPS_INFO.c_str();
+const char* MqttTopics::Publish::CONFIG_INFO       = _CONFIG_INFO.c_str();
