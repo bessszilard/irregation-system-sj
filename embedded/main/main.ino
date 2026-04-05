@@ -656,6 +656,11 @@ void processCommand(const String& topicStr, const String& payload)
     {
         mqttHd.publishConfigInfo(String(g_wifiSsid), String(g_mqttServer), g_mqttPort, true);
     }
+    else if (topicStr == mqttHd.topics().sub().SYSTEM_VERSION_GET)
+    {
+        Serial.printf("[CMD] Get version\n");
+        mqttHd.publishVersion(FW_VERSION, FW_BUILD_TIME);
+    }
     else
     {
         Serial.printf("[CMD] Unknown topic: %s\n", topicStr.c_str());

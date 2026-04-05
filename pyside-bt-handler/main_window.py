@@ -456,6 +456,7 @@ class MainWindow(QMainWindow):
         self._ble = BleClient()
         self._devices: dict[str, str] = {}
         self._connected = False
+        self._version_queried = False
 
         self._setup_ui()
         self._connect_signals()
@@ -470,11 +471,18 @@ class MainWindow(QMainWindow):
         self.conn_bar = ConnectionBar()
         root.addWidget(self.conn_bar)
 
+        fw_row = QHBoxLayout()
         self.fw_label = QLabel("Firmware: —")
         self.fw_label.setStyleSheet(
             "color: #9e9e9e; font-size: 11px; padding: 2px 4px;"
         )
-        root.addWidget(self.fw_label)
+        self._get_version_btn = QPushButton("Get Version")
+        self._get_version_btn.setFixedWidth(100)
+        self._get_version_btn.setEnabled(False)
+        self._get_version_btn.clicked.connect(self._query_version)
+        fw_row.addWidget(self.fw_label, 1)
+        fw_row.addWidget(self._get_version_btn)
+        root.addLayout(fw_row)
 
         sep = QFrame()
         sep.setFrameShape(QFrame.HLine)
@@ -549,6 +557,11 @@ class MainWindow(QMainWindow):
                 self._ble.connect_device(address)
 
     @Slot()
+    def _query_version(self):
+        self._ble.send_command("system/version/get", "")
+        self.log_panel.append("sent", "system/version/get: ")
+
+    @Slot()
     def _send_raw(self):
         text = self._send_input.text().strip()
         if text:
@@ -590,6 +603,8 @@ class MainWindow(QMainWindow):
         self._send_input.setEnabled(True)
         self._send_btn.setEnabled(True)
         self.cmd_panel.set_enabled(True)
+        self._version_queried = False
+        self._get_version_btn.setEnabled(True)
         self.statusBar().showMessage(f"Connected — {address}")
         self.log_panel.append("system", f"Connected to {address}")
 
@@ -601,6 +616,7 @@ class MainWindow(QMainWindow):
         self.conn_bar.status_dot.setStyleSheet("color:#9e9e9e; font-size:20px;")
         self._send_input.setEnabled(False)
         self._send_btn.setEnabled(False)
+        self._get_version_btn.setEnabled(False)
         self.cmd_panel.set_enabled(False)
         self.fw_label.setText("Firmware: —")
         self.fw_label.setStyleSheet("color: #9e9e9e; font-size: 11px; padding: 2px 4px;")
@@ -610,6 +626,11 @@ class MainWindow(QMainWindow):
     @Slot(str, str)
     def _on_message(self, topic: str, payload: str):
         self.log_panel.append(topic, payload)
+
+        if "localTime" in topic and not self._version_queried:
+            self._version_queried = True
+            self._ble.send_command("system/version/get", "")
+            self.log_panel.append("sent", "system/version/get: ")
 
         if "system/version" in topic:
             try:

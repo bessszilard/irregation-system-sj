@@ -130,6 +130,14 @@ void MqttHandler::publishConfigInfo(const String& wifiSsid,
 }
 
 //---------------------------------------------------------------
+void MqttHandler::publishVersion(const char* version, const char* buildTime)
+//---------------------------------------------------------------
+{
+    publish(m_topics.pub().SYSTEM_VERSION,
+            "{ \"version\": \"" + String(version) + "\", \"built\": \"" + String(buildTime) + "\" }");
+}
+
+//---------------------------------------------------------------
 bool MqttHandler::loop()
 //---------------------------------------------------------------
 {
@@ -180,6 +188,7 @@ bool MqttHandler::subscribeTopics()
     success &= m_client->subscribe(m_topics.sub().CONFIG_MQTT_GET);
     success &= m_client->subscribe(m_topics.sub().FLASH_SAVE_ALL);
     success &= m_client->subscribe(m_topics.sub().FLASH_LOAD_ALL);
+    success &= m_client->subscribe(m_topics.sub().SYSTEM_VERSION_GET);
     return success;
 }
 
@@ -215,6 +224,11 @@ void MqttHandler::reconnectMqtt()
 void MqttHandler::publish(const char* topic, const String& message)
 //---------------------------------------------------------------
 {
+    if (m_btHandler != nullptr)
+    {
+        m_btHandler->publish(topic, message);
+    }
+
     if (m_client == nullptr)
     {
         Serial.println("Invalid mqtt client");
@@ -234,10 +248,5 @@ void MqttHandler::publish(const char* topic, const String& message)
     else
     {
         Serial.printf("Publishing failed to %s", topic);
-    }
-
-    if (m_btHandler != nullptr)
-    {
-        m_btHandler->publish(topic, message);
     }
 }

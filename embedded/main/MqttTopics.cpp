@@ -47,6 +47,7 @@ static String _CONFIG_MQTT_SET       = rootId + "config/mqtt/set";
 static String _CONFIG_MQTT_GET       = rootId + "config/mqtt/get";
 static String _FLASH_SAVE_ALL        = rootId + "flash/save_all";
 static String _FLASH_LOAD_ALL        = rootId + "flash/load_all";
+static String _SYSTEM_VERSION_GET    = rootId + "system/version/get";
 
 const char* MqttTopics::Subscription::GET_ALL_INFO          = _GET_ALL_INFO.c_str();
 const char* MqttTopics::Subscription::CMD_ADD               = _CMD_ADD.c_str();
@@ -65,6 +66,7 @@ const char* MqttTopics::Subscription::CONFIG_MQTT_SET       = _CONFIG_MQTT_SET.c
 const char* MqttTopics::Subscription::CONFIG_MQTT_GET       = _CONFIG_MQTT_GET.c_str();
 const char* MqttTopics::Subscription::FLASH_SAVE_ALL        = _FLASH_SAVE_ALL.c_str();
 const char* MqttTopics::Subscription::FLASH_LOAD_ALL        = _FLASH_LOAD_ALL.c_str();
+const char* MqttTopics::Subscription::SYSTEM_VERSION_GET    = _SYSTEM_VERSION_GET.c_str();
 
 // Repeat same structure for Publish
 static String _SENSORS           = rootId + "sensors";
@@ -75,6 +77,7 @@ static String _CMD_RESPONSE      = rootId + "cmd/response";
 static String _CMD_OPTIONS       = rootId + "cmd/command-options";
 static String _RELAY_GROUPS_INFO = rootId + "relay-groups/info";
 static String _CONFIG_INFO       = rootId + "config/info";
+static String _SYSTEM_VERSION    = rootId + "system/version";
 
 const char* MqttTopics::Publish::SENSORS           = _SENSORS.c_str();
 const char* MqttTopics::Publish::RELAYS            = _RELAYS.c_str();
@@ -84,3 +87,4 @@ const char* MqttTopics::Publish::CMD_RESPONSE      = _CMD_RESPONSE.c_str();
 const char* MqttTopics::Publish::CMD_OPTIONS       = _CMD_OPTIONS.c_str();
 const char* MqttTopics::Publish::RELAY_GROUPS_INFO = _RELAY_GROUPS_INFO.c_str();
 const char* MqttTopics::Publish::CONFIG_INFO       = _CONFIG_INFO.c_str();
+const char* MqttTopics::Publish::SYSTEM_VERSION    = _SYSTEM_VERSION.c_str();

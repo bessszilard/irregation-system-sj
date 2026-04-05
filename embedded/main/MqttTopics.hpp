@@ -28,6 +28,7 @@ public:
         static const char* CONFIG_MQTT_GET;
         static const char* FLASH_SAVE_ALL;
         static const char* FLASH_LOAD_ALL;
+        static const char* SYSTEM_VERSION_GET;
     };
 
     struct Publish
@@ -40,6 +41,7 @@ public:
         static const char* CMD_OPTIONS;
         static const char* RELAY_GROUPS_INFO;
         static const char* CONFIG_INFO;
+        static const char* SYSTEM_VERSION;
     };
 
     const Subscription& sub() const

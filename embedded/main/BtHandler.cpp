@@ -128,15 +128,15 @@ void BtHandler::onRxData(const String& p_data)
         if (line.length() == 0)
             continue;
 
-        int sep = line.indexOf(": ");
+        int sep = line.indexOf(':');
         if (sep < 0)
         {
-            Serial.printf("[BT RX] Malformed frame (no ': '): %s\n", line.c_str());
+            Serial.printf("[BT RX] Malformed frame (no ':'): %s\n", line.c_str());
             continue;
         }
 
         String shortTopic = line.substring(0, sep);
-        String payload    = line.substring(sep + 2);
+        String payload    = line.substring(sep + 1);
         shortTopic.trim();
         payload.trim();
 
