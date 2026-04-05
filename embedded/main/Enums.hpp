@@ -64,6 +64,15 @@ enum class RelayGroups
     F,
     G,
     H,
+    J,
+    K,
+    L,
+    M,
+    N,
+    O,
+    P,
+    Q,
+    R,
     NumberOfGroups,
     Unknown
 };

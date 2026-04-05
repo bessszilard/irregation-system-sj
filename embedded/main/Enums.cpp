@@ -50,7 +50,15 @@ RelayGroups RelayGroupsFromString(const String& p_rawMsg, int p_startId /*=0*/, 
     if (subStr == "RGE") return RelayGroups::E;
     if (subStr == "RGF") return RelayGroups::F;
     if (subStr == "RGG") return RelayGroups::G;
-    if (subStr == "RGH") return RelayGroups::H;
+    if (subStr == "RGJ") return RelayGroups::J;
+    if (subStr == "RGK") return RelayGroups::K;
+    if (subStr == "RGL") return RelayGroups::L;
+    if (subStr == "RGM") return RelayGroups::M;
+    if (subStr == "RGN") return RelayGroups::N;
+    if (subStr == "RGO") return RelayGroups::O;
+    if (subStr == "RGP") return RelayGroups::P;
+    if (subStr == "RGQ") return RelayGroups::Q;
+    if (subStr == "RGR") return RelayGroups::R;
     return RelayGroups::Unknown;
 }
 
