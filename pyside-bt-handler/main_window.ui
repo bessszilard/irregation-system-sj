@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CentralWidget</class>
+ <widget class="QWidget" name="CentralWidget">
+  <layout class="QVBoxLayout" name="root" stretch="0,0,0,1,0">
+   <property name="leftMargin">
+    <number>8</number>
+   </property>
+   <property name="topMargin">
+    <number>8</number>
+   </property>
+   <property name="rightMargin">
+    <number>8</number>
+   </property>
+   <property name="bottomMargin">
+    <number>6</number>
+   </property>
+   <property name="spacing">
+    <number>6</number>
+   </property>
+   <item>
+    <widget class="ConnectionBar" name="conn_bar"/>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="fw_row" stretch="1,0">
+     <item>
+      <widget class="QLabel" name="fw_label">
+       <property name="text">
+        <string>Firmware: —</string>
+       </property>
+       <property name="styleSheet">
+        <string>color: #9e9e9e; font-size: 11px; padding: 2px 4px;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="get_version_btn">
+       <property name="text">
+        <string>Get Version</string>
+       </property>
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>100</width>
+         <height>16777215</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QFrame" name="separator">
+     <property name="frameShape">
+      <enum>QFrame::HLine</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTabWidget" name="tabs">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="LogPanel" name="log_panel">
+      <attribute name="title">
+       <string>📋  Log</string>
+      </attribute>
+     </widget>
+     <widget class="SensorPanel" name="sensor_panel">
+      <attribute name="title">
+       <string>🌡  Sensors</string>
+      </attribute>
+     </widget>
+     <widget class="RelayPanel" name="relay_panel">
+      <attribute name="title">
+       <string>⚡  Relays</string>
+      </attribute>
+     </widget>
+     <widget class="CommandsPanel" name="cmd_panel">
+      <attribute name="title">
+       <string>🎛  Commands</string>
+      </attribute>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="send_row">
+     <item>
+      <widget class="QLineEdit" name="send_input">
+       <property name="placeholderText">
+        <string>Send raw text to device via BLE RX…</string>
+       </property>
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="send_btn">
+       <property name="text">
+        <string>Send</string>
+       </property>
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>70</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>70</width>
+         <height>16777215</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ConnectionBar</class>
+   <extends>QGroupBox</extends>
+   <header>main_window</header>
+  </customwidget>
+  <customwidget>
+   <class>LogPanel</class>
+   <extends>QWidget</extends>
+   <header>main_window</header>
+  </customwidget>
+  <customwidget>
+   <class>SensorPanel</class>
+   <extends>QWidget</extends>
+   <header>main_window</header>
+  </customwidget>
+  <customwidget>
+   <class>RelayPanel</class>
+   <extends>QWidget</extends>
+   <header>main_window</header>
+  </customwidget>
+  <customwidget>
+   <class>CommandsPanel</class>
+   <extends>QWidget</extends>
+   <header>main_window</header>
+  </customwidget>
+ </customwidgets>
+</ui>

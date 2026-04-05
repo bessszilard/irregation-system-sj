@@ -1,8 +1,10 @@
 import json
 from datetime import datetime
+from pathlib import Path
 
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import QFile, QIODevice, Qt, Slot
 from PySide6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor
+from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -462,62 +464,36 @@ class MainWindow(QMainWindow):
         self._connect_signals()
 
     def _setup_ui(self):
-        central = QWidget()
+        loader = QUiLoader()
+        for cls in (ConnectionBar, LogPanel, SensorPanel, RelayPanel, CommandsPanel):
+            loader.registerCustomWidget(cls)
+
+        ui_file = QFile(str(Path(__file__).parent / "main_window.ui"))
+        ui_file.open(QIODevice.OpenModeFlag.ReadOnly)
+        central = loader.load(ui_file, self)
+        ui_file.close()
+
         self.setCentralWidget(central)
-        root = QVBoxLayout(central)
-        root.setContentsMargins(8, 8, 8, 6)
-        root.setSpacing(6)
 
-        self.conn_bar = ConnectionBar()
-        root.addWidget(self.conn_bar)
-
-        fw_row = QHBoxLayout()
-        self.fw_label = QLabel("Firmware: —")
-        self.fw_label.setStyleSheet(
-            "color: #9e9e9e; font-size: 11px; padding: 2px 4px;"
-        )
-        self._get_version_btn = QPushButton("Get Version")
-        self._get_version_btn.setFixedWidth(100)
-        self._get_version_btn.setEnabled(False)
-        self._get_version_btn.clicked.connect(self._query_version)
-        fw_row.addWidget(self.fw_label, 1)
-        fw_row.addWidget(self._get_version_btn)
-        root.addLayout(fw_row)
-
-        sep = QFrame()
-        sep.setFrameShape(QFrame.HLine)
-        root.addWidget(sep)
-
-        self.tabs = QTabWidget()
-        self.log_panel = LogPanel()
-        self.sensor_panel = SensorPanel()
-        self.relay_panel = RelayPanel()
-        self.cmd_panel = CommandsPanel()
-
-        self.tabs.addTab(self.log_panel,    "📋  Log")
-        self.tabs.addTab(self.sensor_panel, "🌡  Sensors")
-        self.tabs.addTab(self.relay_panel,  "⚡  Relays")
-        self.tabs.addTab(self.cmd_panel,    "🎛  Commands")
-        root.addWidget(self.tabs, 1)
-
-        # Raw send bar
-        send_row = QHBoxLayout()
-        self._send_input = QLineEdit()
-        self._send_input.setPlaceholderText("Send raw text to device via BLE RX…")
-        self._send_input.setEnabled(False)
-        self._send_btn = QPushButton("Send")
-        self._send_btn.setFixedWidth(70)
-        self._send_btn.setEnabled(False)
-        self._send_btn.clicked.connect(self._send_raw)
-        self._send_input.returnPressed.connect(self._send_raw)
-        send_row.addWidget(self._send_input)
-        send_row.addWidget(self._send_btn)
-        root.addLayout(send_row)
+        self.conn_bar          = central.findChild(ConnectionBar, "conn_bar")
+        self.fw_label          = central.findChild(QLabel,        "fw_label")
+        self._get_version_btn  = central.findChild(QPushButton,   "get_version_btn")
+        self.tabs              = central.findChild(QTabWidget,     "tabs")
+        self.log_panel         = central.findChild(LogPanel,       "log_panel")
+        self.sensor_panel      = central.findChild(SensorPanel,    "sensor_panel")
+        self.relay_panel       = central.findChild(RelayPanel,     "relay_panel")
+        self.cmd_panel         = central.findChild(CommandsPanel,  "cmd_panel")
+        self._send_input       = central.findChild(QLineEdit,      "send_input")
+        self._send_btn         = central.findChild(QPushButton,    "send_btn")
 
         self.setStatusBar(QStatusBar())
         self.statusBar().showMessage("Ready — click Scan to discover devices")
 
     def _connect_signals(self):
+        self._get_version_btn.clicked.connect(self._query_version)
+        self._send_btn.clicked.connect(self._send_raw)
+        self._send_input.returnPressed.connect(self._send_raw)
+
         self.conn_bar.scan_btn.clicked.connect(self._scan)
         self.conn_bar.connect_btn.clicked.connect(self._toggle_connection)
         self.conn_bar.device_combo.currentIndexChanged.connect(self._on_combo_changed)
