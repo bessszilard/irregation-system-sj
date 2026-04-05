@@ -24,6 +24,9 @@ public:
     bool isConnected() const;
     void publish(const char* p_topic, const String& p_message);
 
+    // Call from the main loop — handles deferred publishes that must run outside BLE callbacks.
+    void loop();
+
     // Register the callback that processes incoming BLE commands.
     void setCommandCallback(BtCmdCallback p_cb);
 

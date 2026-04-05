@@ -45,6 +45,8 @@ static String _CONFIG_WIFI_SET       = rootId + "config/wifi/set";
 static String _CONFIG_WIFI_GET       = rootId + "config/wifi/get";
 static String _CONFIG_MQTT_SET       = rootId + "config/mqtt/set";
 static String _CONFIG_MQTT_GET       = rootId + "config/mqtt/get";
+static String _FLASH_SAVE_ALL        = rootId + "flash/save_all";
+static String _FLASH_LOAD_ALL        = rootId + "flash/load_all";
 
 const char* MqttTopics::Subscription::GET_ALL_INFO          = _GET_ALL_INFO.c_str();
 const char* MqttTopics::Subscription::CMD_ADD               = _CMD_ADD.c_str();
@@ -61,6 +63,8 @@ const char* MqttTopics::Subscription::CONFIG_WIFI_SET       = _CONFIG_WIFI_SET.c
 const char* MqttTopics::Subscription::CONFIG_WIFI_GET       = _CONFIG_WIFI_GET.c_str();
 const char* MqttTopics::Subscription::CONFIG_MQTT_SET       = _CONFIG_MQTT_SET.c_str();
 const char* MqttTopics::Subscription::CONFIG_MQTT_GET       = _CONFIG_MQTT_GET.c_str();
+const char* MqttTopics::Subscription::FLASH_SAVE_ALL        = _FLASH_SAVE_ALL.c_str();
+const char* MqttTopics::Subscription::FLASH_LOAD_ALL        = _FLASH_LOAD_ALL.c_str();
 
 // Repeat same structure for Publish
 static String _SENSORS           = rootId + "sensors";

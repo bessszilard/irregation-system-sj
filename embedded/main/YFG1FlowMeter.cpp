@@ -1,11 +1,15 @@
 #include "YFG1FlowMeter.hpp"
 #include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
 
-static uint16_t s_pulseCount = 0;
+static volatile uint16_t s_pulseCount = 0;
+static portMUX_TYPE s_pulseMux = portMUX_INITIALIZER_UNLOCKED;
 
 void IRAM_ATTR pulseCounter()
 {
+    portENTER_CRITICAL_ISR(&s_pulseMux);
     s_pulseCount++;
+    portEXIT_CRITICAL_ISR(&s_pulseMux);
 }
 
 YFG1FlowMeter::YFG1FlowMeter(int p_pin, float p_calibrationFactor)
@@ -21,7 +25,9 @@ YFG1FlowMeter::YFG1FlowMeter(int p_pin, float p_calibrationFactor)
 }
 void YFG1FlowMeter::resetValues()
 {
+    portENTER_CRITICAL(&s_pulseMux);
     s_pulseCount = 0;
+    portEXIT_CRITICAL(&s_pulseMux);
     m_oldTime_ms = 0;
     m_data       = Data(0.0, 0);
 }
@@ -30,10 +36,12 @@ void YFG1FlowMeter::updateFlowData(bool verbose)
 {
     if ((millis() - m_oldTime_ms) > 1000) // Only process counters once per second
     {
-        detachInterrupt(m_inputPin);
-        float flowRate_mLitPerSec = ((1000.0 / (millis() - m_oldTime_ms)) * s_pulseCount) / m_calibrationFactor;
-        s_pulseCount              = 0;
-        attachInterrupt(m_inputPin, pulseCounter, FALLING);
+        portENTER_CRITICAL(&s_pulseMux);
+        uint16_t pulseCount = s_pulseCount;
+        s_pulseCount        = 0;
+        portEXIT_CRITICAL(&s_pulseMux);
+
+        float flowRate_mLitPerSec = ((1000.0 / (millis() - m_oldTime_ms)) * pulseCount) / m_calibrationFactor;
         m_oldTime_ms = millis();
 
         m_data.flowRate_LitMin = flowRate_mLitPerSec * 60 / 1000;

@@ -178,6 +178,8 @@ bool MqttHandler::subscribeTopics()
     success &= m_client->subscribe(m_topics.sub().CONFIG_WIFI_GET);
     success &= m_client->subscribe(m_topics.sub().CONFIG_MQTT_SET);
     success &= m_client->subscribe(m_topics.sub().CONFIG_MQTT_GET);
+    success &= m_client->subscribe(m_topics.sub().FLASH_SAVE_ALL);
+    success &= m_client->subscribe(m_topics.sub().FLASH_LOAD_ALL);
     return success;
 }
 

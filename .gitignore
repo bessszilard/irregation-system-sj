@@ -32,3 +32,4 @@
 *.app
 
 build/*
+pyside-bt-handler/v_env/

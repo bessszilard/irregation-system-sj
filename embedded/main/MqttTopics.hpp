@@ -26,6 +26,8 @@ public:
         static const char* CONFIG_WIFI_GET;
         static const char* CONFIG_MQTT_SET;
         static const char* CONFIG_MQTT_GET;
+        static const char* FLASH_SAVE_ALL;
+        static const char* FLASH_LOAD_ALL;
     };
 
     struct Publish

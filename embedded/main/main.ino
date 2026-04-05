@@ -20,8 +20,10 @@
 #include "MqttHandler.hpp"
 #include "BtHandler.hpp"
 #include "FramManager.hpp"
+#include "FlashManager.hpp"
 #include "PredefinedCommands.hpp"
 #include "SolenoidManager.hpp"
+#include "Version.hpp"
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 // Default credentials — overridden at runtime if FRAM config is found
@@ -33,6 +35,7 @@ char g_mqttPassword[60] = "";
 
 // TwoWire I2C_2 = TwoWire(0);
 FramManager framM;
+FlashManager flashM;
 
 const char* ntpServer        = "pool.ntp.org";
 const long gmtOffset_sec     = 3600 * 2;
@@ -90,7 +93,7 @@ void setup()
     {
         ; // wait for serial port to connect. Needed for native USB
     }
-    Wire.begin();
+    Wire.begin(BAROMETRIC_SDA, BAROMETRIC_SCL);
     lcdLayout.init();
 
     lcdLayout.connectingToSSID(g_wifiSsid, false, 0);
@@ -138,6 +141,8 @@ const uint32_t slowLoopInterval_ms = 5000;  // 5   seconds in milliseconds
 const uint32_t fastLoopInterval_ms = 500;   // 0.5 seconds in milliseconds
 bool storeCmdListToFRAMFlag        = false;
 bool loadCmdListFromFRAMFlag       = false;
+bool storeCmdListToFlashFlag       = false;
+bool loadCmdListFromFlashFlag      = false;
 uint32_t lastTime_ms                    = 0;
 const uint32_t mqttReconnectInterval_ms = 5000;
 uint32_t lastMqttReconnectAttempt_ms    = 0;
@@ -156,6 +161,7 @@ void loop()
     // each each time -------------------------------------------------------------
 
     processBtCommands();
+    btHd.loop();
 
     if (Serial.available() > 0)
     {
@@ -273,6 +279,36 @@ void loop()
         }
         else
             Serial.println("Failed to load commands from FRAM");
+    }
+
+    if (storeCmdListToFlashFlag)
+    {
+        storeCmdListToFlashFlag = false;
+        uint16_t relayGroupArray[NUMBER_OF_RELAY_GROUPS] = {0};
+        solM.relayGroups().getFRAMArray(relayGroupArray);
+        flashM.saveCommands(solM.getCmdListStr());
+        flashM.saveRelayGroups(relayGroupArray, NUMBER_OF_RELAY_GROUPS);
+    }
+    if (loadCmdListFromFlashFlag)
+    {
+        loadCmdListFromFlashFlag = false;
+        String cmdList;
+        if (flashM.loadCommands(cmdList))
+        {
+            Serial.print("Flash: loaded commands: ");
+            solM.loadCmdsFromString(cmdList);
+            Serial.println(cmdList);
+            mqttHd.publish(solM);
+        }
+        else
+            Serial.println("Failed to load commands from Flash");
+
+        uint16_t relayGroupArray[NUMBER_OF_RELAY_GROUPS] = {0};
+        if (flashM.loadRelayGroups(relayGroupArray, NUMBER_OF_RELAY_GROUPS))
+        {
+            solM.relayGroups().loadfromFRAMArray(relayGroupArray);
+            mqttHd.publish(solM.relayGroups());
+        }
     }
 
     bool atLeastOneRelayChanged = false;
@@ -605,6 +641,16 @@ void processCommand(const String& topicStr, const String& payload)
             mqttHd.publishConfigInfo(String(g_wifiSsid), String(g_mqttServer), g_mqttPort, false);
         }
     }
+    else if (topicStr == mqttHd.topics().sub().FLASH_SAVE_ALL)
+    {
+        Serial.println("Flash: save all");
+        storeCmdListToFlashFlag = true;
+    }
+    else if (topicStr == mqttHd.topics().sub().FLASH_LOAD_ALL)
+    {
+        Serial.println("Flash: load all");
+        loadCmdListFromFlashFlag = true;
+    }
     else if (topicStr == mqttHd.topics().sub().CONFIG_WIFI_GET ||
              topicStr == mqttHd.topics().sub().CONFIG_MQTT_GET)
     {
@@ -715,6 +761,8 @@ void loadConfigFromFRAM()
 
 void setupFRAM()
 {
+    flashM.begin();
+
     if (framM.begin())
     {
         Serial.println("Connected to FRAM");
@@ -732,11 +780,30 @@ void setupFRAM()
         Serial.print("Loadded commands: ");
         solM.loadCmdsFromString(cmdList);
     }
+    else if (flashM.loadCommands(cmdList))
+    {
+        Serial.print("Flash fallback: loaded commands: ");
+        solM.loadCmdsFromString(cmdList);
+    }
     else
     {
         resetSolenoidCommandsToDefault();
     }
+
     loadRelayGroupsFormFRAM();
+
+    // If FRAM relay groups failed, try flash
+    uint16_t relayGroupArray[NUMBER_OF_RELAY_GROUPS] = {0};
+    if (flashM.loadRelayGroups(relayGroupArray, NUMBER_OF_RELAY_GROUPS))
+    {
+        // Only apply if FRAM didn't already load them (check via a re-read attempt)
+        uint16_t framRelayGroupArray[NUMBER_OF_RELAY_GROUPS] = {0};
+        if (!framM.loadRelayGroups(framRelayGroupArray, NUMBER_OF_RELAY_GROUPS))
+        {
+            solM.relayGroups().loadfromFRAMArray(relayGroupArray);
+            Serial.println("Flash fallback: relay groups loaded");
+        }
+    }
 }
 
 bool updateRelayStateAndApply()
