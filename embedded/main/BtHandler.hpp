@@ -5,6 +5,7 @@
 #include <BLEServer.h>
 #include <BLE2902.h>
 #include <functional>
+#include "OtaHandler.hpp"
 
 // Nordic UART Service UUIDs (supported by nRF Connect, LightBlue, etc. on iOS & Android)
 #define NUS_SERVICE_UUID "6E400001-B5B3-F393-E0A9-E50E24DCCA9E"
@@ -22,6 +23,7 @@ public:
 
     void begin(const char* p_deviceName);
     bool isConnected() const;
+    bool shouldReboot() const;
     void publish(const char* p_topic, const String& p_message);
 
     // Call from the main loop — handles deferred publishes that must run outside BLE callbacks.
@@ -40,6 +42,7 @@ private:
     bool               m_deviceConnected;
     BtCmdCallback      m_cmdCallback;
     String             m_rxBuffer;
+    OtaHandler         m_otaHandler;
 
     static const size_t CHUNK_SIZE = 200;
 };

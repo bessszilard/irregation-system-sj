@@ -160,6 +160,13 @@ void loop()
     // loopStartTime = currentTime_ms;
     // each each time -------------------------------------------------------------
 
+    if (btHd.shouldReboot())
+    {
+        Serial.println("[OTA] Rebooting...");
+        delay(500);
+        ESP.restart();
+    }
+
     processBtCommands();
     btHd.loop();
 

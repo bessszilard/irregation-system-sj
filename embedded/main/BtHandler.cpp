@@ -59,6 +59,7 @@ void BtHandler::begin(const char* p_deviceName)
 //---------------------------------------------------------------
 {
     BLEDevice::init(p_deviceName);
+    BLEDevice::setMTU(517); // Request large MTU for faster OTA transfers
 
     m_server = BLEDevice::createServer();
     m_server->setCallbacks(new BtServerCallbacks(this));
@@ -76,6 +77,8 @@ void BtHandler::begin(const char* p_deviceName)
 
     pService->start();
 
+    m_otaHandler.registerService(m_server);
+
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(NUS_SERVICE_UUID);
     pAdvertising->setScanResponse(true);
@@ -92,6 +95,13 @@ bool BtHandler::isConnected() const
 }
 
 //---------------------------------------------------------------
+bool BtHandler::shouldReboot() const
+//---------------------------------------------------------------
+{
+    return m_otaHandler.shouldReboot();
+}
+
+//---------------------------------------------------------------
 void BtHandler::setConnected(bool p_connected)
 //---------------------------------------------------------------
 {
@@ -102,6 +112,7 @@ void BtHandler::setConnected(bool p_connected)
 void BtHandler::loop()
 //---------------------------------------------------------------
 {
+    m_otaHandler.loop();
 }
 
 //---------------------------------------------------------------

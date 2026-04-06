@@ -2,12 +2,13 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from PySide6.QtCore import QFile, QIODevice, Qt, Slot
-from PySide6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor
+from PySide6.QtCore import QFile, QIODevice, Qt, Signal, Slot
+from PySide6.QtGui import QAction, QColor, QFont, QTextCharFormat, QTextCursor
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
+    QFileDialog,
     QFrame,
     QGridLayout,
     QGroupBox,
@@ -16,6 +17,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QProgressBar,
     QPushButton,
     QScrollArea,
     QSizePolicy,
@@ -320,7 +322,6 @@ _CMD_TEMPLATES = {
 class CommandsPanel(QWidget):
     # Signal emitted when user wants to send a command (connected to BleClient).
     # (short_topic, payload)
-    from PySide6.QtCore import Signal
     command_requested = Signal(str, str)
 
     def __init__(self, parent=None):
@@ -447,6 +448,98 @@ class CommandsPanel(QWidget):
         self._resp_tabs.setCurrentIndex(3)
 
 
+# ─────────────────────────────────────────────────────── OTA panel
+
+class OtaPanel(QWidget):
+    flash_requested = Signal(str)  # filepath
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        outer = QVBoxLayout(self)
+        outer.setSpacing(10)
+
+        # File picker row
+        file_group = QGroupBox("Firmware File")
+        file_layout = QHBoxLayout(file_group)
+        self._path_edit = QLineEdit()
+        self._path_edit.setReadOnly(True)
+        self._path_edit.setPlaceholderText("Select a .bin file…")
+        self._browse_btn = QPushButton("Browse…")
+        self._browse_btn.setFixedWidth(90)
+        self._browse_btn.clicked.connect(self._browse)
+        file_layout.addWidget(self._path_edit, 1)
+        file_layout.addWidget(self._browse_btn)
+        outer.addWidget(file_group)
+
+        # Progress
+        progress_group = QGroupBox("Progress")
+        progress_layout = QVBoxLayout(progress_group)
+        self._progress_bar = QProgressBar()
+        self._progress_bar.setRange(0, 100)
+        self._progress_bar.setValue(0)
+        self._progress_bar.setTextVisible(True)
+        self._status_label = QLabel("Ready")
+        self._status_label.setAlignment(Qt.AlignCenter)
+        self._status_label.setStyleSheet("font-size: 12px; padding: 4px;")
+        progress_layout.addWidget(self._progress_bar)
+        progress_layout.addWidget(self._status_label)
+        outer.addWidget(progress_group)
+
+        # Flash button
+        self._flash_btn = QPushButton("Flash Firmware")
+        self._flash_btn.setEnabled(False)
+        self._flash_btn.setFixedHeight(36)
+        self._flash_btn.clicked.connect(self._on_flash)
+        outer.addWidget(self._flash_btn)
+        outer.addStretch()
+
+    def set_connected(self, connected: bool):
+        self._flash_btn.setEnabled(connected and bool(self._path_edit.text()))
+
+    def _browse(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Select firmware", "", "Binary files (*.bin)")
+        if path:
+            self._path_edit.setText(path)
+            self._flash_btn.setEnabled(True)
+
+    def _on_flash(self):
+        path = self._path_edit.text()
+        if path:
+            self._flash_btn.setEnabled(False)
+            self._progress_bar.setValue(0)
+            self._set_status("Sending BEGIN…", "#fff176")
+            self.flash_requested.emit(path)
+
+    def on_progress(self, written: int, total: int):
+        pct = int(written * 100 / total) if total else 0
+        self._progress_bar.setValue(pct)
+        self._set_status(f"Flashing… {written // 1024} / {total // 1024} KB", "#fff176")
+
+    def on_status(self, msg: str):
+        if msg == "READY":
+            self._set_status("Transferring firmware…", "#fff176")
+        elif msg == "SUCCESS":
+            self._progress_bar.setValue(100)
+            self._set_status("Success! Device is rebooting.", "#a5d6a7")
+            self._flash_btn.setEnabled(True)
+        elif msg == "ABORTED":
+            self._set_status("Aborted.", "#ffb74d")
+            self._flash_btn.setEnabled(True)
+        elif msg.startswith("ERROR:"):
+            self._set_status(msg, "#ef9a9a")
+            self._flash_btn.setEnabled(True)
+        elif msg.startswith("PROGRESS:"):
+            try:
+                pct = int(msg.split(":")[1])
+                self._progress_bar.setValue(pct)
+            except ValueError:
+                pass
+
+    def _set_status(self, text: str, color: str = "#eeeeee"):
+        self._status_label.setText(text)
+        self._status_label.setStyleSheet(f"font-size: 12px; padding: 4px; color: {color};")
+
+
 # ──────────────────────────────────────────────────── main window
 
 class MainWindow(QMainWindow):
@@ -486,8 +579,17 @@ class MainWindow(QMainWindow):
         self._send_input       = central.findChild(QLineEdit,      "send_input")
         self._send_btn         = central.findChild(QPushButton,    "send_btn")
 
+        self.ota_panel = OtaPanel()
+        self.tabs.addTab(self.ota_panel, "OTA Update")
+
         self.setStatusBar(QStatusBar())
         self.statusBar().showMessage("Ready — click Scan to discover devices")
+
+        # Menu bar
+        device_menu = self.menuBar().addMenu("Device")
+        self._fw_update_action = QAction("Firmware Update…", self)
+        self._fw_update_action.setEnabled(False)
+        device_menu.addAction(self._fw_update_action)
 
     def _connect_signals(self):
         self._get_version_btn.clicked.connect(self._query_version)
@@ -504,8 +606,12 @@ class MainWindow(QMainWindow):
         self._ble.disconnected.connect(self._on_disconnected)
         self._ble.message_received.connect(self._on_message)
         self._ble.error.connect(self._on_error)
+        self._ble.ota_progress.connect(self.ota_panel.on_progress)
+        self._ble.ota_status.connect(self.ota_panel.on_status)
 
         self.cmd_panel.command_requested.connect(self._send_command)
+        self.ota_panel.flash_requested.connect(self._start_ota)
+        self._fw_update_action.triggered.connect(self._open_fw_update_dialog)
 
     # ─────────────── actions
 
@@ -550,6 +656,24 @@ class MainWindow(QMainWindow):
         self._ble.send_command(short_topic, payload)
         self.log_panel.append("sent", f"{short_topic}: {payload}")
 
+    @Slot(str)
+    def _start_ota(self, filepath: str):
+        self.log_panel.append("system", f"OTA started: {filepath}")
+        self._ble.send_ota(filepath)
+
+    @Slot()
+    def _open_fw_update_dialog(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Select firmware binary", "", "Binary files (*.bin)")
+        if not path:
+            return
+        # Switch to OTA tab so the user can see progress
+        self.tabs.setCurrentWidget(self.ota_panel)
+        self.ota_panel._path_edit.setText(path)
+        self.ota_panel._flash_btn.setEnabled(False)
+        self.ota_panel._progress_bar.setValue(0)
+        self.ota_panel._set_status("Sending BEGIN…", "#fff176")
+        self._start_ota(path)
+
     # ─────────────── BLE slots
 
     @Slot(str, str)
@@ -581,6 +705,8 @@ class MainWindow(QMainWindow):
         self.cmd_panel.set_enabled(True)
         self._version_queried = False
         self._get_version_btn.setEnabled(True)
+        self.ota_panel.set_connected(True)
+        self._fw_update_action.setEnabled(True)
         self.statusBar().showMessage(f"Connected — {address}")
         self.log_panel.append("system", f"Connected to {address}")
 
@@ -594,6 +720,8 @@ class MainWindow(QMainWindow):
         self._send_btn.setEnabled(False)
         self._get_version_btn.setEnabled(False)
         self.cmd_panel.set_enabled(False)
+        self.ota_panel.set_connected(False)
+        self._fw_update_action.setEnabled(False)
         self.fw_label.setText("Firmware: —")
         self.fw_label.setStyleSheet("color: #9e9e9e; font-size: 11px; padding: 2px 4px;")
         self.statusBar().showMessage("Disconnected")
