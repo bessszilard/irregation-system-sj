@@ -3,10 +3,10 @@
 
 //---------------------------------------------------------------
 class BtServerCallbacks : public BLEServerCallbacks
+//---------------------------------------------------------------
 {
 public:
-    BtServerCallbacks(BtHandler* p_handler)
-        : m_handler(p_handler)
+    BtServerCallbacks(BtHandler* p_handler) : m_handler(p_handler)
     {
     }
 
@@ -29,10 +29,10 @@ private:
 
 //---------------------------------------------------------------
 class BtRxCallbacks : public BLECharacteristicCallbacks
+//---------------------------------------------------------------
 {
 public:
-    BtRxCallbacks(BtHandler* p_handler)
-        : m_handler(p_handler)
+    BtRxCallbacks(BtHandler* p_handler) : m_handler(p_handler)
     {
     }
 
@@ -46,10 +46,7 @@ private:
 };
 
 //---------------------------------------------------------------
-BtHandler::BtHandler()
-    : m_server(nullptr)
-    , m_txChar(nullptr)
-    , m_deviceConnected(false)
+BtHandler::BtHandler() : m_server(nullptr), m_txChar(nullptr), m_deviceConnected(false)
 //---------------------------------------------------------------
 {
 }
@@ -71,8 +68,8 @@ void BtHandler::begin(const char* p_deviceName)
     m_txChar->addDescriptor(new BLE2902());
 
     // RX: client → ESP32 (write)
-    BLECharacteristic* rxChar = pService->createCharacteristic(
-        NUS_RX_CHAR_UUID, BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_WRITE_NR);
+    BLECharacteristic* rxChar =
+        pService->createCharacteristic(NUS_RX_CHAR_UUID, BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_WRITE_NR);
     rxChar->setCallbacks(new BtRxCallbacks(this));
 
     pService->start();
@@ -99,6 +96,13 @@ bool BtHandler::shouldReboot() const
 //---------------------------------------------------------------
 {
     return m_otaHandler.shouldReboot();
+}
+
+//---------------------------------------------------------------
+bool BtHandler::isFirmwareUpdateActive() const
+//---------------------------------------------------------------
+{
+    return m_otaHandler.isInProgress();
 }
 
 //---------------------------------------------------------------

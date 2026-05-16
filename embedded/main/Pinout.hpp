@@ -21,7 +21,7 @@
 //
 //  Function              WROOM pin   S3 pin
 //  ──────────────────────────────────────────────────────────
-//  LED                   BUILTIN     BUILTIN
+//  LED                   GPIO2       BUILTIN
 //  RELAY_ARRAY_DATA          32          18
 //  RELAY_ARRAY_CLOCK         33           3
 //  RELAY_ARRAY_LATCH         25          46
@@ -33,8 +33,13 @@
 //  HC12_RXD (ESP RX)         16          19
 // ============================================================
 
-#define LED_PIN     LED_BUILTIN
-#define OTA_LED_PIN (45)
+#if defined(LED_BUILTIN)
+    #define LED_PIN LED_BUILTIN
+#elif defined(BOARD_ESP32_WROOM)
+    #define LED_PIN (2)
+#else  // BOARD_ESP32_S3
+    #define LED_PIN (48)
+#endif
 
 #ifdef BOARD_ESP32_WROOM
     #define RELAY_ARRAY_DATA  (32)

@@ -24,6 +24,7 @@ public:
     void begin(const char* p_deviceName);
     bool isConnected() const;
     bool shouldReboot() const;
+    bool isFirmwareUpdateActive() const;
     void publish(const char* p_topic, const String& p_message);
 
     // Call from the main loop — handles deferred publishes that must run outside BLE callbacks.

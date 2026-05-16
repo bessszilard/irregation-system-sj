@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Arduino",
-            "compilerPath": "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2411/bin/xtensa-esp32-elf-g++",
+            "compilerPath": "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2507/bin/xtensa-esp32-elf-g++",
             "compilerArgs": [
                 "-MMD",
                 "-w",
@@ -12,15 +12,15 @@
             ],
             "intelliSenseMode": "gcc-x64",
             "includePath": [
-                "/home/szilard/git/irregation-system-sj/embedded/main",
-                "/home/szilard/.arduino15/packages/esp32/tools/esp32-arduino-libs/idf-release_v5.4-858a988d-v1/esp32/qio_qspi/include",
-                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.2.1/cores/esp32",
-                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.2.1/variants/uPesy_esp32_wroom_devkit",
-                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.2.1/libraries/Wire/src",
+                "/home/szilard/git/personal/irregation-system-sj/embedded/main",
+                "/home/szilard/.arduino15/packages/esp32/tools/esp32-arduino-libs/idf-release_v5.5-07e9bf49-v1/esp32/qio_qspi/include",
+                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.3.2/cores/esp32",
+                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.3.2/variants/uPesy_esp32_wroom_devkit",
+                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.3.2/libraries/Wire/src",
                 "/home/szilard/Arduino/libraries/Rtc_by_Makuna/src",
                 "/home/szilard/Arduino/libraries/PubSubClient/src",
-                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.2.1/libraries/WiFi/src",
-                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.2.1/libraries/Network/src",
+                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.3.2/libraries/WiFi/src",
+                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.3.2/libraries/Network/src",
                 "/home/szilard/Arduino/libraries/DallasTemperature",
                 "/home/szilard/Arduino/libraries/OneWire",
                 "/home/szilard/Arduino/libraries/DHT_sensor_library",
@@ -32,16 +32,16 @@
                 "/home/szilard/Arduino/libraries/Adafruit_FRAM_I2C",
                 "/home/szilard/Arduino/libraries/Adafruit_BusIO",
                 "/home/szilard/Arduino/libraries/Adafruit_Unified_Sensor",
-                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.2.1/libraries/SPI/src",
-                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2411/xtensa-esp-elf/include/c++/14.2.0",
-                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2411/xtensa-esp-elf/include/c++/14.2.0/xtensa-esp-elf/esp32",
-                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2411/xtensa-esp-elf/include/c++/14.2.0/backward",
-                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2411/lib/gcc/xtensa-esp-elf/14.2.0/include",
-                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2411/lib/gcc/xtensa-esp-elf/14.2.0/include-fixed",
-                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2411/xtensa-esp-elf/include"
+                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.3.2/libraries/SPI/src",
+                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2507/xtensa-esp-elf/include/c++/14.2.0",
+                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2507/xtensa-esp-elf/include/c++/14.2.0/xtensa-esp-elf/esp32",
+                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2507/xtensa-esp-elf/include/c++/14.2.0/backward",
+                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2507/lib/gcc/xtensa-esp-elf/14.2.0/include",
+                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2507/lib/gcc/xtensa-esp-elf/14.2.0/include-fixed",
+                "/home/szilard/.arduino15/packages/esp32/tools/esp-x32/2507/xtensa-esp-elf/include"
             ],
             "forcedInclude": [
-                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.2.1/cores/esp32/Arduino.h"
+                "/home/szilard/.arduino15/packages/esp32/hardware/esp32/3.3.2/cores/esp32/Arduino.h"
             ],
             "cStandard": "c11",
             "cppStandard": "c++11",

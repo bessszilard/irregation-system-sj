@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKETCH_DIR="$SCRIPT_DIR/embedded/main"
 ARDUINO_CLI="${ARDUINO_CLI:-/home/szilard/bin/arduino-cli}"
-FQBN="esp32:esp32:esp32:FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=enabled"
+FQBN="esp32:esp32:esp32s3:FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=enabled"
 BUILD_DIR="$SCRIPT_DIR/build/esp32"
 
 usage() {
@@ -34,7 +34,12 @@ mkdir -p "$BUILD_DIR"
     --warnings default \
     "$SKETCH_DIR"
 
-VERSION=$(grep -oP '(?<=FW_VERSION\s{4}")[^"]+' "$SKETCH_DIR/Version.hpp")
+VERSION=$(sed -nE 's/^#define[[:space:]]+FW_VERSION[[:space:]]+"([^"]+)".*/\1/p' "$SKETCH_DIR/Version.hpp")
+if [[ -z "$VERSION" ]]; then
+    echo "Failed to read FW_VERSION from $SKETCH_DIR/Version.hpp" >&2
+    exit 1
+fi
+
 BINARY="$BUILD_DIR/main.ino.bin"
 if [[ -f "$BINARY" ]]; then
     RENAMED="$BUILD_DIR/ESP32_${VERSION}.bin"

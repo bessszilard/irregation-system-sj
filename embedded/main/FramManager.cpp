@@ -1,16 +1,22 @@
 #include "FramManager.hpp"
 #include "FramMap.hpp"
 
-FramManager::FramManager() : m_fram() {}
+FramManager::FramManager() : m_fram()
+{
+}
 
+//---------------------------------------------------------------
 bool FramManager::begin()
+//---------------------------------------------------------------
 {
     return m_fram.begin(0x50);
 }
 
 // TODOsz clean up
 
+//---------------------------------------------------------------
 void FramManager::printId()
+//---------------------------------------------------------------
 {
     uint16_t manufacturerID;
     uint16_t productID;
@@ -19,7 +25,9 @@ void FramManager::printId()
     Serial.printf("manufacturerID %d, SerialId %d", manufacturerID, productID);
 }
 
+//---------------------------------------------------------------
 bool FramManager::saveCommands(const String& cmdList)
+//---------------------------------------------------------------
 {
     if (false == writeAndVerify16(CMDS_ID_ADDR, CMDS_ID_NUMBER))
     {
@@ -41,7 +49,9 @@ bool FramManager::saveCommands(const String& cmdList)
     return true;
 }
 
+//---------------------------------------------------------------
 bool FramManager::loadCommands(String& cmdList)
+//---------------------------------------------------------------
 {
     uint16_t cmdId = 0;
     if (false == read16(CMDS_ID_ADDR, cmdId) || CMDS_ID_NUMBER != cmdId)
@@ -70,7 +80,9 @@ bool FramManager::loadCommands(String& cmdList)
     return true;
 }
 
+//---------------------------------------------------------------
 bool FramManager::writeAndVerify16(uint16_t address, uint16_t data)
+//---------------------------------------------------------------
 {
     if (false == m_fram.write(address, (uint8_t*)&data, sizeof(uint16_t)))
     {
@@ -93,7 +105,9 @@ bool FramManager::writeAndVerify16(uint16_t address, uint16_t data)
     return true;
 }
 
+//---------------------------------------------------------------
 bool FramManager::writeStringAndVerify(uint16_t address, const String& strData)
+//---------------------------------------------------------------
 {
     Serial.printf("writing str len %d %s\n", strData.length(), strData.c_str());
     // if (false == m_fram.write(address, (uint8_t*)strData.c_str(), strData.length()+1))
@@ -138,7 +152,9 @@ bool FramManager::writeStringAndVerify(uint16_t address, const String& strData)
     return everythingOkay;
 }
 
+//---------------------------------------------------------------
 bool FramManager::read16(uint16_t address, uint16_t& data)
+//---------------------------------------------------------------
 {
     if (false == m_fram.read(address, (uint8_t*)&data, sizeof(uint16_t)))
     {
@@ -148,7 +164,9 @@ bool FramManager::read16(uint16_t address, uint16_t& data)
     return true;
 }
 
+//---------------------------------------------------------------
 bool FramManager::readString(uint16_t address, String& strData, uint16_t length)
+//---------------------------------------------------------------
 {
     const int chunkSize = 64;
     uint8_t* buffer     = (uint8_t*)malloc(length);
@@ -176,7 +194,9 @@ bool FramManager::readString(uint16_t address, String& strData, uint16_t length)
     return true;
 }
 
+//---------------------------------------------------------------
 bool FramManager::saveWifiConfig(const String& ssid, const String& password)
+//---------------------------------------------------------------
 {
     if (false == writeStringAndVerify(WIFI_SSID_ADDR, ssid))
     {
@@ -197,7 +217,9 @@ bool FramManager::saveWifiConfig(const String& ssid, const String& password)
     return true;
 }
 
+//---------------------------------------------------------------
 bool FramManager::loadWifiConfig(String& ssid, String& password)
+//---------------------------------------------------------------
 {
     uint16_t id = 0;
     if (false == read16(WIFI_CONFIG_ID_ADDR, id) || id != WIFI_CONFIG_ID)
@@ -219,7 +241,9 @@ bool FramManager::loadWifiConfig(String& ssid, String& password)
     return true;
 }
 
+//---------------------------------------------------------------
 bool FramManager::saveMqttConfig(const String& server, uint16_t port, const String& password)
+//---------------------------------------------------------------
 {
     if (false == writeStringAndVerify(MQTT_SERVER_URL_ADDR, server))
     {
@@ -245,7 +269,9 @@ bool FramManager::saveMqttConfig(const String& server, uint16_t port, const Stri
     return true;
 }
 
+//---------------------------------------------------------------
 bool FramManager::loadMqttConfig(String& server, uint16_t& port, String& password)
+//---------------------------------------------------------------
 {
     uint16_t id = 0;
     if (false == read16(MQTT_CONFIG_ID_ADDR, id) || id != MQTT_CONFIG_ID)
@@ -272,7 +298,9 @@ bool FramManager::loadMqttConfig(String& server, uint16_t& port, String& passwor
     return true;
 }
 
+//---------------------------------------------------------------
 bool FramManager::saveRelayGroups(uint16_t* p_data, uint16_t p_length)
+//---------------------------------------------------------------
 {
     if (false == writeAndVerify16(RELAY_GROUPS_ID_ADDR, RELAY_GROUPS_ID))
     {
@@ -292,7 +320,9 @@ bool FramManager::saveRelayGroups(uint16_t* p_data, uint16_t p_length)
     return true;
 }
 
+//---------------------------------------------------------------
 bool FramManager::loadRelayGroups(uint16_t* p_data, uint16_t p_length)
+//---------------------------------------------------------------
 {
     uint16_t relayGroupId = 0;
     if (false == read16(RELAY_GROUPS_ID_ADDR, relayGroupId) || relayGroupId != RELAY_GROUPS_ID)

@@ -1,36 +1,38 @@
 
-#include <Wire.h>
 #include <RtcDS3231.h>
+#include <Wire.h>
 #define MQTT_MAX_TRANSFER_SIZE 512 // or 256
+#include "ADS1X15.h"
+#include "time.h"
+#include "uFire_SHT20.h"
+#include <DallasTemperature.h>
+#include <OneWire.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <mutex>
 #include <queue>
-#include <DallasTemperature.h>
-#include <OneWire.h>
-#include "uFire_SHT20.h"
-#include "time.h"
-#include "ADS1X15.h"
 
-#include "Structures.hpp"
-#include "Pinout.hpp"
-#include "RelayArray.hpp"
-#include "YFG1FlowMeter.hpp"
+#include "BtHandler.hpp"
+#include "FlashManager.hpp"
+#include "FramManager.hpp"
 #include "LcdLayouts.hpp"
 #include "MqttHandler.hpp"
-#include "BtHandler.hpp"
-#include "FramManager.hpp"
-#include "FlashManager.hpp"
+#include "Pinout.hpp"
 #include "PredefinedCommands.hpp"
+#include "RelayArray.hpp"
 #include "SolenoidManager.hpp"
+#include "Structures.hpp"
 #include "Version.hpp"
+#include "YFG1FlowMeter.hpp"
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 // Default credentials — overridden at runtime if FRAM config is found
 char g_wifiSsid[32]     = "VM28AE28";
 char g_wifiPassword[60] = "cL3wcfwbjqMz";
-char g_mqttServer[60]   = "test.mosquitto.org";
-uint16_t g_mqttPort     = 1883;
+// char g_mqttServer[60]   = "test.mosquitto.org";
+// uint16_t g_mqttPort     = 1883;
+char g_mqttServer[60]   = "shortline.proxy.rlwy.net";
+uint16_t g_mqttPort     = 21977;
 char g_mqttPassword[60] = "";
 
 // TwoWire I2C_2 = TwoWire(0);
@@ -79,7 +81,7 @@ bool updateRelayStateAndApply();
 
 // BLE RX commands arrive from the BLE task; queue them for processing on the main loop task.
 std::queue<std::pair<String, String>> g_btCmdQueue;
-std::mutex                            g_btCmdMutex;
+std::mutex g_btCmdMutex;
 
 void setup()
 {
@@ -87,6 +89,7 @@ void setup()
 
     Serial.begin(115200);
     Serial.setTimeout(100);
+    espClient.setConnectionTimeout(100);
     pinMode(LED_PIN, OUTPUT);
 
     while (!Serial)
@@ -122,10 +125,12 @@ void setup()
     mqttHd.setBtHandler(&btHd);
 
     // BLE RX: queue incoming commands for safe processing on the main loop task.
-    btHd.setCommandCallback([](const String& shortTopic, const String& payload) {
-        std::lock_guard<std::mutex> lock(g_btCmdMutex);
-        g_btCmdQueue.push({MqttTopics::RootWithId() + shortTopic, payload});
-    });
+    btHd.setCommandCallback(
+        [](const String& shortTopic, const String& payload)
+        {
+            std::lock_guard<std::mutex> lock(g_btCmdMutex);
+            g_btCmdQueue.push({MqttTopics::RootWithId() + shortTopic, payload});
+        });
 }
 
 RelayArrayStates relayStates(RelayState::Unknown);
@@ -135,17 +140,18 @@ WifiSignalStrength filteredWifiSignals = WifiSignalStrength::Unknown;
 
 char myData[50];
 
-uint32_t slowLoopCalled_ms         = 0;     // Store the last time the code ran
-uint32_t fastLoopCalled_ms         = 0;     // Store the last time the code ran
-const uint32_t slowLoopInterval_ms = 5000;  // 5   seconds in milliseconds
-const uint32_t fastLoopInterval_ms = 500;   // 0.5 seconds in milliseconds
-bool storeCmdListToFRAMFlag        = false;
-bool loadCmdListFromFRAMFlag       = false;
-bool storeCmdListToFlashFlag       = false;
-bool loadCmdListFromFlashFlag      = false;
-uint32_t lastTime_ms                    = 0;
-const uint32_t mqttReconnectInterval_ms = 5000;
-uint32_t lastMqttReconnectAttempt_ms    = 0;
+uint32_t slowLoopCalled_ms                       = 0; // Store the last time the code ran
+uint32_t fastLoopCalled_ms                       = 0; // Store the last time the code ran
+uint32_t ledBlinkCalled_ms                       = 0;
+const uint32_t slowLoopInterval_ms               = 5000; // 5   seconds in milliseconds
+const uint32_t fastLoopInterval_ms               = 500;  // 0.5 seconds in milliseconds
+const uint32_t defaultLedBlinkInterval_ms        = 500;
+const uint32_t firmwareUpdateLedBlinkInterval_ms = 250;
+bool storeCmdListToFRAMFlag                      = false;
+bool loadCmdListFromFRAMFlag                     = false;
+bool storeCmdListToFlashFlag                     = false;
+bool loadCmdListFromFlashFlag                    = false;
+uint32_t lastTime_ms                             = 0;
 
 void loop()
 {
@@ -170,6 +176,14 @@ void loop()
     processBtCommands();
     btHd.loop();
 
+    const uint32_t ledBlinkInterval_ms = btHd.isFirmwareUpdateActive() ? firmwareUpdateLedBlinkInterval_ms : defaultLedBlinkInterval_ms;
+    if (currentTime_ms - ledBlinkCalled_ms >= ledBlinkInterval_ms)
+    {
+        ledBlinkCalled_ms = currentTime_ms;
+        bool ledState     = !digitalRead(LED_PIN);
+        digitalWrite(LED_PIN, ledState);
+    }
+
     if (Serial.available() > 0)
     {
         String incoming = Serial.readStringUntil('\n');
@@ -180,7 +194,7 @@ void loop()
         {
             // Format: SET_WIFI:ssid;password
             String params = incoming.substring(9); // skip "SET_WIFI:"
-            int    sep    = params.indexOf(';');
+            int sep       = params.indexOf(';');
             if (sep > 0)
             {
                 params.substring(0, sep).toCharArray(g_wifiSsid, sizeof(g_wifiSsid));
@@ -201,8 +215,8 @@ void loop()
         {
             // Format: SET_MQTT:server;port;password
             String params = incoming.substring(9); // skip "SET_MQTT:"
-            int    sep1   = params.indexOf(';');
-            int    sep2   = (sep1 >= 0) ? params.indexOf(';', sep1 + 1) : -1;
+            int sep1      = params.indexOf(';');
+            int sep2      = (sep1 >= 0) ? params.indexOf(';', sep1 + 1) : -1;
             if (sep1 > 0)
             {
                 params.substring(0, sep1).toCharArray(g_mqttServer, sizeof(g_mqttServer));
@@ -244,23 +258,7 @@ void loop()
     // we only check mqtt if Wifi is connected.
     if (WL_CONNECTED == WiFi.status())
     {
-        if (false == mqttHd.connected())
-        {
-            // Only attempt reconnection every 5 seconds
-            if (currentTime_ms - lastMqttReconnectAttempt_ms >= mqttReconnectInterval_ms)
-            {
-                lastMqttReconnectAttempt_ms = currentTime_ms;
-                Serial.println("Attempting MQTT reconnection...");
-                if (false == mqttHd.init(g_mqttServer, g_mqttPort, callback))
-                {
-                    Serial.println("Failed to set up the Mqtt server");
-                }
-            }
-        }
-        if (mqttHd.connected())
-        {
-            mqttHd.loop();
-        }
+        mqttHd.loop();
     }
     else
     {
@@ -290,7 +288,7 @@ void loop()
 
     if (storeCmdListToFlashFlag)
     {
-        storeCmdListToFlashFlag = false;
+        storeCmdListToFlashFlag                          = false;
         uint16_t relayGroupArray[NUMBER_OF_RELAY_GROUPS] = {0};
         solM.relayGroups().getFRAMArray(relayGroupArray);
         flashM.saveCommands(solM.getCmdListStr());
@@ -340,8 +338,6 @@ void loop()
 
         filteredRssi = ToWifiSignalStrength(Utils::GetSmoothedRSSI(WiFi.RSSI()));
 
-        // Update LCD
-        digitalWrite(LED_PIN, !digitalRead(LED_PIN));
         atLeastOneRelayChanged = updateRelayStateAndApply();
     }
 
@@ -360,11 +356,7 @@ void loop()
     {
         oldWifiStatus = WiFi.status();
         oldRssi       = filteredRssi;
-        lcdLayout.updateDef(WiFi.status(),
-                            WiFi.RSSI(),
-                            mqttHd.connected(),
-                            relayStates,
-                            mqttHd.topics().GetShortDeviceId());
+        lcdLayout.updateDef(WiFi.status(), WiFi.RSSI(), mqttHd.connected(), relayStates, mqttHd.topics().GetShortDeviceId());
     }
 }
 
@@ -426,7 +418,7 @@ bool localTimeUpdate(LocalTime& p_data, bool p_verbose)
         LocalTime rtcTime(rtc.GetDateTime());
         // int year, month;
         // rtc.get(&rtcTime.tm_sec, &rtcTime.tm_min, &rtcTime.tm_hour, &rtcTime.tm_mday, &month, &year);
-        p_data = rtcTime;
+        p_data       = rtcTime;
         p_data.valid = true;
         if (p_verbose)
             Serial.println("Rtc time: " + rtcTime.toString());
@@ -658,8 +650,7 @@ void processCommand(const String& topicStr, const String& payload)
         Serial.println("Flash: load all");
         loadCmdListFromFlashFlag = true;
     }
-    else if (topicStr == mqttHd.topics().sub().CONFIG_WIFI_GET ||
-             topicStr == mqttHd.topics().sub().CONFIG_MQTT_GET)
+    else if (topicStr == mqttHd.topics().sub().CONFIG_WIFI_GET || topicStr == mqttHd.topics().sub().CONFIG_MQTT_GET)
     {
         mqttHd.publishConfigInfo(String(g_wifiSsid), String(g_mqttServer), g_mqttPort, true);
     }

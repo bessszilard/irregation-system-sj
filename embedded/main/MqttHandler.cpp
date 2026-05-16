@@ -1,12 +1,15 @@
 #include "MqttHandler.hpp"
 
-static const unsigned long RECONNECT_INTERVAL_MS = 5000;
+static const unsigned long RECONNECT_INTERVAL_MIN_MS = 5000;
+static const unsigned long RECONNECT_INTERVAL_MAX_MS = 60000;
+static const uint16_t      MQTT_SOCKET_TIMEOUT_SECONDS = 1;
 
 //---------------------------------------------------------------
 MqttHandler::MqttHandler(PubSubClient* p_client)
     : m_client(p_client)
     , m_btHandler(nullptr)
     , m_lastReconnectAttempt_ms(0)
+    , m_reconnectInterval_ms(RECONNECT_INTERVAL_MIN_MS)
 //---------------------------------------------------------------
 {
     if (m_client != nullptr)
@@ -34,6 +37,9 @@ bool MqttHandler::init(const char* p_domain, uint16_t p_port, MQTT_CALLBACK_SIGN
     char clientID[20];
 
     m_client->setServer(p_domain, p_port);
+    m_client->setCallback(callback);
+    m_client->setSocketTimeout(MQTT_SOCKET_TIMEOUT_SECONDS);
+
     if (m_client->connect("esp32_irrigator"))
     {
         Serial.print("Connection has been established with ");
@@ -50,10 +56,6 @@ bool MqttHandler::init(const char* p_domain, uint16_t p_port, MQTT_CALLBACK_SIGN
     {
         Serial.println("Failed to subscribe topics");
     }
-
-    // comes through the macro
-    m_client->setCallback(callback);
-    m_client->setSocketTimeout(0);
 
     return true;
 }
@@ -150,6 +152,10 @@ bool MqttHandler::loop()
     {
         reconnectMqtt();
     }
+    if (false == connected())
+    {
+        return false;
+    }
     return m_client->loop();
 }
 
@@ -197,16 +203,18 @@ void MqttHandler::reconnectMqtt()
 //---------------------------------------------------------------
 {
     unsigned long now = millis();
-    if (now - m_lastReconnectAttempt_ms < RECONNECT_INTERVAL_MS)
+    if (now - m_lastReconnectAttempt_ms < m_reconnectInterval_ms)
     {
         return;
     }
     m_lastReconnectAttempt_ms = now;
 
-    Serial.print("Attempting MQTT connection...");
+    Serial.println("Attempting MQTT connection...");
+    const unsigned long started_ms = millis();
     if (m_client->connect("espClient"))
     {
         Serial.println("connected");
+        m_reconnectInterval_ms = RECONNECT_INTERVAL_MIN_MS;
         if (false == subscribeTopics())
         {
             Serial.println("Failed to subscribe topics");
@@ -214,9 +222,16 @@ void MqttHandler::reconnectMqtt()
     }
     else
     {
+        const unsigned long elapsed_ms = millis() - started_ms;
+        m_reconnectInterval_ms        = min(m_reconnectInterval_ms * 2, RECONNECT_INTERVAL_MAX_MS);
         Serial.print("failed, rc=");
         Serial.print(m_client->state());
-        Serial.println(" will retry in 5 seconds");
+        Serial.print(" elapsed_ms=");
+        Serial.print(elapsed_ms);
+        Serial.print(" will retry in ");
+        Serial.print(m_reconnectInterval_ms / 1000);
+        Serial.println(" seconds");
+        m_client->disconnect();
     }
 }
 

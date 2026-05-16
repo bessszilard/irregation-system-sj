@@ -22,6 +22,7 @@ public:
 
     // Returns true once after a successful flash — caller should reboot.
     bool shouldReboot() const;
+    bool isInProgress() const;
 
     // Called by BLE callbacks — not for external use.
     void onCtrlWrite(const String& p_data);
@@ -38,4 +39,6 @@ private:
     size_t             m_totalSize;
     size_t             m_written;
     uint8_t            m_lastProgressPct;
+    uint32_t           m_lastLedToggle_ms;
+    bool               m_ledState;
 };

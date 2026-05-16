@@ -41,6 +41,7 @@ private:
     PubSubClient* m_client;
     BtHandler*    m_btHandler;
     unsigned long m_lastReconnectAttempt_ms;
+    unsigned long m_reconnectInterval_ms;
 
     void publish(const char* topic, const String& message);
     MqttTopics m_topics;

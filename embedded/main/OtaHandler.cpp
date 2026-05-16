@@ -1,6 +1,9 @@
 #include "OtaHandler.hpp"
+#include "Pinout.hpp"
 #include <Update.h>
 #include <BLEUtils.h>
+
+static const uint32_t OTA_LED_BLINK_INTERVAL_MS = 250;
 
 //---------------------------------------------------------------
 class OtaCtrlCallbacks : public BLECharacteristicCallbacks
@@ -38,6 +41,8 @@ OtaHandler::OtaHandler()
     , m_totalSize(0)
     , m_written(0)
     , m_lastProgressPct(0)
+    , m_lastLedToggle_ms(0)
+    , m_ledState(false)
 //---------------------------------------------------------------
 {
 }
@@ -101,6 +106,13 @@ bool OtaHandler::shouldReboot() const
 }
 
 //---------------------------------------------------------------
+bool OtaHandler::isInProgress() const
+//---------------------------------------------------------------
+{
+    return m_inProgress || m_transferComplete;
+}
+
+//---------------------------------------------------------------
 // Handles "BEGIN:<total_bytes>" and "ABORT" control commands.
 void OtaHandler::onCtrlWrite(const String& p_data)
 //---------------------------------------------------------------
@@ -133,6 +145,9 @@ void OtaHandler::onCtrlWrite(const String& p_data)
         m_transferComplete = false;
         m_lastProgressPct  = 0;
         m_shouldReboot     = false;
+        m_lastLedToggle_ms = millis();
+        m_ledState         = true;
+        digitalWrite(LED_PIN, m_ledState);
         Serial.printf("[OTA] Started, expecting %u bytes\n", (unsigned)totalSize);
         sendStatus("READY");
     }
@@ -155,6 +170,14 @@ void OtaHandler::onDataWrite(const uint8_t* p_data, size_t p_len)
 {
     if (!m_inProgress || p_len == 0)
         return;
+
+    const uint32_t now = millis();
+    if (now - m_lastLedToggle_ms >= OTA_LED_BLINK_INTERVAL_MS)
+    {
+        m_lastLedToggle_ms = now;
+        m_ledState         = !m_ledState;
+        digitalWrite(LED_PIN, m_ledState);
+    }
 
     size_t written = Update.write(const_cast<uint8_t*>(p_data), p_len);
     if (written != p_len)
@@ -197,7 +220,8 @@ void OtaHandler::abortOta(const char* p_reason)
 //---------------------------------------------------------------
 {
     Update.abort();
-    m_inProgress = false;
+    m_inProgress       = false;
+    m_transferComplete = false;
     String msg   = "ERROR:";
     msg         += p_reason;
     sendStatus(msg);
