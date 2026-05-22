@@ -1,0 +1,43 @@
+# Custom .clang-format based on LLVM style
+BasedOnStyle: LLVM
+
+# Line length
+ColumnLimit: 150
+
+# Function parameter formatting
+BinPackParameters: false
+AlignAfterOpenBracket: Align
+AllowAllParametersOfDeclarationOnNextLine: false
+
+# Function call argument formatting  
+BinPackArguments: false
+AllowAllArgumentsOnNextLine: false
+
+# Brace positioning
+BreakBeforeBraces: Allman
+
+# Indentation settings
+IndentWidth: 4
+UseTab: Never
+
+# Line breaking and continuation
+ContinuationIndentWidth: 4
+PenaltyBreakBeforeFirstCallParameter: 100
+
+# Return type handling
+AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterDefinitionReturnType: None
+PenaltyReturnTypeOnItsOwnLine: 1000000
+AllowShortFunctionsOnASingleLine: None
+
+# Pointer & reference alignment
+PointerAlignment: Left
+
+# Constructor initializer formatting
+PackConstructorInitializers: CurrentLine
+BreakConstructorInitializersBeforeComma: true
+AccessModifierOffset: -4
+
+AlignConsecutiveAssignments: true
+AlignTrailingComments: true
+

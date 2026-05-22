@@ -1,11 +1,28 @@
 #include "MqttHandler.hpp"
 
+static const unsigned long RECONNECT_INTERVAL_MIN_MS = 5000;
+static const unsigned long RECONNECT_INTERVAL_MAX_MS = 60000;
+static const uint16_t      MQTT_SOCKET_TIMEOUT_SECONDS = 1;
+
 //---------------------------------------------------------------
 MqttHandler::MqttHandler(PubSubClient* p_client)
+    : m_client(p_client)
+    , m_btHandler(nullptr)
+    , m_lastReconnectAttempt_ms(0)
+    , m_reconnectInterval_ms(RECONNECT_INTERVAL_MIN_MS)
 //---------------------------------------------------------------
 {
-    m_client = p_client;
-    m_client->setBufferSize(4096);
+    if (m_client != nullptr)
+    {
+        m_client->setBufferSize(4096);
+    }
+}
+
+//---------------------------------------------------------------
+void MqttHandler::setBtHandler(BtHandler* p_btHandler)
+//---------------------------------------------------------------
+{
+    m_btHandler = p_btHandler;
 }
 
 //---------------------------------------------------------------
@@ -20,6 +37,9 @@ bool MqttHandler::init(const char* p_domain, uint16_t p_port, MQTT_CALLBACK_SIGN
     char clientID[20];
 
     m_client->setServer(p_domain, p_port);
+    m_client->setCallback(callback);
+    m_client->setSocketTimeout(MQTT_SOCKET_TIMEOUT_SECONDS);
+
     if (m_client->connect("esp32_irrigator"))
     {
         Serial.print("Connection has been established with ");
@@ -36,9 +56,6 @@ bool MqttHandler::init(const char* p_domain, uint16_t p_port, MQTT_CALLBACK_SIGN
     {
         Serial.println("Failed to subscribe topics");
     }
-
-    // comes through the macro
-    m_client->setCallback(callback);
 
     return true;
 }
@@ -103,6 +120,26 @@ void MqttHandler::publishCmdOptions(const String& cmdOptions)
 }
 
 //---------------------------------------------------------------
+void MqttHandler::publishConfigInfo(const String& wifiSsid,
+                                    const String& mqttServer,
+                                    uint16_t      mqttPort,
+                                    bool          saved)
+//---------------------------------------------------------------
+{
+    String json = "{ \"WifiSsid\": \"" + wifiSsid + "\", \"MqttServer\": \"" + mqttServer +
+                  "\", \"MqttPort\": " + String(mqttPort) + ", \"Saved\": " + (saved ? "true" : "false") + " }";
+    publish(m_topics.pub().CONFIG_INFO, json);
+}
+
+//---------------------------------------------------------------
+void MqttHandler::publishVersion(const char* version, const char* buildTime)
+//---------------------------------------------------------------
+{
+    publish(m_topics.pub().SYSTEM_VERSION,
+            "{ \"version\": \"" + String(version) + "\", \"built\": \"" + String(buildTime) + "\" }");
+}
+
+//---------------------------------------------------------------
 bool MqttHandler::loop()
 //---------------------------------------------------------------
 {
@@ -114,6 +151,10 @@ bool MqttHandler::loop()
     if (false == connected())
     {
         reconnectMqtt();
+    }
+    if (false == connected())
+    {
+        return false;
     }
     return m_client->loop();
 }
@@ -147,6 +188,13 @@ bool MqttHandler::subscribeTopics()
     success &= m_client->subscribe(m_topics.sub().RELAY_GROUPS_SET);
     success &= m_client->subscribe(m_topics.sub().RELAY_GROUPS_LOAD);
     success &= m_client->subscribe(m_topics.sub().GET_ALL_INFO);
+    success &= m_client->subscribe(m_topics.sub().CONFIG_WIFI_SET);
+    success &= m_client->subscribe(m_topics.sub().CONFIG_WIFI_GET);
+    success &= m_client->subscribe(m_topics.sub().CONFIG_MQTT_SET);
+    success &= m_client->subscribe(m_topics.sub().CONFIG_MQTT_GET);
+    success &= m_client->subscribe(m_topics.sub().FLASH_SAVE_ALL);
+    success &= m_client->subscribe(m_topics.sub().FLASH_LOAD_ALL);
+    success &= m_client->subscribe(m_topics.sub().SYSTEM_VERSION_GET);
     return success;
 }
 
@@ -154,27 +202,36 @@ bool MqttHandler::subscribeTopics()
 void MqttHandler::reconnectMqtt()
 //---------------------------------------------------------------
 {
-    // Loop until we're reconnected
-    while (!m_client->connected())
+    unsigned long now = millis();
+    if (now - m_lastReconnectAttempt_ms < m_reconnectInterval_ms)
     {
-        Serial.print("Attempting MQTT connection...");
-        // Attempt to connect
-        if (m_client->connect("espClient"))
+        return;
+    }
+    m_lastReconnectAttempt_ms = now;
+
+    Serial.println("Attempting MQTT connection...");
+    const unsigned long started_ms = millis();
+    if (m_client->connect("espClient"))
+    {
+        Serial.println("connected");
+        m_reconnectInterval_ms = RECONNECT_INTERVAL_MIN_MS;
+        if (false == subscribeTopics())
         {
-            Serial.println("connected");
-            if (false == subscribeTopics())
-            {
-                Serial.println("Failed to subscribe topics");
-            }
+            Serial.println("Failed to subscribe topics");
         }
-        else
-        {
-            Serial.print("failed, rc=");
-            Serial.print(m_client->state());
-            Serial.println(" try again in 5 seconds");
-            // Wait 5 seconds before retrying
-            delay(5000);
-        }
+    }
+    else
+    {
+        const unsigned long elapsed_ms = millis() - started_ms;
+        m_reconnectInterval_ms        = min(m_reconnectInterval_ms * 2, RECONNECT_INTERVAL_MAX_MS);
+        Serial.print("failed, rc=");
+        Serial.print(m_client->state());
+        Serial.print(" elapsed_ms=");
+        Serial.print(elapsed_ms);
+        Serial.print(" will retry in ");
+        Serial.print(m_reconnectInterval_ms / 1000);
+        Serial.println(" seconds");
+        m_client->disconnect();
     }
 }
 
@@ -182,6 +239,11 @@ void MqttHandler::reconnectMqtt()
 void MqttHandler::publish(const char* topic, const String& message)
 //---------------------------------------------------------------
 {
+    if (m_btHandler != nullptr)
+    {
+        m_btHandler->publish(topic, message);
+    }
+
     if (m_client == nullptr)
     {
         Serial.println("Invalid mqtt client");

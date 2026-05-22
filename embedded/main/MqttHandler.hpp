@@ -3,11 +3,14 @@
 #include "Structures.hpp"
 #include "MqttTopics.hpp"
 #include "SolenoidManager.hpp"
+#include "BtHandler.hpp"
 
 class MqttHandler
 {
 public:
     MqttHandler(PubSubClient* p_client);
+
+    void setBtHandler(BtHandler* p_btHandler);
 
     bool init(const char* p_domain, uint16_t p_port, MQTT_CALLBACK_SIGNATURE);
 
@@ -20,6 +23,8 @@ public:
     void publish(CommandState p_cmdState);
 
     void publishCmdOptions(const String& p_cmdOptions);
+    void publishConfigInfo(const String& wifiSsid, const String& mqttServer, uint16_t mqttPort, bool saved);
+    void publishVersion(const char* version, const char* buildTime);
 
     bool loop();
     bool connected();
@@ -34,6 +39,9 @@ public:
 
 private:
     PubSubClient* m_client;
+    BtHandler*    m_btHandler;
+    unsigned long m_lastReconnectAttempt_ms;
+    unsigned long m_reconnectInterval_ms;
 
     void publish(const char* topic, const String& message);
     MqttTopics m_topics;

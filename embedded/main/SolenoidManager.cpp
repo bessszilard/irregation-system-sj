@@ -71,7 +71,7 @@ CommandState SolenoidManager::overrideCmd(const String& p_cmdStr)
 // invalidate current command, and update relayStates
 CommandState SolenoidManager::removeCmd(uint8_t p_id)
 {
-    if (m_currentCmdId < p_id)
+    if (m_currentCmdId <= p_id)
     {
         return CommandState::CantRemove;
     }
@@ -254,7 +254,7 @@ void SolenoidManager::getRelayStatesWithCmdIdsJson(String& jsonResult) const
 
 String SolenoidManager::getCmdString(uint8_t p_id) const
 {
-    if (m_currentCmdId < p_id)
+    if (m_currentCmdId <= p_id)
     {
         return "";
     }

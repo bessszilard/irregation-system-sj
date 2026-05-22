@@ -30,12 +30,12 @@ bool RelayArray::handleAllRelays(RelayState p_state)
 
 bool RelayArray::handleRelay(int p_id, RelayState p_state)
 {
-    m_states[p_id] = p_state;
-    if (NUMBER_OF_RELAYS < p_id)
+    if (p_id < 0 || NUMBER_OF_RELAYS <= p_id)
     {
         Serial.println("Invalid relay id " + String(p_id));
         return false;
     }
+    m_states[p_id] = p_state;
     switch (p_state)
     {
         case RelayState::Opened:
@@ -66,6 +66,10 @@ bool RelayArray::setState(RelayIds p_relayId, RelayState p_state)
         case RelayIds::Relay10:
         case RelayIds::Relay11:
         case RelayIds::Relay12:
+        case RelayIds::Relay13:
+        case RelayIds::Relay14:
+        case RelayIds::Relay15:
+        case RelayIds::Relay16:
         {
             int id = static_cast<int>(p_relayId);
             return handleRelay(id, p_state);
@@ -82,6 +86,7 @@ bool RelayArray::setState(RelayIds p_relayId, RelayState p_state)
             // TODOsz error
             return false;
     }
+    return false;
 }
 
 void RelayArray::knTestIncr()
